@@ -1,2 +1,13 @@
 node_modules
 dist
+# Temp files
+.!*!repo.zip
+repo.zip
+*.zip
+.DS_Store
+
+# Asset bundles (download separately)
+FarmAnimals_v1.1/
+
+# Netlify local
+.netlify/
