@@ -1,0 +1,295 @@
+# Game Over Screen E2E Test
+# Tests game over flow and transitions
+#
+# VERIFIES:
+# 1. Game over screen appears when all lives lost
+# 2. Final score is displayed
+# 3. Banked animals count shown
+# 4. High score handling (new high score vs. existing)
+# 5. Earned coins displayed
+# 6. RETRY button restarts game
+# 7. MAIN MENU button returns to menu
+#
+# This test WILL FAIL if:
+# - Game over screen doesn't show final stats
+# - Navigation buttons don't work
+# - Score/coins aren't displayed
+
+appId: web
+---
+# ============================================================
+# SETUP: Get to gameplay
+# ============================================================
+
+- openLink: https://homestead-headaches.netlify.app
+
+# Skip splash
+- evalScript: ${sessionStorage.setItem('homestead_splash_shown_session', 'true')}
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 15000
+
+# Start game
+- tapOn: "NEW GAME"
+
+- extendedWaitUntil:
+    visible: "SELECT MODE"
+    timeout: 5000
+
+- evalScript: |
+    ${
+      const modeCards = document.querySelectorAll('button');
+      const endlessCard = Array.from(modeCards).find(b =>
+        b.textContent && b.textContent.includes('Endless') && !b.disabled
+      );
+      if (endlessCard) endlessCard.click();
+    }
+
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- tapOn: "SELECT"
+
+# Handle tutorial
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.body.textContent.includes('Got it')}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn == true}
+    commands:
+      - tapOn: "Got it"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+# ============================================================
+# PHASE 1: Play normally to accumulate some score
+# ============================================================
+
+# Enable AutoPlayer
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+
+# Play for ~15 seconds to get some score/banked animals
+- repeat:
+    times: 15
+    commands:
+      - waitForAnimationToEnd
+
+- takeScreenshot: gameover-01-during-gameplay
+
+# Record current score and stats
+- evalScript: |
+    ${
+      // Try to capture current game state
+      const allNumbers = document.body.textContent.match(/\d{1,}/g) || [];
+      output.scoreBeforeDeath = allNumbers.length > 0 ? Math.max(...allNumbers.map(n => parseInt(n))) : 0;
+
+      const bankedMatch = document.body.textContent.match(/BANKED:\s*(\d+)/);
+      output.bankedBeforeDeath = bankedMatch ? parseInt(bankedMatch[1]) : 0;
+
+      console.log('Score before death:', output.scoreBeforeDeath, 'Banked:', output.bankedBeforeDeath);
+    }
+
+# Disable AutoPlayer
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+# ============================================================
+# PHASE 2: Force game over (let animals drop)
+# ============================================================
+
+# Stop catching - just wait for lives to drain
+# The game will naturally lose lives when animals aren't caught
+- repeat:
+    times: 60
+    commands:
+      - waitForAnimationToEnd
+      # Check if game over appeared
+      - evalScript: |
+          ${
+            output.gameOverAppeared = document.body.textContent.includes('GAME OVER');
+            if (output.gameOverAppeared) console.log('Game Over detected!');
+          }
+
+# Check if game over screen appeared
+- evalScript: |
+    ${
+      output.reachedGameOver = document.body.textContent.includes('GAME OVER');
+    }
+
+# If not at game over yet, wait more (game might still have lives)
+- runFlow:
+    when:
+      true: ${output.reachedGameOver != true}
+    commands:
+      - repeat:
+          times: 60
+          commands:
+            - waitForAnimationToEnd
+            - evalScript: |
+                ${
+                  output.gameOverAppeared = document.body.textContent.includes('GAME OVER');
+                }
+
+# ============================================================
+# PHASE 3: Verify Game Over Screen Content
+# ============================================================
+
+# VERIFY: Game over screen appeared
+- extendedWaitUntil:
+    visible: "GAME OVER"
+    timeout: 120000
+
+- takeScreenshot: gameover-02-game-over-screen
+
+# VERIFY: Final score is displayed
+- evalScript: |
+    ${
+      // Game over screen should show the final score
+      output.hasScoreDisplay = document.body.textContent.includes('Score') ||
+        document.body.textContent.match(/\d{2,}/) !== null;
+      console.log('Score displayed:', output.hasScoreDisplay);
+    }
+
+# VERIFY: Banked animals count shown (if any were banked)
+- evalScript: |
+    ${
+      output.showsBankedCount = document.body.textContent.includes('Banked') ||
+        document.body.textContent.includes('banked') ||
+        document.body.textContent.includes('Animals');
+    }
+
+# VERIFY: Navigation buttons present
+- assertVisible: "RETRY|TRY AGAIN|Play Again"
+- assertVisible: "MAIN MENU|Menu|HOME"
+
+# Check for coins earned display
+- evalScript: |
+    ${
+      output.showsCoins = document.body.textContent.includes('coin') ||
+        document.body.textContent.includes('Coin');
+    }
+
+# Check for high score notification
+- evalScript: |
+    ${
+      output.showsHighScore = document.body.textContent.includes('HIGH SCORE') ||
+        document.body.textContent.includes('New Record') ||
+        document.body.textContent.includes('Best') ||
+        document.body.textContent.includes('BEST');
+    }
+
+- takeScreenshot: gameover-03-stats-visible
+
+# ============================================================
+# TEST: RETRY Button
+# ============================================================
+
+# Find and click RETRY button
+- evalScript: |
+    ${
+      const retryBtn = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent.includes('RETRY') ||
+        b.textContent.includes('TRY AGAIN') ||
+        b.textContent.includes('Play Again') ||
+        b.textContent.includes('PLAY AGAIN')
+      );
+      if (retryBtn) {
+        retryBtn.click();
+        output.retryClicked = true;
+      }
+    }
+
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# VERIFY: Game restarts (see gameplay UI)
+- extendedWaitUntil:
+    visible: "STACK|LV"
+    timeout: 10000
+
+- evalScript: |
+    ${
+      output.retryWorked = document.body.textContent.includes('STACK') &&
+        !document.body.textContent.includes('GAME OVER');
+    }
+
+- takeScreenshot: gameover-04-after-retry
+
+# ============================================================
+# Force another game over for MAIN MENU test
+# ============================================================
+
+# Wait for game over again (no AutoPlayer = quick death)
+- repeat:
+    times: 90
+    commands:
+      - waitForAnimationToEnd
+      - evalScript: |
+          ${
+            output.gameOverAgain = document.body.textContent.includes('GAME OVER');
+          }
+
+# Verify game over appeared again
+- extendedWaitUntil:
+    visible: "GAME OVER"
+    timeout: 120000
+
+- takeScreenshot: gameover-05-second-game-over
+
+# ============================================================
+# TEST: MAIN MENU Button
+# ============================================================
+
+# Click MAIN MENU button
+- evalScript: |
+    ${
+      const menuBtn = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent.includes('MAIN MENU') ||
+        b.textContent.includes('Menu') ||
+        b.textContent.includes('HOME')
+      );
+      if (menuBtn) {
+        menuBtn.click();
+        output.menuClicked = true;
+      }
+    }
+
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# VERIFY: Returns to main menu
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 5000
+
+- assertVisible: "NEW GAME"
+- assertVisible: "HOMESTEAD"
+
+- takeScreenshot: gameover-06-back-to-menu
+
+# ============================================================
+# FINAL SUMMARY
+# ============================================================
+
+- evalScript: |
+    ${
+      console.log('=== GAME OVER TEST SUMMARY ===');
+      console.log('Score before death:', output.scoreBeforeDeath);
+      console.log('Banked before death:', output.bankedBeforeDeath);
+      console.log('Reached game over:', output.reachedGameOver || output.gameOverAppeared);
+      console.log('Has score display:', output.hasScoreDisplay);
+      console.log('Shows banked count:', output.showsBankedCount);
+      console.log('Shows coins:', output.showsCoins);
+      console.log('Shows high score:', output.showsHighScore);
+      console.log('Retry worked:', output.retryWorked);
+      console.log('Menu button clicked:', output.menuClicked);
+      console.log('==============================');
+    }

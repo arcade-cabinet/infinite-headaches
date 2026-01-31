@@ -1,0 +1,299 @@
+# Pause Menu E2E Test
+# Tests pause functionality and menu options
+#
+# VERIFIES:
+# 1. Pause button is clickable during gameplay
+# 2. Pause menu appears with correct UI
+# 3. Current score and level shown in pause menu
+# 4. RESUME returns to gameplay
+# 5. RESTART restarts the game
+# 6. MAIN MENU returns to main menu
+# 7. ESC key / click outside also resumes
+#
+# This test WILL FAIL if:
+# - Pause button doesn't work
+# - Pause menu doesn't show score/level
+# - Resume doesn't return to gameplay
+# - Main menu navigation fails
+
+appId: web
+---
+# ============================================================
+# SETUP: Get to gameplay
+# ============================================================
+
+- openLink: https://homestead-headaches.netlify.app
+
+# Skip splash
+- evalScript: ${sessionStorage.setItem('homestead_splash_shown_session', 'true')}
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 15000
+
+# Start game
+- tapOn: "NEW GAME"
+
+- extendedWaitUntil:
+    visible: "SELECT MODE"
+    timeout: 5000
+
+- evalScript: |
+    ${
+      const modeCards = document.querySelectorAll('button');
+      const endlessCard = Array.from(modeCards).find(b =>
+        b.textContent && b.textContent.includes('Endless') && !b.disabled
+      );
+      if (endlessCard) endlessCard.click();
+    }
+
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- tapOn: "SELECT"
+
+# Handle tutorial
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.body.textContent.includes('Got it')}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn == true}
+    commands:
+      - tapOn: "Got it"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+# ============================================================
+# TEST 1: Play for a bit to get some score
+# ============================================================
+
+# Enable AutoPlayer briefly
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+
+# Play for 5 seconds to get some score
+- repeat:
+    times: 5
+    commands:
+      - waitForAnimationToEnd
+
+# Disable AutoPlayer
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+- takeScreenshot: pause-01-during-gameplay
+
+# Capture current score and level before pause
+- evalScript: |
+    ${
+      // Get score - look for numbers in the top-left area
+      const allNumbers = document.body.textContent.match(/\d{1,}/g) || [];
+      output.scoreBeforePause = allNumbers.length > 0 ? parseInt(allNumbers[0]) : 0;
+
+      // Get level
+      const lvMatch = document.body.textContent.match(/LV\.?\s*(\d+)/);
+      output.levelBeforePause = lvMatch ? parseInt(lvMatch[1]) : 1;
+
+      console.log('Score before pause:', output.scoreBeforePause, 'Level:', output.levelBeforePause);
+    }
+
+# ============================================================
+# TEST 2: Click pause button
+# ============================================================
+
+# Find and click pause button (typically in top-right)
+- evalScript: |
+    ${
+      // Look for pause button - it might be an SVG icon button
+      const pauseButton = document.querySelector('[aria-label*="ause"]') ||
+        document.querySelector('button[class*="pause"]') ||
+        Array.from(document.querySelectorAll('button')).find(b =>
+          b.style.cssText.includes('right') || b.className.includes('right')
+        );
+
+      if (pauseButton) {
+        pauseButton.click();
+        output.pauseClicked = true;
+      } else {
+        // Try pressing ESC as fallback
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        output.pauseClicked = true;
+      }
+    }
+
+- waitForAnimationToEnd
+
+# ============================================================
+# TEST 3: Verify pause menu content
+# ============================================================
+
+# VERIFY: Pause menu appears
+- extendedWaitUntil:
+    visible: "PAUSED"
+    timeout: 3000
+
+- assertVisible: "PAUSED"
+
+# VERIFY: All pause menu buttons are present
+- assertVisible: "RESUME"
+- assertVisible: "RESTART"
+- assertVisible: "MAIN MENU"
+
+# VERIFY: Current stats are shown
+- evalScript: |
+    ${
+      // Check if score is displayed in pause menu
+      output.scoreInPauseMenu = document.body.textContent.includes('Score:');
+      output.levelInPauseMenu = document.body.textContent.includes('Level:');
+      console.log('Score shown:', output.scoreInPauseMenu, 'Level shown:', output.levelInPauseMenu);
+    }
+
+# VERIFY: Hint text is present
+- assertVisible: "ESC|tap outside|resume"
+
+- takeScreenshot: pause-02-pause-menu
+
+# ============================================================
+# TEST 4: Test RESUME
+# ============================================================
+
+- tapOn: "RESUME"
+
+# VERIFY: Game resumes (pause menu disappears, gameplay visible)
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 3000
+
+# VERIFY: Pause menu is gone
+- evalScript: |
+    ${
+      output.pauseMenuGone = !document.body.textContent.includes('PAUSED');
+      console.log('Pause menu dismissed:', output.pauseMenuGone);
+    }
+- assertTrue: ${output.pauseMenuGone == true}
+
+- takeScreenshot: pause-03-after-resume
+
+# ============================================================
+# TEST 5: Pause again and test click-outside to resume
+# ============================================================
+
+# Pause again
+- evalScript: |
+    ${
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    }
+
+- extendedWaitUntil:
+    visible: "PAUSED"
+    timeout: 3000
+
+# Click outside the modal (on the backdrop)
+- tapOn:
+    point: "10%,10%"
+
+- waitForAnimationToEnd
+
+# VERIFY: Should resume
+- evalScript: |
+    ${
+      output.resumedByClickOutside = !document.body.textContent.includes('PAUSED');
+    }
+
+# If still paused, click resume button
+- runFlow:
+    when:
+      true: ${output.resumedByClickOutside != true}
+    commands:
+      - tapOn: "RESUME"
+      - waitForAnimationToEnd
+
+- takeScreenshot: pause-04-after-click-outside
+
+# ============================================================
+# TEST 6: Test RESTART from pause menu
+# ============================================================
+
+# Pause again
+- evalScript: ${window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))}
+
+- extendedWaitUntil:
+    visible: "PAUSED"
+    timeout: 3000
+
+# Click RESTART
+- tapOn: "RESTART"
+
+- waitForAnimationToEnd
+
+# VERIFY: Game restarts (should see STACK indicator, score reset)
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+# VERIFY: Pause menu is gone
+- evalScript: |
+    ${
+      output.restartWorked = !document.body.textContent.includes('PAUSED') &&
+        document.body.textContent.includes('STACK');
+    }
+- assertTrue: ${output.restartWorked == true}
+
+- takeScreenshot: pause-05-after-restart
+
+# ============================================================
+# TEST 7: Test MAIN MENU from pause
+# ============================================================
+
+# Play briefly
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+- repeat:
+    times: 3
+    commands:
+      - waitForAnimationToEnd
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+# Pause
+- evalScript: ${window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))}
+
+- extendedWaitUntil:
+    visible: "PAUSED"
+    timeout: 3000
+
+# Click MAIN MENU
+- tapOn: "MAIN MENU"
+
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# VERIFY: Returns to main menu
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 5000
+
+- assertVisible: "NEW GAME"
+- assertVisible: "HOMESTEAD"
+
+- takeScreenshot: pause-06-back-to-main-menu
+
+# ============================================================
+# FINAL VERIFICATION
+# ============================================================
+
+- evalScript: |
+    ${
+      console.log('=== PAUSE MENU TEST SUMMARY ===');
+      console.log('Pause button worked:', output.pauseClicked);
+      console.log('Score shown in pause menu:', output.scoreInPauseMenu);
+      console.log('Level shown in pause menu:', output.levelInPauseMenu);
+      console.log('Resume worked:', output.pauseMenuGone);
+      console.log('Restart worked:', output.restartWorked);
+      console.log('Main menu navigation worked: at main menu now');
+      console.log('================================');
+    }

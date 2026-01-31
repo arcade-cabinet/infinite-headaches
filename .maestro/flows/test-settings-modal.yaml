@@ -1,0 +1,349 @@
+# Settings Modal E2E Test
+# Tests Settings modal functionality
+#
+# VERIFIES:
+# 1. Settings modal opens correctly
+# 2. All tabs are present and switchable (Graphics, Sound, Access, Seed)
+# 3. Graphics quality settings can be changed
+# 4. Sound settings (volume sliders, mute toggle) work
+# 5. Accessibility settings toggle correctly
+# 6. Seed display and shuffle works
+# 7. Settings persist after closing and reopening
+# 8. DONE button closes the modal
+#
+# This test WILL FAIL if:
+# - Modal doesn't open
+# - Tabs don't switch
+# - Settings don't persist
+# - Quality radio buttons don't work
+
+appId: web
+---
+# ============================================================
+# SETUP: Get to main menu
+# ============================================================
+
+- openLink: https://homestead-headaches.netlify.app
+
+# Skip splash
+- evalScript: ${sessionStorage.setItem('homestead_splash_shown_session', 'true')}
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 15000
+
+# ============================================================
+# TEST 1: Open Settings Modal
+# ============================================================
+
+- tapOn: "SETTINGS"
+
+# VERIFY: Settings modal appears
+- extendedWaitUntil:
+    visible: "SETTINGS"
+    timeout: 3000
+
+# VERIFY: Close button exists
+- evalScript: |
+    ${
+      output.hasCloseButton = document.body.textContent.includes('x') ||
+        document.querySelector('[aria-label*="lose"]') !== null;
+    }
+
+- takeScreenshot: settings-01-modal-opened
+
+# ============================================================
+# TEST 2: Verify all tabs exist
+# ============================================================
+
+# VERIFY: All four tabs are present
+- assertVisible: "Graphics"
+- assertVisible: "Sound"
+- assertVisible: "Access"
+- assertVisible: "Seed"
+
+# VERIFY: Graphics tab is active by default (Quality Preset visible)
+- assertVisible: "Quality Preset"
+
+# ============================================================
+# TEST 3: Test Graphics Tab
+# ============================================================
+
+# VERIFY: Quality options are present
+- assertVisible: "Low"
+- assertVisible: "Medium"
+- assertVisible: "High"
+
+# Check for "Recommended" badge
+- evalScript: |
+    ${
+      output.hasRecommendedBadge = document.body.textContent.includes('Recommended');
+      console.log('Recommended badge present:', output.hasRecommendedBadge);
+    }
+
+# Record initial quality setting
+- evalScript: |
+    ${
+      const lowChecked = document.querySelector('input[value="low"]')?.checked;
+      const mediumChecked = document.querySelector('input[value="medium"]')?.checked;
+      const highChecked = document.querySelector('input[value="high"]')?.checked;
+      output.initialQuality = lowChecked ? 'low' : mediumChecked ? 'medium' : 'high';
+      console.log('Initial quality:', output.initialQuality);
+    }
+
+# Change to Low quality
+- tapOn: "Low"
+- waitForAnimationToEnd
+
+# VERIFY: Low is now selected
+- evalScript: |
+    ${
+      output.lowSelected = document.querySelector('input[value="low"]')?.checked === true;
+      console.log('Low selected:', output.lowSelected);
+    }
+- assertTrue: ${output.lowSelected == true}
+
+- takeScreenshot: settings-02-graphics-low
+
+# Change to High quality
+- tapOn: "High"
+- waitForAnimationToEnd
+
+# VERIFY: High is now selected
+- evalScript: |
+    ${
+      output.highSelected = document.querySelector('input[value="high"]')?.checked === true;
+    }
+- assertTrue: ${output.highSelected == true}
+
+- takeScreenshot: settings-03-graphics-high
+
+# ============================================================
+# TEST 4: Test Sound Tab
+# ============================================================
+
+- tapOn: "Sound"
+
+- waitForAnimationToEnd
+
+# VERIFY: Sound tab content appears
+- extendedWaitUntil:
+    visible: "Master Volume"
+    timeout: 3000
+
+- assertVisible: "Mute All"
+- assertVisible: "Music"
+- assertVisible: "Sound Effects"
+
+- takeScreenshot: settings-04-sound-tab
+
+# Test Mute toggle
+- evalScript: |
+    ${
+      // Find the mute toggle button
+      const muteToggle = document.querySelector('[aria-label*="ute"]') ||
+        Array.from(document.querySelectorAll('button')).find(b =>
+          b.getAttribute('aria-pressed') !== null
+        );
+
+      if (muteToggle) {
+        output.initialMuteState = muteToggle.getAttribute('aria-pressed');
+        muteToggle.click();
+        output.muteToggleClicked = true;
+      }
+    }
+
+- waitForAnimationToEnd
+
+# VERIFY: Mute state changed
+- evalScript: |
+    ${
+      const muteToggle = document.querySelector('[aria-label*="ute"]') ||
+        Array.from(document.querySelectorAll('button')).find(b =>
+          b.getAttribute('aria-pressed') !== null
+        );
+      output.newMuteState = muteToggle?.getAttribute('aria-pressed');
+      output.muteStateChanged = output.newMuteState !== output.initialMuteState;
+      console.log('Mute state changed:', output.muteStateChanged);
+    }
+
+# Toggle back to original state
+- evalScript: |
+    ${
+      const muteToggle = document.querySelector('[aria-label*="ute"]') ||
+        Array.from(document.querySelectorAll('button')).find(b =>
+          b.getAttribute('aria-pressed') !== null
+        );
+      if (muteToggle) muteToggle.click();
+    }
+
+# ============================================================
+# TEST 5: Test Accessibility Tab
+# ============================================================
+
+- tapOn: "Access"
+
+- waitForAnimationToEnd
+
+# VERIFY: Accessibility options appear
+- extendedWaitUntil:
+    visible: "Reduced Motion"
+    timeout: 3000
+
+- assertVisible: "Reduced Motion"
+- assertVisible: "Screen Shake"
+
+- takeScreenshot: settings-05-accessibility-tab
+
+# Test Reduced Motion toggle
+- evalScript: |
+    ${
+      const toggles = document.querySelectorAll('[aria-label*="toggle"]');
+      if (toggles.length > 0) {
+        output.initialReducedMotion = toggles[0].getAttribute('aria-pressed');
+        toggles[0].click();
+        output.reducedMotionToggled = true;
+      }
+    }
+
+- waitForAnimationToEnd
+
+# ============================================================
+# TEST 6: Test Seed Tab
+# ============================================================
+
+- tapOn: "Seed"
+
+- waitForAnimationToEnd
+
+# VERIFY: Seed content appears
+- extendedWaitUntil:
+    visible: "Current Seed"
+    timeout: 3000
+
+- assertVisible: "Shuffle"
+- assertVisible: "Copy"
+
+- takeScreenshot: settings-06-seed-tab
+
+# Record initial seed
+- evalScript: |
+    ${
+      // The seed is displayed in a styled div - find it by looking for the mono font text
+      const seedContainer = document.querySelector('.font-mono') ||
+        document.querySelector('[style*="monospace"]');
+      output.initialSeed = seedContainer?.textContent?.trim() || '';
+      console.log('Initial seed:', output.initialSeed);
+    }
+
+# Test Shuffle button
+- tapOn: "Shuffle"
+
+- waitForAnimationToEnd
+
+# VERIFY: Seed changed after shuffle
+- evalScript: |
+    ${
+      const seedContainer = document.querySelector('.font-mono') ||
+        document.querySelector('[style*="monospace"]');
+      output.newSeed = seedContainer?.textContent?.trim() || '';
+      output.seedChanged = output.newSeed !== output.initialSeed;
+      console.log('New seed:', output.newSeed, 'Changed:', output.seedChanged);
+    }
+
+- takeScreenshot: settings-07-seed-shuffled
+
+# Test Copy button
+- tapOn: "Copy"
+
+- waitForAnimationToEnd
+
+# VERIFY: Copy feedback appears
+- extendedWaitUntil:
+    visible: "Copied!"
+    timeout: 2000
+
+- takeScreenshot: settings-08-seed-copied
+
+# ============================================================
+# TEST 7: Settings persistence
+# ============================================================
+
+# Go back to Graphics tab
+- tapOn: "Graphics"
+- waitForAnimationToEnd
+
+# Set to Medium quality
+- tapOn: "Medium"
+- waitForAnimationToEnd
+
+# Close settings
+- tapOn: "DONE"
+
+- waitForAnimationToEnd
+
+# VERIFY: Back at main menu
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 3000
+
+# Reopen settings
+- tapOn: "SETTINGS"
+
+- extendedWaitUntil:
+    visible: "Quality Preset"
+    timeout: 3000
+
+# VERIFY: Medium quality persisted
+- evalScript: |
+    ${
+      output.mediumPersisted = document.querySelector('input[value="medium"]')?.checked === true;
+      console.log('Medium quality persisted:', output.mediumPersisted);
+    }
+- assertTrue: ${output.mediumPersisted == true}
+
+- takeScreenshot: settings-09-persistence-verified
+
+# ============================================================
+# TEST 8: Close modal with X button
+# ============================================================
+
+# Find and click close (X) button
+- evalScript: |
+    ${
+      const closeBtn = document.querySelector('[aria-label*="lose"]') ||
+        Array.from(document.querySelectorAll('button')).find(b =>
+          b.textContent === 'x' || b.textContent === 'X'
+        );
+      if (closeBtn) {
+        closeBtn.click();
+        output.closedWithX = true;
+      }
+    }
+
+- waitForAnimationToEnd
+
+# VERIFY: Modal closed, back to main menu
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 3000
+
+# ============================================================
+# FINAL SUMMARY
+# ============================================================
+
+- evalScript: |
+    ${
+      console.log('=== SETTINGS MODAL TEST SUMMARY ===');
+      console.log('Has recommended badge:', output.hasRecommendedBadge);
+      console.log('Low quality selectable:', output.lowSelected);
+      console.log('High quality selectable:', output.highSelected);
+      console.log('Mute toggle worked:', output.muteStateChanged);
+      console.log('Seed shuffle worked:', output.seedChanged);
+      console.log('Settings persisted:', output.mediumPersisted);
+      console.log('Close with X worked:', output.closedWithX);
+      console.log('===================================');
+    }
+
+- takeScreenshot: settings-10-test-complete

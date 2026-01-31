@@ -27,7 +27,7 @@ export interface UseGameEngineReturn {
   showGood: boolean;
   inDanger: boolean;
   // Actions
-  startGame: () => void;
+  startGame: (characterId?: "farmer_john" | "farmer_mary") => void;
   bankStack: () => void;
   pauseGame: () => void;
   resumeGame: () => void;
@@ -162,7 +162,7 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
     options.onPowerUp,
   ]);
 
-  const startGame = useCallback(async () => {
+  const startGame = useCallback(async (characterId: "farmer_john" | "farmer_mary" = "farmer_john") => {
     if (engineRef.current) {
       // Initialize and start audio/music
       await audioManager.init();
@@ -187,7 +187,7 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
       setLives(GAME_CONFIG.lives.starting);
       setCanBank(false);
       setInDanger(false);
-      engineRef.current.start();
+      engineRef.current.start(characterId);
     }
   }, []);
 

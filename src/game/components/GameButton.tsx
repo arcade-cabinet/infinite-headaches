@@ -28,20 +28,22 @@ export function GameButton({
 
   const variantClasses = {
     primary: [
-      "bg-yellow-400 text-black",
-      "border-3 md:border-4 border-black",
-      "shadow-[0_6px_0_#F57F17,0_12px_16px_rgba(0,0,0,0.3)]",
-      "md:shadow-[0_8px_0_#F57F17,0_15px_20px_rgba(0,0,0,0.3)]",
-      "hover:bg-yellow-300",
-      "active:translate-y-1 active:shadow-[0_2px_0_#F57F17]",
+      // Barn red button with wheat/gold text
+      "bg-[#b91c1c] text-[#fef9c3]",
+      "border-3 md:border-4 border-[#7f1d1d]",
+      "shadow-[0_6px_0_#7f1d1d,0_12px_16px_rgba(0,0,0,0.3)]",
+      "md:shadow-[0_8px_0_#7f1d1d,0_15px_20px_rgba(0,0,0,0.3)]",
+      "hover:bg-[#991b1b]",
+      "active:translate-y-1 active:shadow-[0_2px_0_#7f1d1d]",
       "md:active:translate-y-1.5",
     ],
     secondary: [
-      "bg-purple-600 text-white",
-      "border-3 md:border-4 border-purple-400",
-      "shadow-[0_6px_0_#7c3aed,0_12px_16px_rgba(0,0,0,0.3)]",
-      "hover:bg-purple-500",
-      "active:translate-y-1 active:shadow-[0_2px_0_#7c3aed]",
+      // Weathered wood button with wheat text
+      "bg-[#554730] text-[#fef9c3]",
+      "border-3 md:border-4 border-[#6b5a3a]",
+      "shadow-[0_6px_0_#382e25,0_12px_16px_rgba(0,0,0,0.3)]",
+      "hover:bg-[#6b5a3a]",
+      "active:translate-y-1 active:shadow-[0_2px_0_#382e25]",
     ],
   };
 

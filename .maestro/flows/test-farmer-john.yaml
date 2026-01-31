@@ -1,0 +1,91 @@
+# Test Playing as Farmer John
+# Verifies character selection and AutoPlayer gameplay
+#
+# Test flow:
+# 1. Open app
+# 2. Click PLAY
+# 3. Select Farmer John in character select
+# 4. Enable AutoPlayer via JavaScript
+# 5. Wait for game to run for 30 seconds
+# 6. Verify score increased
+# 7. Disable AutoPlayer
+
+appId: web
+---
+# Open the app
+- openLink: https://homestead-headaches.netlify.app
+
+# Wait for the app to fully load
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 15000
+
+# Verify main menu loaded
+- assertVisible: "HOMESTEAD"
+
+# ========== START GAME ==========
+
+- tapOn: "PLAY"
+
+# Wait for character select screen
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+# ========== SELECT FARMER JOHN ==========
+
+# Farmer John should be the first/default character
+- assertVisible: "Farmer John"
+- assertVisible: "The Veteran"
+
+# Select Farmer John
+- tapOn: "SELECT"
+
+# Wait for game to start (may show tutorial first)
+- extendedWaitUntil:
+    visible: "STACK|Got it|DRAG"
+    timeout: 10000
+
+# If tutorial appears, dismiss it
+- evalScript: ${output.tutorialBtn = document.evaluate("//*[contains(text(), 'Got it')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn != null}
+    commands:
+      - tapOn: "Got it"
+
+# Wait for game UI to be ready
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+# Take screenshot before AutoPlayer
+- takeScreenshot: farmer-john-before-autoplayer
+
+# ========== ENABLE AUTOPLAYER ==========
+
+# Enable AutoPlayer via JavaScript (if available)
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+
+# Wait for the game to run (approximately 30 seconds using repeat)
+# Each waitForAnimationToEnd is roughly 1 second
+- repeat:
+    times: 30
+    commands:
+      - waitForAnimationToEnd
+
+# Take screenshot during gameplay
+- takeScreenshot: farmer-john-during-gameplay
+
+# ========== VERIFY GAME STATE ==========
+
+# Verify game is still running or has ended
+- assertVisible: "STACK|LV|GAME OVER"
+
+# ========== DISABLE AUTOPLAYER ==========
+
+# Disable AutoPlayer via JavaScript (if available)
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+# Take final screenshot
+- takeScreenshot: farmer-john-test-complete

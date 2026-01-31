@@ -1,3 +1,4 @@
+import { Vector3 } from "@babylonjs/core";
 import { world } from "../world";
 
 export function WobbleSystem(deltaTime: number) {
@@ -5,7 +6,7 @@ export function WobbleSystem(deltaTime: number) {
 
   for (const entity of entities) {
     const { wobble } = entity;
-    
+
     // Spring physics
     wobble.velocity += -wobble.offset * wobble.springiness;
     wobble.velocity *= wobble.damping;
@@ -14,9 +15,9 @@ export function WobbleSystem(deltaTime: number) {
     // Apply wobble to rotation (visual only for now, or could affect position)
     // For 3D, we might rotate around Z axis
     if (!entity.modelRotation) {
-      entity.modelRotation = new (require("@babylonjs/core").Vector3)(0, 0, 0);
+      entity.modelRotation = new Vector3(0, 0, 0);
     }
-    
+
     // Rotate based on wobble offset
     entity.modelRotation.z = wobble.offset * 0.1;
   }

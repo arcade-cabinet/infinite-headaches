@@ -19,6 +19,7 @@ import "@babylonjs/loaders/glTF";
 import { Scene, Engine, useScene } from "react-babylonjs";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import React, { Suspense, useEffect, useRef, useCallback, useState } from "react";
+import { useGraphics, useRenderSettings, graphicsManager } from "../../graphics";
 import { MovementSystem } from "../ecs/systems/MovementSystem";
 import { WobbleSystem } from "../ecs/systems/WobbleSystem";
 import {
@@ -33,6 +34,7 @@ import {
   getStormColors,
   setTornadoIntensity,
 } from "../effects/TornadoEffect";
+import { FarmEnvironment } from "./FarmEnvironment";
 
 /**
  * EntityRenderer - Renders a single ECS entity as a 3D model with animations.
@@ -132,7 +134,19 @@ const EntityRenderer = ({ entity }: { entity: Entity }) => {
         );
       }
     } catch (error) {
-      console.error(`Failed to load model ${entity.model}:`, error);
+      // DO NOT SILENTLY FAIL - throw error to expose missing models
+      const errorMessage = `MODEL LOAD FAILED: ${entity.model}\n` +
+        `Entity ID: ${entity.id}\n` +
+        `Error: ${error instanceof Error ? error.message : String(error)}\n\n` +
+        `This is likely caused by a missing .glb file in public/assets/models/.\n` +
+        `Available models should match ANIMAL_TYPES in src/game/config.ts`;
+
+      console.error(errorMessage);
+
+      // Also show in UI for visibility during development
+      if (import.meta.env.DEV) {
+        throw new Error(errorMessage);
+      }
     }
   }, [scene, entity.model, entity.id]);
 
@@ -202,8 +216,45 @@ const GameSystems = () => {
 };
 
 /**
+ * GraphicsIntegration - Registers Babylon.js engine and scene with the graphics manager.
+ * This enables the graphics settings system to apply quality settings automatically.
+ */
+const GraphicsIntegration = () => {
+  const scene = useScene();
+  const { registerEngine, registerScene } = useGraphicsManagerRegistration();
+
+  useEffect(() => {
+    if (scene) {
+      const engine = scene.getEngine();
+      registerEngine(engine);
+      registerScene(scene);
+    }
+  }, [scene, registerEngine, registerScene]);
+
+  return null;
+};
+
+/**
+ * Hook to get registration functions from graphicsManager
+ * Separated to avoid issues with conditional hook calls
+ */
+function useGraphicsManagerRegistration() {
+  const registerEngine = useCallback((engine: import("@babylonjs/core").AbstractEngine) => {
+    // Cast to Engine for graphics manager - AbstractEngine has the methods we need
+    graphicsManager.registerEngine(engine as import("@babylonjs/core").Engine);
+  }, []);
+
+  const registerScene = useCallback((scene: BabylonScene) => {
+    graphicsManager.registerScene(scene);
+  }, []);
+
+  return { registerEngine, registerScene };
+}
+
+/**
  * TornadoEffectComponent - Manages the 3D tornado particle effect.
  * The tornado intensity can be controlled via the `intensity` prop (0-1).
+ * Particle count is controlled by graphics quality settings.
  */
 interface TornadoProps {
   /** Tornado intensity from 0 (calm) to 1 (maximum chaos) */
@@ -221,18 +272,27 @@ const TornadoEffectComponent = ({
 }: TornadoProps) => {
   const scene = useScene();
   const tornadoRef = useRef<TornadoEffect | null>(null);
+  const renderSettings = useRenderSettings();
 
-  // Initialize tornado effect
+  // Calculate particle count based on graphics quality settings
+  // Base particle count is 2000, scaled by the particleCount multiplier (0-1)
+  const baseParticleCount = 2000;
+  const scaledParticleCount = Math.max(
+    200, // Minimum particles for effect to be visible
+    Math.floor(baseParticleCount * renderSettings.particleCount)
+  );
+
+  // Initialize tornado effect - recreate when particle count changes significantly
   useEffect(() => {
     if (!scene || !enabled) return;
 
-    // Create tornado effect
+    // Create tornado effect with graphics-scaled particle count
     const tornado = createTornadoEffect(scene, {
       position,
       baseRadius: 2,
       topRadius: 15,
       height: 40,
-      particleCount: 2000,
+      particleCount: scaledParticleCount,
     });
 
     tornadoRef.current = tornado;
@@ -241,7 +301,7 @@ const TornadoEffectComponent = ({
       tornado.dispose();
       tornadoRef.current = null;
     };
-  }, [scene, enabled]);
+  }, [scene, enabled, scaledParticleCount]);
 
   // Update intensity
   useEffect(() => {
@@ -341,6 +401,62 @@ const StormAtmosphere = ({ intensity = 0.5 }: StormAtmosphereProps) => {
 };
 
 /**
+ * GameSceneContent - Inner scene content that can access graphics hooks
+ * This component renders inside the Scene and can use useGraphics hooks
+ */
+const GameSceneContent = ({
+  tornadoIntensity,
+  entities,
+}: {
+  tornadoIntensity: number;
+  entities: Entity[];
+}) => {
+  const renderSettings = useRenderSettings();
+
+  return (
+    <>
+      {/* Register engine and scene with graphics manager */}
+      <GraphicsIntegration />
+
+      {/* Main camera - positioned to see the farmland */}
+      <freeCamera
+        name="camera1"
+        position={new Vector3(0, 8, -20)}
+        setTarget={[new Vector3(0, 3, 10)]}
+      />
+
+      {/* Nebraska farmland environment - sky, ground, atmosphere */}
+      {/* Quality settings affect texture resolution and ground subdivisions */}
+      <FarmEnvironment
+        stormIntensity={tornadoIntensity}
+        showGround={true}
+        groundSize={300}
+        textureQuality={renderSettings.textureQuality}
+      />
+
+      {/* Storm atmosphere lighting */}
+      <StormAtmosphere intensity={tornadoIntensity} />
+
+      {/* Tornado effect in background */}
+      {/* Particle count is scaled by graphics settings inside the component */}
+      <TornadoEffectComponent
+        intensity={tornadoIntensity}
+        position={new Vector3(0, 0, 50)}
+        enabled={true}
+      />
+
+      {/* Run ECS systems in the render loop */}
+      <GameSystems />
+
+      {/* Render all entities with models */}
+      {entities.map((entity) => (
+        <EntityRenderer key={entity.id} entity={entity} />
+      ))}
+    </>
+  );
+};
+
+/**
  * GameScene - Main 3D scene component using Babylon.js with ECS integration.
  *
  * Features:
@@ -348,13 +464,19 @@ const StormAtmosphere = ({ intensity = 0.5 }: StormAtmosphereProps) => {
  * - Tornado particle effect (the "Headache" mechanic)
  * - Dynamic storm atmosphere lighting
  * - Transparent background for layered rendering over 2D canvas
+ * - Graphics quality system integration for performance scaling
  */
 export const GameScene = () => {
-  const entities = useEntities(world);
+  const bucket = useEntities(world);
+  // useEntities returns a Bucket object - access .entities for the array
+  const entities = bucket?.entities ?? [];
 
   // Tornado intensity state - this would typically come from game state/AI director
   // For now, default to 0.5 and allow external control
   const [tornadoIntensity, setTornadoIntensity] = useState(0.5);
+
+  // Get graphics settings for Engine configuration
+  const { settings } = useGraphics();
 
   // Expose tornado intensity control globally for game director
   useEffect(() => {
@@ -367,36 +489,16 @@ export const GameScene = () => {
   return (
     <div style={{ flex: 1, width: "100%", height: "100%" }}>
       <Engine
-        antialias
+        antialias={settings.antialiasing}
         adaptToDeviceRatio
         canvasId="babylon-canvas"
         canvasStyle={{ background: "transparent" }}
       >
-        <Scene clearColor={new Color4(0, 0, 0, 0)}>
-          {/* Main camera */}
-          <freeCamera
-            name="camera1"
-            position={new Vector3(0, 5, -10)}
-            setTarget={[new Vector3(0, 5, 0)]}
+        <Scene clearColor={new Color4(0.5, 0.7, 0.9, 1)}>
+          <GameSceneContent
+            tornadoIntensity={tornadoIntensity}
+            entities={entities}
           />
-
-          {/* Storm atmosphere lighting */}
-          <StormAtmosphere intensity={tornadoIntensity} />
-
-          {/* Tornado effect in background */}
-          <TornadoEffectComponent
-            intensity={tornadoIntensity}
-            position={new Vector3(0, 0, 50)}
-            enabled={true}
-          />
-
-          {/* Run ECS systems in the render loop */}
-          <GameSystems />
-
-          {/* Render all entities with models */}
-          {entities.map((entity) => (
-            <EntityRenderer key={entity.id} entity={entity} />
-          ))}
         </Scene>
       </Engine>
     </div>

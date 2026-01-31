@@ -1,0 +1,261 @@
+# Help Modal E2E Test
+# Tests Help modal functionality and content
+#
+# VERIFIES:
+# 1. Help modal opens from main menu
+# 2. All tabs present (Basics, Controls, Tips)
+# 3. Tab switching works correctly
+# 4. Essential gameplay instructions are present
+# 5. GOT IT button closes modal
+# 6. Clicking outside closes modal
+#
+# This test WILL FAIL if:
+# - Help modal doesn't open
+# - Tabs don't switch
+# - Critical instructions are missing
+# - Close functionality doesn't work
+
+appId: web
+---
+# ============================================================
+# SETUP: Get to main menu
+# ============================================================
+
+- openLink: https://homestead-headaches.netlify.app
+
+# Skip splash
+- evalScript: ${sessionStorage.setItem('homestead_splash_shown_session', 'true')}
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 15000
+
+# ============================================================
+# TEST 1: Open Help Modal
+# ============================================================
+
+- tapOn: "HELP"
+
+# VERIFY: Help modal appears
+- extendedWaitUntil:
+    visible: "HOW TO PLAY"
+    timeout: 3000
+
+- assertVisible: "HOW TO PLAY"
+
+- takeScreenshot: help-01-modal-opened
+
+# ============================================================
+# TEST 2: Verify all tabs exist
+# ============================================================
+
+- assertVisible: "Basics"
+- assertVisible: "Controls"
+- assertVisible: "Tips"
+
+# ============================================================
+# TEST 3: Verify Basics Tab Content (default)
+# ============================================================
+
+# VERIFY: Essential instructions are present
+- assertVisible: "DRAG"
+- assertVisible: "TAP"
+
+# VERIFY: Storm/gameplay description
+- evalScript: |
+    ${
+      output.hasStormDescription = document.body.textContent.includes('tornado') ||
+        document.body.textContent.includes('Storm');
+      output.hasStackingInfo = document.body.textContent.includes('stack') ||
+        document.body.textContent.includes('Stack');
+      output.hasScoringInfo = document.body.textContent.includes('Score') ||
+        document.body.textContent.includes('points');
+      output.hasLivesInfo = document.body.textContent.includes('heart') ||
+        document.body.textContent.includes('lives') ||
+        document.body.textContent.includes('Lives');
+    }
+
+# VERIFY: Key gameplay elements mentioned
+- assertVisible: "Stacking|stack|STACK"
+- assertVisible: "Scoring|Score|points"
+
+# VERIFY: Bank instruction
+- evalScript: |
+    ${
+      output.hasBankInstruction = document.body.textContent.includes('Bank') ||
+        document.body.textContent.includes('Barn');
+    }
+
+- takeScreenshot: help-02-basics-tab
+
+# ============================================================
+# TEST 4: Test Controls Tab
+# ============================================================
+
+- tapOn: "Controls"
+
+- waitForAnimationToEnd
+
+# VERIFY: Controls content appears
+# Should show either Touch or Keyboard controls based on device
+- evalScript: |
+    ${
+      output.hasTouchControls = document.body.textContent.includes('Touch Controls') ||
+        document.body.textContent.includes('Slide your finger');
+      output.hasKeyboardControls = document.body.textContent.includes('Keyboard Controls') ||
+        document.body.textContent.includes('LEFT') ||
+        document.body.textContent.includes('ESC');
+      output.hasAnyControls = output.hasTouchControls || output.hasKeyboardControls;
+      console.log('Touch controls:', output.hasTouchControls, 'Keyboard:', output.hasKeyboardControls);
+    }
+- assertTrue: ${output.hasAnyControls == true}
+
+# VERIFY: DRAG instruction present
+- assertVisible: "DRAG|Drag|drag"
+
+- takeScreenshot: help-03-controls-tab
+
+# ============================================================
+# TEST 5: Test Tips Tab
+# ============================================================
+
+- tapOn: "Tips"
+
+- waitForAnimationToEnd
+
+# VERIFY: Tips content appears
+- extendedWaitUntil:
+    visible: "Pro Tips|Tips"
+    timeout: 3000
+
+# VERIFY: Strategy tips are present
+- evalScript: |
+    ${
+      output.hasBalanceTip = document.body.textContent.includes('Balance') ||
+        document.body.textContent.includes('balance');
+      output.hasBankTip = document.body.textContent.includes('Bank early') ||
+        document.body.textContent.includes('bank');
+      output.hasCritterTypes = document.body.textContent.includes('Critter Types') ||
+        document.body.textContent.includes('Golden') ||
+        document.body.textContent.includes('Normal');
+      output.hasUpgradeInfo = document.body.textContent.includes('Upgrade') ||
+        document.body.textContent.includes('coins');
+    }
+
+# VERIFY: Key tips mentioned
+- assertVisible: "wobble|Wobble|balance|Balance"
+
+- takeScreenshot: help-04-tips-tab
+
+# ============================================================
+# TEST 6: Test GOT IT button
+# ============================================================
+
+- assertVisible: "GOT IT!"
+
+- tapOn: "GOT IT!"
+
+- waitForAnimationToEnd
+
+# VERIFY: Modal closed, back to main menu
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 3000
+
+- evalScript: |
+    ${
+      output.gotItWorked = !document.body.textContent.includes('HOW TO PLAY');
+    }
+- assertTrue: ${output.gotItWorked == true}
+
+- takeScreenshot: help-05-modal-closed
+
+# ============================================================
+# TEST 7: Test close by clicking outside
+# ============================================================
+
+# Reopen help
+- tapOn: "HELP"
+
+- extendedWaitUntil:
+    visible: "HOW TO PLAY"
+    timeout: 3000
+
+# Click outside the modal (on backdrop)
+- tapOn:
+    point: "5%,5%"
+
+- waitForAnimationToEnd
+
+# Check if modal closed
+- evalScript: |
+    ${
+      output.clickOutsideWorked = !document.body.textContent.includes('HOW TO PLAY');
+    }
+
+# If not closed, use GOT IT button
+- runFlow:
+    when:
+      true: ${output.clickOutsideWorked != true}
+    commands:
+      - tapOn: "GOT IT!"
+      - waitForAnimationToEnd
+
+- takeScreenshot: help-06-closed-by-click-outside
+
+# VERIFY: Back at main menu
+- assertVisible: "NEW GAME"
+
+# ============================================================
+# TEST 8: Test X close button
+# ============================================================
+
+# Reopen help
+- tapOn: "HELP"
+
+- extendedWaitUntil:
+    visible: "HOW TO PLAY"
+    timeout: 3000
+
+# Click X close button
+- evalScript: |
+    ${
+      const closeBtn = document.querySelector('[aria-label*="lose help"]') ||
+        Array.from(document.querySelectorAll('button')).find(b =>
+          b.textContent === 'x' || b.textContent === 'X'
+        );
+      if (closeBtn) {
+        closeBtn.click();
+        output.xButtonClicked = true;
+      }
+    }
+
+- waitForAnimationToEnd
+
+# VERIFY: Modal closed
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 3000
+
+- takeScreenshot: help-07-closed-by-x
+
+# ============================================================
+# FINAL SUMMARY
+# ============================================================
+
+- evalScript: |
+    ${
+      console.log('=== HELP MODAL TEST SUMMARY ===');
+      console.log('Has storm description:', output.hasStormDescription);
+      console.log('Has stacking info:', output.hasStackingInfo);
+      console.log('Has scoring info:', output.hasScoringInfo);
+      console.log('Has lives info:', output.hasLivesInfo);
+      console.log('Has bank instruction:', output.hasBankInstruction);
+      console.log('Has touch controls:', output.hasTouchControls);
+      console.log('Has keyboard controls:', output.hasKeyboardControls);
+      console.log('Has critter types:', output.hasCritterTypes);
+      console.log('GOT IT button worked:', output.gotItWorked);
+      console.log('X button clicked:', output.xButtonClicked);
+      console.log('===============================');
+    }

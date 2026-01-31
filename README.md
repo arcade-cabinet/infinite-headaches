@@ -1,58 +1,69 @@
-# Infinite Headaches
+# Homestead Headaches
 
-A physics-based tower-stacking arcade game featuring everyone's favorite confused duck. Catch falling Ducks, build impossible towers, and try not to let your stack topple!
+A 3D physics-based tower-stacking arcade game with a Nebraska homestead theme. Save farm animals from an incoming tornado by catching and stacking them before the storm hits!
 
-**Now cross-platform:** Web, Android, iOS, and Desktop (Electron)
+**Cross-platform:** Web, Android, iOS, and Desktop (Electron)
 
 ## Play
 
-Drag your Duck to catch falling ducks and build the tallest tower possible. But be careful - move too fast and your tower will wobble and fall!
+Drag your farmer to catch falling farm animals and build the tallest stack possible. But be careful - move too fast and your tower will wobble and fall!
 
 ### Controls
-- **Drag** - Move your Duck left/right to catch falling ducks
-- **Tap stacked duck** - Trigger special abilities (Fire/Ice ducks)
-- **CaptureBall button** - Bank your stack to safety
+- **Drag** - Move your farmer left/right to catch falling animals
+- **Tap stacked animal** - Trigger special abilities (Fire Chicken, Ice Duck, etc.)
+- **Bank button** - Save your stack when you have 5+ animals
 
 ## Features
 
-### Dynamic Physics
+### Dynamic 3D Physics
 - Realistic wobble mechanics - smooth movements are rewarded
 - Stack stability decreases with height
 - Center of mass calculations for tipping
+- Low-poly 3D models with vertex-colored shaders
 
-### Special Ducks
-- **Normal Duck** (Yellow) - The classic confused duck
-- **Fire Duck** (Orange) - Tap to shoot fireballs and destroy falling ducks
-- **Ice Duck** (Blue) - Tap to freeze ducks mid-air
+### Farm Animals
+- **Cow** - Sturdy and reliable, the backbone of any stack
+- **Pig** - Round and bouncy
+- **Chicken** - Light and fluttery, slows fall speed
+- **Duck** - The classic farm friend
+- **Sheep** - Fluffy and stable
+
+### Special Animal Variants
+- **Fire Chicken** - Tap to shoot fireballs that destroy falling animals
+- **Ice Duck** - Tap to freeze animals mid-air for easier catching
+- **Brown Cow** - Produces poop projectiles that grow bouncy bushes
+- **Golden Pig** - Triple points, but falls faster
+- **Heavy Cow** - Worth more points but destabilizes the stack
 
 ### Power-Ups
-- **Rare Candy** - Merge your entire stack into one mega duck
+- **Rare Candy** - Merge your entire stack into one mega animal
 - **Potion** - Restore hearts
-- **Great Ball** - Magnetic pull attracts ducks toward you
+- **Great Ball** - Magnetic pull attracts animals toward you
 - **X Attack** - Double points for 8 seconds
 - **Full Restore** - Full heal + temporary invincibility
 
 ### Intelligent AI Director
 The game features a YUKA-powered AI that adapts to your skill:
 - Struggling? The game shows mercy with easier spawns
-- Doing well? Expect more challenging duck patterns
+- Doing well? Expect more challenging animal patterns
 - Logarithmic difficulty scaling feels fair at all skill levels
 
-### Audio & Haptics
-- Original synthesized soundtrack with a psychic/mysterious theme
-- Dynamic music intensity based on gameplay
-- Satisfying sound effects for every action
-- Haptic feedback on native platforms (land, perfect catch, game over)
+### Nebraska Homestead Theme
+- Barn red, wheat gold, and prairie sky color palette
+- Procedural tornado visual effect that grows with danger
+- Dynamic storm atmosphere lighting
 
 ## Tech Stack
 
 - **React 19** + **TypeScript** - Modern UI framework
-- **Canvas 2D** - Smooth 60fps game rendering
+- **Babylon.js** via **react-babylonjs** - 3D rendering engine
+- **Miniplex** - Entity Component System (ECS) for game state
+- **Zustand** - UI state management (settings, seeds)
 - **Tone.js** - Procedural audio synthesis
 - **YUKA** - Goal-driven AI for game direction
 - **Capacitor 8** - Cross-platform native builds
-- **Vite** - Lightning-fast builds
-- **Tailwind CSS** - Utility-first styling
+- **Vite 6** - Lightning-fast builds
+- **Tailwind CSS 4** - Utility-first styling
 
 ## Platforms
 
@@ -129,29 +140,50 @@ ffmpeg -i input.wav -c:a libvorbis -q:a 6 output.ogg
 ```
 /
 ├── src/
-│   ├── game/           # Game logic
-│   │   ├── ai/         # YUKA-powered AI (GameDirector, WobbleGovernor)
-│   │   ├── engine/     # Core game loop and physics
-│   │   ├── entities/   # Duck, PowerUp, Fireball, etc.
-│   │   ├── renderer/   # Canvas drawing functions
-│   │   ├── hooks/      # React integration
-│   │   ├── components/ # UI components
-│   │   ├── screens/    # Menu, Game, GameOver
-│   │   └── config.ts   # All game constants
+│   ├── game/                    # Game logic
+│   │   ├── ai/                  # YUKA-powered AI (GameDirector, WobbleGovernor)
+│   │   ├── animals/             # Animal definitions by type
+│   │   │   ├── cow/             # Cow config, components, variants
+│   │   │   ├── chicken/         # Chicken config, components, variants
+│   │   │   ├── pig/             # Pig config, components, variants
+│   │   │   └── sheep/           # Sheep config, components, variants
+│   │   ├── ecs/                 # Miniplex ECS
+│   │   │   ├── components/      # ECS component definitions
+│   │   │   ├── systems/         # ECS systems (Movement, Wobble, Freeze, etc.)
+│   │   │   └── world.ts         # World instance
+│   │   ├── entities/            # Entity logic (Animal, PowerUp, Fireball, etc.)
+│   │   ├── effects/             # Visual effects (TornadoEffect, ParticleEffects)
+│   │   ├── registry/            # AnimalRegistry for centralized definitions
+│   │   ├── scene/               # Babylon.js scene components
+│   │   ├── hooks/               # React-game integration hooks
+│   │   ├── components/          # UI components (HUD, buttons, indicators)
+│   │   ├── screens/             # Menu, Game, GameOver screens
+│   │   └── config.ts            # All game constants
 │   │
-│   ├── platform/       # Cross-platform abstraction
-│   │   ├── haptics.ts  # Native haptic feedback
-│   │   ├── storage.ts  # Capacitor Preferences / localStorage
-│   │   ├── audio.ts    # Pre-rendered audio with Tone.js fallback
-│   │   ├── feedback.ts # Unified audio + haptics API
-│   │   └── app-lifecycle.ts  # Pause/resume handling
+│   ├── platform/                # Cross-platform abstraction
+│   │   ├── haptics.ts           # Native haptic feedback
+│   │   ├── storage.ts           # Capacitor Preferences / localStorage
+│   │   ├── audio.ts             # Pre-rendered audio with Tone.js fallback
+│   │   ├── feedback.ts          # Unified audio + haptics API
+│   │   └── app-lifecycle.ts     # Pause/resume handling
 │   │
-│   └── components/ui/  # shadcn/ui components
+│   ├── theme/                   # Nebraska homestead theming
+│   │   └── tokens/              # Color palette (barnRed, wheat, soil, etc.)
+│   │
+│   ├── graphics/                # Multi-LOD graphics system
+│   │   ├── settings/            # Quality presets (high/medium/low)
+│   │   └── manager/             # GraphicsManager for LOD switching
+│   │
+│   ├── random/                  # Deterministic RNG system
+│   │   └── store.ts             # Zustand store for seeded randomness
+│   │
+│   └── components/ui/           # shadcn/ui components
 │
-├── android/            # Android native project
-├── ios/                # iOS native project
-├── electron/           # Electron desktop project
-└── public/assets/audio/  # Pre-rendered audio files
+├── android/                     # Capacitor Android project
+├── ios/                         # Capacitor iOS project
+├── electron/                    # Capacitor Electron project
+├── .maestro/                    # Maestro E2E test flows
+└── public/assets/               # Static assets (models, audio, textures)
 ```
 
 ## Game Mechanics
@@ -177,13 +209,15 @@ When you have 5+ ducks stacked, bank them to safety:
 
 ## Documentation
 
+- [Vision](docs/VISION.md) - Project vision and creative direction
+- [Game Manual](docs/GAME_MANUAL.md) - Player guide and mechanics
 - [Development Log](docs/DEV_LOG.md) - Project history and decisions
 - [Agent Context](AGENTS.md) - AI development guide
 
 ## Credits
 
-Built with React, TypeScript, Capacitor, and a lot of confused duck energy.
+Built with React, TypeScript, Babylon.js, Capacitor, and a lot of Nebraska farm energy.
 
 ---
 
-*Stack responsibly. Headache energy is not responsible for toppled towers.*
+*Stack responsibly. Homestead Headaches is not responsible for toppled towers or escaped farm animals.*

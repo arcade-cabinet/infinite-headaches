@@ -12,7 +12,6 @@ import { PauseMenu } from "../components/PauseMenu";
 import { PerfectIndicator } from "../components/PerfectIndicator";
 import { CaptureBallButton } from "../components/CaptureBallButton";
 import { ScoreDisplay } from "../components/ScoreDisplay";
-import { SoundToggle } from "../components/SoundToggle";
 import { hasCompletedTutorial, Tutorial } from "../components/Tutorial";
 import { useGameEngine } from "../hooks/useGameEngine";
 import { useHighScore } from "../hooks/useHighScore";
@@ -21,14 +20,27 @@ import { checkModeUnlocks, type GameModeType, saveUnlockedModes } from "../modes
 import { addCoins, calculateCoinsFromScore } from "../progression/Upgrades";
 import { GameOverScreen } from "./GameOverScreen";
 import { MainMenu } from "./MainMenu";
+import { SplashScreen } from "./SplashScreen";
 import { GameScene } from "../scene/GameScene";
 import { Background } from "../components/Background";
 
-type ScreenState = "menu" | "playing" | "gameover";
+type ScreenState = "splash" | "menu" | "playing" | "gameover";
+
+// Check if splash has been shown this session
+const SPLASH_SHOWN_KEY = "homestead_splash_shown_session";
 
 export function GameScreen() {
-  const [screen, setScreen] = useState<ScreenState>("menu");
+  // Determine initial screen state - show splash only once per session
+  const getInitialScreen = (): ScreenState => {
+    if (typeof window !== "undefined" && sessionStorage.getItem(SPLASH_SHOWN_KEY)) {
+      return "menu";
+    }
+    return "splash";
+  };
+
+  const [screen, setScreen] = useState<ScreenState>(getInitialScreen);
   const [currentMode, setCurrentMode] = useState<GameModeType>("endless");
+  const [selectedCharacter, setSelectedCharacter] = useState<"farmer_john" | "farmer_mary">("farmer_john");
   const [finalScore, setFinalScore] = useState(0);
   const [finalBanked, setFinalBanked] = useState(0);
   const [earnedCoins, setEarnedCoins] = useState(0);
@@ -37,6 +49,14 @@ export function GameScreen() {
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
   const { highScore, updateHighScore } = useHighScore();
   const { isMobile, fontSize, spacing } = useResponsiveScale();
+
+  // Handle splash screen completion
+  const handleSplashComplete = useCallback(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(SPLASH_SHOWN_KEY, "true");
+    }
+    setScreen("menu");
+  }, []);
 
   const handleGameOver = useCallback(
     (score: number, bankedAnimals: number) => {
@@ -145,7 +165,10 @@ export function GameScreen() {
   }, [combo, screen]);
 
   const handlePlay = useCallback(
-    (mode: GameModeType = "endless") => {
+    (mode: GameModeType = "endless", characterId: "farmer_john" | "farmer_mary" = "farmer_john") => {
+      // Store selected character
+      setSelectedCharacter(characterId);
+
       // Check if user needs tutorial
       if (!hasCompletedTutorial()) {
         setShowTutorial(true);
@@ -157,7 +180,7 @@ export function GameScreen() {
       setScreen("playing");
       setIsNewHighScore(false);
       setEarnedCoins(0);
-      startGame();
+      startGame(characterId);
     },
     [startGame]
   );
@@ -166,8 +189,8 @@ export function GameScreen() {
     setShowTutorial(false);
     setScreen("playing");
     setIsNewHighScore(false);
-    startGame();
-  }, [startGame]);
+    startGame(selectedCharacter);
+  }, [startGame, selectedCharacter]);
 
   const handleMainMenu = useCallback(() => {
     setScreen("menu");
@@ -177,8 +200,8 @@ export function GameScreen() {
     resumeGame();
     setScreen("playing");
     setIsNewHighScore(false);
-    startGame();
-  }, [resumeGame, startGame]);
+    startGame(selectedCharacter);
+  }, [resumeGame, startGame, selectedCharacter]);
 
   const handleDismissAchievement = useCallback((id: string) => {
     setUnlockedAchievements((prev) => prev.filter((a) => a.id !== id));
@@ -295,7 +318,6 @@ export function GameScreen() {
         }}
       >
         {screen === "playing" && !isPaused && <PauseButton onClick={pauseGame} />}
-        <SoundToggle />
       </div>
 
       {/* CaptureBall Bank Button */}
@@ -350,6 +372,9 @@ export function GameScreen() {
         achievements={unlockedAchievements}
         onDismiss={handleDismissAchievement}
       />
+
+      {/* Splash Screen - shown on first load */}
+      {screen === "splash" && <SplashScreen onComplete={handleSplashComplete} />}
     </div>
   );
 }

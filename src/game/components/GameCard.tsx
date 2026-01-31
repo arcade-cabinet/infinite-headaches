@@ -16,10 +16,12 @@ export function GameCard({ children, className, style }: GameCardProps) {
   return (
     <div
       className={cn(
-        "bg-purple-900/90",
+        // Nebraska Homestead: soil/wood dark background
+        "bg-[#4a3c30]/95",
         "p-6 md:p-8 lg:p-10",
         "rounded-2xl md:rounded-3xl",
-        "border-4 md:border-[6px] border-yellow-400",
+        // Weathered wood border
+        "border-4 md:border-[6px] border-[#6b5a3a]",
         "pointer-events-auto",
         "shadow-2xl",
         "w-full",

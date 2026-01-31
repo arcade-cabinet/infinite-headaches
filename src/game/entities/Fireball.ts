@@ -1,6 +1,27 @@
 /**
  * Fireball Entity
  * Projectile shot by Fire-type Ducks
+ *
+ * LEGACY FILE - BLOCKED FROM DELETION
+ * ECS replacement exists but GameEngine.ts still uses this class directly.
+ *
+ * ECS Replacement: src/game/ecs/systems/ProjectileSystem.ts
+ * - ProjectileComponent in components/index.ts handles state
+ * - ProjectileSystem handles movement, collisions, and trails
+ * - Use spawnFireballsFrom() to create fireballs
+ *
+ * BLOCKING USAGES (must refactor these first):
+ * - GameEngine.ts line 126: private fireballs: Fireball[] = [];
+ * - GameEngine.ts line 517-518: new Fireball() in shootFireball()
+ * - GameEngine.ts line 1130-1163: checkFireballHits() method
+ * - GameEngine.ts line 1478, 1617: fireball.draw() in update/render
+ *
+ * To complete migration:
+ * 1. Replace this.fireballs array with ECS world.with("projectile") query
+ * 2. Replace shootFireball() to use spawnFireballsFrom() from ProjectileSystem
+ * 3. Remove checkFireballHits() - collision handled by ProjectileSystem
+ * 4. Remove 2D draw calls - 3D rendering handled by GameScene
+ * 5. Delete this file
  */
 
 import { GAME_CONFIG } from "../config";

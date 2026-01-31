@@ -11,3 +11,4 @@ FarmAnimals_v1.1/
 
 # Netlify local
 .netlify/
+.vite

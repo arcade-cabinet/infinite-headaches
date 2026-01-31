@@ -6,8 +6,14 @@
 import { applyDuckAI } from "../ai/DuckBehavior";
 import { GameDirector, type GameState } from "../ai/GameDirector";
 import { WobbleGovernor } from "../ai/WobbleGovernor";
+import {
+  createAutoPlayerIntegration,
+  isAutoPlayerEnabled,
+  type AutoPlayerIntegration,
+  type AutoPlayerGameState,
+} from "../ai/AutoPlayer";
 import { feedback } from "@/platform";
-import { GAME_CONFIG, POWER_UPS, type PowerUpType } from "../config";
+import { ANIMAL_TYPES, GAME_CONFIG, POWER_UPS, type PowerUpType } from "../config";
 import { Animal } from "../entities/Animal";
 import { Fireball } from "../entities/Fireball";
 import { FrozenDuck } from "../entities/FrozenAnimal";
@@ -15,7 +21,41 @@ import { Particle } from "../entities/Particle";
 import { PowerUp } from "../entities/PowerUp";
 import { drawBackground } from "../renderer/background";
 import { world } from "../ecs/world";
-import { createAnimal, createPlayer } from "../ecs/archetypes";
+import {
+  createAnimal,
+  createPlayer,
+  createFallingAnimal,
+  createFireballEntity,
+  convertToStacked,
+  convertToBanking,
+  convertToScattering,
+  freezeEntityArchetype,
+} from "../ecs/archetypes";
+import { Entity } from "../ecs/components";
+import {
+  // Systems
+  runAllSystems,
+  FreezeSystem,
+  ProjectileSystem,
+  AbilitySystem,
+  StackingSystem,
+  // Helpers
+  getStackedEntitiesSorted,
+  getStackHeight,
+  getTopOfStack,
+  getFallingEntities,
+  getFrozenEntities,
+  getActiveProjectiles,
+  getAbilityStateForUI,
+  propagateWobbleFromBase,
+  scatterStack,
+  squishEntity,
+  spawnFireballsFrom,
+  freezeEntity,
+  thawEntity,
+  // Types
+  type TippingState,
+} from "../ecs/systems";
 import { Vector3 } from "@babylonjs/core";
 
 const {
@@ -68,17 +108,27 @@ export class GameEngine {
   private ctx: CanvasRenderingContext2D;
 
   // Game objects
+  // TODO: LEGACY - basePlayer Animal class should be replaced with ECS entity
   private basePlayer: Animal | null = null;
+  private selectedCharacterId: "farmer_john" | "farmer_mary" = "farmer_john";
+  // TODO: LEGACY - these arrays should be replaced with ECS queries
+  // Use world.with("stacked"), world.with("falling"), etc.
   private stackedAnimals: Animal[] = [];
   private fallingAnimals: Animal[] = [];
   private bankingAnimals: Animal[] = [];
   private scatteringAnimals: Animal[] = [];
   private particles: Particle[] = [];
 
-  // New entities
+  // TODO: LEGACY - PowerUp and Fireball classes should be ECS entities
+  // PowerUps can remain as-is for now (simpler entity)
+  // Fireballs should use ProjectileSystem
   private powerUps: PowerUp[] = [];
   private fireballs: Fireball[] = [];
-  private frozenAnimals: FrozenDuck[] = []; // Rename entity class later if needed
+  // TODO: LEGACY - FrozenDuck should use FreezeSystem
+  private frozenAnimals: FrozenDuck[] = [];
+
+  // ECS player entity reference
+  private playerEntity: Entity | null = null;
 
   // Game state
   private score = 0;
@@ -134,6 +184,9 @@ export class GameEngine {
   // YUKA Game Director - AI orchestrating spawning, difficulty, power-ups
   private gameDirector: GameDirector;
 
+  // YUKA AutoPlayer - AI for automated playtesting (E2E tests)
+  private autoPlayerIntegration: AutoPlayerIntegration | null = null;
+
   // Track recent misses for governor input
   private recentMisses: number = 0;
   private missDecayTimer: number = 0;
@@ -156,6 +209,92 @@ export class GameEngine {
   isPlaying = false;
   isPaused = false;
 
+  // ============================================================
+  // ECS HELPER METHODS
+  // These methods provide ECS-based queries as an alternative
+  // to the legacy arrays. Use these during the migration.
+  // ============================================================
+
+  /**
+   * Gets the count of falling entities from ECS
+   */
+  private getECSFallingCount(): number {
+    return world.with("falling").size;
+  }
+
+  /**
+   * Gets the count of stacked entities from ECS
+   */
+  private getECSStackHeight(): number {
+    return world.with("stacked").size;
+  }
+
+  /**
+   * Gets the count of frozen entities from ECS
+   */
+  private getECSFrozenCount(): number {
+    return world.with("frozen").size;
+  }
+
+  /**
+   * Gets the count of projectiles from ECS
+   */
+  private getECSProjectileCount(): number {
+    return world.with("gameProjectile").size;
+  }
+
+  /**
+   * Runs ECS systems for the current frame
+   * This integrates with the legacy update loop
+   */
+  private runECSSystems(deltaTime: number): void {
+    runAllSystems(
+      deltaTime,
+      this.playerEntity,
+      this.canvas.width,
+      this.canvas.height,
+      {
+        onTipping: (dangerLevel, _centerOfMass) => {
+          if (dangerLevel >= physics.tipping.dangerThreshold) {
+            this.screenShake = Math.max(this.screenShake, effects.dangerShake * dangerLevel);
+            if (Math.random() < 0.1) {
+              feedback.dangerPulse();
+            }
+          }
+        },
+        onTopple: () => {
+          // Handled separately to sync with legacy logic
+        },
+        onDangerStateChange: (inDanger) => {
+          if (this.inDangerState !== inDanger) {
+            this.inDangerState = inDanger;
+            this.callbacks.onDangerState(inDanger);
+            if (inDanger) {
+              feedback.warning();
+            }
+          }
+        },
+        onProjectileHit: (projectile, target) => {
+          // Remove target from falling
+          if (target.id) {
+            world.remove(target);
+          }
+          // Score bonus
+          this.score += Math.floor(scoring.fireKillBonus * this.currentMultiplier);
+          this.callbacks.onScoreChange(this.score, this.currentMultiplier, this.combo);
+          feedback.play("land");
+        },
+        onShatter: (_entity) => {
+          // Play shatter sound effect
+          feedback.play("land");
+        },
+        onThawComplete: (_entity) => {
+          // Entity transitions back to falling automatically
+        },
+      }
+    );
+  }
+
   constructor(canvas: HTMLCanvasElement, callbacks: GameCallbacks) {
     this.canvas = canvas;
     const ctx = canvas.getContext("2d", { alpha: false });
@@ -172,6 +311,9 @@ export class GameEngine {
 
     // Initialize YUKA Game Director
     this.gameDirector = new GameDirector();
+
+    // Initialize YUKA AutoPlayer for E2E testing
+    this.autoPlayerIntegration = createAutoPlayerIntegration(() => this.bankStack());
   }
 
   private handleResize = (): void => {
@@ -464,9 +606,10 @@ export class GameEngine {
     };
   }
 
-  start(): void {
+  start(characterId: "farmer_john" | "farmer_mary" = "farmer_john"): void {
     feedback.init();
-    
+    this.selectedCharacterId = characterId;
+
     // Clear ECS world
     world.clear();
 
@@ -519,9 +662,12 @@ export class GameEngine {
 
     const floorY = this.canvas.height * layout.floorY;
     this.basePlayer = new Animal(this.canvas.width / 2, floorY, "base", "farmer");
-    
-    // Create ECS entity for player
-    this.basePlayer.ecsEntity = createPlayer(this.mapToWorld(this.basePlayer.x, this.basePlayer.y));
+
+    // Create ECS entity for player and store reference
+    const playerEcsEntity = createPlayer(this.selectedCharacterId || "farmer_john", this.mapToWorld(this.basePlayer.x, this.basePlayer.y));
+    world.add(playerEcsEntity);
+    this.basePlayer.ecsEntity = playerEcsEntity;
+    this.playerEntity = playerEcsEntity;
 
     this.callbacks.onScoreChange(0, 1, 0);
     this.callbacks.onStackChange(0, false);
@@ -535,6 +681,21 @@ export class GameEngine {
       this.loop();
     }
   }
+
+  private loop = (): void => {
+    if (!this.isPlaying) return;
+
+    const now = performance.now();
+    const deltaTime = now - this.lastFrameTime;
+    this.lastFrameTime = now;
+
+    if (!this.isPaused) {
+      this.update(deltaTime);
+      this.render();
+    }
+
+    this.animationId = requestAnimationFrame(this.loop);
+  };
 
   bankStack(): void {
     if (this.stackedAnimals.length < banking.minStackToBank) return;
@@ -1105,6 +1266,10 @@ export class GameEngine {
     this.timeSinceLastMiss += deltaTime;
     this.timeSinceLastPowerUp += deltaTime;
 
+    // Run ECS systems for entities managed purely by ECS
+    // This handles frozen entities, projectiles, and provides danger state
+    this.runECSSystems(deltaTime);
+
     this.updateGameDirector(deltaTime);
 
     const spawnDecision = this.gameDirector.decideSpawn();
@@ -1117,6 +1282,46 @@ export class GameEngine {
     if (powerUpDecision.shouldSpawn) {
       this.spawnPowerUpWithDirector(powerUpDecision);
       this.timeSinceLastPowerUp = 0;
+    }
+
+    // Update AutoPlayer for E2E testing (when enabled)
+    if (this.autoPlayerIntegration && this.basePlayer) {
+      const autoPlayerState: AutoPlayerGameState = {
+        playerX: this.basePlayer.x,
+        playerY: this.basePlayer.y,
+        stackHeight: this.stackedAnimals.length,
+        stackWobble: this.stackedAnimals.reduce(
+          (max, a) => Math.max(max, Math.abs(a.wobbleOffset)),
+          0
+        ),
+        canBank: this.stackedAnimals.length >= banking.minStackToBank,
+        fallingAnimals: this.fallingAnimals,
+        stackedAnimals: this.stackedAnimals,
+        screenWidth: this.canvas.width,
+        screenHeight: this.canvas.height,
+        inDanger: this.inDangerState,
+      };
+
+      const desiredX = this.autoPlayerIntegration.update(deltaTime, autoPlayerState);
+      if (desiredX !== null) {
+        // AutoPlayer controls the base player position
+        const clampedX = Math.max(
+          GAME_CONFIG.animal.width / 2 + 10,
+          Math.min(
+            this.canvas.width - GAME_CONFIG.animal.width / 2 - layout.bankWidth - 10,
+            desiredX
+          )
+        );
+
+        // Apply movement with wobble effect
+        const actualDelta = clampedX - this.basePlayer.x;
+        this.basePlayer.x = clampedX;
+
+        if (Math.abs(actualDelta) > 0.5) {
+          const wobbleForce = actualDelta * physics.wobbleStrength * 0.5;
+          this.propagateWobble(wobbleForce);
+        }
+      }
     }
 
     if (this.basePlayer) {
@@ -1301,6 +1506,21 @@ export class GameEngine {
   private updateAbilityState(): void {
     if (!this.callbacks.onAbilityStateChange) return;
 
+    // Try ECS-based ability state first
+    const ecsAbilityState = getAbilityStateForUI();
+
+    // Fall back to legacy if ECS has no abilities tracked
+    if (ecsAbilityState.hasFire || ecsAbilityState.hasIce) {
+      this.callbacks.onAbilityStateChange(
+        ecsAbilityState.fireReady,
+        ecsAbilityState.iceReady,
+        ecsAbilityState.hasFire,
+        ecsAbilityState.hasIce
+      );
+      return;
+    }
+
+    // Legacy fallback: check Animal class instances
     let fireReady = 0;
     let iceReady = 0;
     let hasFire = false;
@@ -1309,15 +1529,17 @@ export class GameEngine {
     const allAnimals = this.basePlayer ? [this.basePlayer, ...this.stackedAnimals] : this.stackedAnimals;
 
     for (const animal of allAnimals) {
-      if (animal.type === "frog") {
+      // Check for abilities from the animal type config
+      const typeConfig = ANIMAL_TYPES[animal.type];
+      if (typeConfig?.ability === "fireball") {
         hasFire = true;
         const cooldownLeft = Math.max(0, animal.abilityCooldown);
-        const fireCooldownMax = 3000;
+        const fireCooldownMax = typeConfig.abilityCooldown ?? 3000;
         fireReady = Math.max(fireReady, 1 - cooldownLeft / fireCooldownMax);
-      } else if (animal.type === "penguin") {
+      } else if (typeConfig?.ability === "freeze") {
         hasIce = true;
         const cooldownLeft = Math.max(0, animal.abilityCooldown);
-        const iceCooldownMax = 5000;
+        const iceCooldownMax = typeConfig.abilityCooldown ?? 5000;
         iceReady = Math.max(iceReady, 1 - cooldownLeft / iceCooldownMax);
       }
     }
@@ -1332,6 +1554,37 @@ export class GameEngine {
         this.particles.splice(i, 1);
       }
     }
+  }
+
+  private drawBankZone(): void {
+    // Bank zone is now rendered in 3D scene - stub for compatibility
+  }
+
+  private drawFloorZone(): void {
+    // Floor zone is now rendered in 3D scene - stub for compatibility
+  }
+
+  private drawSpawnZone(): void {
+    // Spawn zone visualization - stub for compatibility
+  }
+
+  private drawActivePowerUpEffects(): void {
+    // Power-up effects are rendered in 3D scene - stub for compatibility
+  }
+
+  private drawAITensionIndicator(): void {
+    // AI tension indicator - stub for compatibility
+  }
+
+  private drawDangerIndicator(): void {
+    // Danger indicator - renders warning when stack is unstable
+    if (!this.inDangerState) return;
+
+    const { width, height } = this.canvas;
+    this.ctx.save();
+    this.ctx.fillStyle = `rgba(255, 0, 0, ${0.1 + Math.sin(Date.now() / 200) * 0.05})`;
+    this.ctx.fillRect(0, 0, width, height);
+    this.ctx.restore();
   }
 
   private render(): void {

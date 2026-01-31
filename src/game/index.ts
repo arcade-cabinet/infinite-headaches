@@ -15,6 +15,17 @@ export {
 export type { DuckAIState, DuckBehaviorType } from "./ai/DuckBehavior";
 // AI System
 export { applyDuckAI, getBehaviorInfo, getRandomBehavior } from "./ai/DuckBehavior";
+// AutoPlayer for E2E Testing
+export {
+  AutoPlayer,
+  createAutoPlayer,
+  createAutoPlayerIntegration,
+  enableAutoPlayer,
+  disableAutoPlayer,
+  isAutoPlayerEnabled,
+  type AutoPlayerIntegration,
+  type AutoPlayerGameState,
+} from "./ai/AutoPlayer";
 // Audio
 export { audioManager, type SoundType } from "./audio";
 export { AchievementToast, AchievementToastList } from "./components/AchievementToast";
@@ -41,17 +52,14 @@ export type { EffectType, ParticleConfig, ParticleType } from "./effects/Particl
 export { ParticleSystem, particleSystem } from "./effects/ParticleEffects";
 // Engine
 export { type GameCallbacks, GameEngine } from "./engine/GameEngine";
-export type { BossConfig, BossType } from "./entities/BossDuck";
-// Boss Entities
-export { BOSS_TYPES, BossDuck, getRandomBossType } from "./entities/BossDuck";
 export type { AnimalState } from "./entities/Animal";
 // Entities
 export { Animal, getRandomAnimalType } from "./entities/Animal";
-export { Fireball } from "./entities/Fireball";
-export type { FreezeState } from "./entities/FrozenDuck";
-export { FrozenDuck } from "./entities/FrozenDuck";
 export { Particle } from "./entities/Particle";
 export { getRandomPowerUpType, PowerUp } from "./entities/PowerUp";
+// ECS exports for freeze and boss functionality
+export type { FreezeState } from "./ecs/systems/FreezeSystem";
+export { createBossAnimal } from "./ecs/archetypes";
 // Hooks
 export { type UseGameEngineReturn, useGameEngine } from "./hooks/useGameEngine";
 export { type UseHighScoreReturn, useHighScore } from "./hooks/useHighScore";

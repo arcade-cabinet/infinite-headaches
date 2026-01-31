@@ -1,8 +1,8 @@
-# AGENTS.md - AI Agent Context for Infinite Headaches
+# AGENTS.md - AI Agent Context for Homestead Headaches
 
 ## Project Overview
 
-**Infinite Headaches** is a cross-platform tower-stacking arcade game built with React, TypeScript, Canvas, and Capacitor. Players drag a Duck to catch falling ducks, building precarious stacks while managing wobble physics, special abilities, and power-ups.
+**Homestead Headaches** is a cross-platform 3D tower-stacking arcade game built with React, TypeScript, Babylon.js, Miniplex ECS, and Capacitor. Players control a farmer to catch falling farm animals, building precarious stacks while managing wobble physics, special abilities, and power-ups. The game features a Nebraska homestead theme with a tornado as the central threat.
 
 **Platforms:** Web/PWA, Android, iOS, Desktop (Electron)
 
@@ -13,16 +13,26 @@
 | React | 19.x | UI framework |
 | TypeScript | 5.9+ | Type safety |
 | Vite | 6.x | Build tool |
-| Canvas 2D | - | Game rendering |
-| Tone.js | 15.x | Audio synthesis (dev) |
+| Babylon.js | 8.x | 3D rendering engine |
+| react-babylonjs | 3.2.x | React bindings for Babylon.js |
+| Miniplex | 2.x | Entity Component System (ECS) |
+| Zustand | 5.x | UI state management |
+| Tone.js | 15.x | Audio synthesis (dev fallback) |
 | YUKA | 0.7.8 | AI/goal-driven behavior |
 | Capacitor | 8.x | Cross-platform native |
 | Tailwind CSS | 4.x | Styling |
 | Biome | 2.3.x | Linting & formatting |
 | Vitest | 4.x | Unit testing |
-| Playwright | 1.58+ | E2E testing |
+| Maestro | - | Mobile E2E testing |
 
 ## Architecture
+
+### Hybrid ECS Architecture
+The game uses a hybrid approach to state management:
+- **Miniplex (ECS):** Source of truth for all game entities (Position, Rotation, Scale, Velocity, Tags)
+- **GameEngine (Driver):** Logic-only class that runs game loop, physics, and AI, then syncs to ECS
+- **Babylon.js (Renderer):** Strictly a view layer that reads from ECS entities. NO GAME LOGIC in view components
+- **Zustand:** UI state management (graphics settings, seeded RNG, user preferences)
 
 ```
 src/
@@ -30,63 +40,145 @@ src/
 │   ├── ai/                    # YUKA-powered AI systems
 │   │   ├── GameDirector.ts    # Orchestrates spawning, difficulty, power-ups
 │   │   ├── WobbleGovernor.ts  # Controls stack wobble based on game state
-│   │   └── DuckBehavior.ts    # Duck steering behaviors
+│   │   └── DuckBehavior.ts    # Animal steering behaviors
 │   │
-│   ├── engine/
-│   │   └── GameEngine.ts      # Core game loop, physics, collision
+│   ├── animals/               # Animal definitions organized by type
+│   │   ├── types.ts           # Shared animal type definitions
+│   │   ├── cow/
+│   │   │   ├── config.ts      # Cow stats and properties
+│   │   │   ├── components.ts  # Cow-specific ECS components
+│   │   │   ├── systems.ts     # Cow-specific systems
+│   │   │   └── variants/      # BrownCow (poop->bush ability)
+│   │   ├── chicken/
+│   │   │   └── variants/      # fire_chicken, corn_chicken, etc.
+│   │   ├── pig/
+│   │   │   └── variants/      # mud_pig, truffle_pig
+│   │   └── sheep/
+│   │       └── variants/      # electric_sheep, rainbow_sheep
 │   │
-│   ├── entities/
-│   │   ├── Duck.ts            # Duck entity (normal, fire, ice types)
-│   │   ├── Particle.ts        # Visual effects
+│   ├── ecs/                   # Miniplex ECS layer
+│   │   ├── components/        # All ECS component definitions
+│   │   │   └── index.ts       # FallingComponent, StackedComponent, FrozenComponent, etc.
+│   │   ├── systems/           # ECS systems
+│   │   │   ├── MovementSystem.ts
+│   │   │   ├── WobbleSystem.ts
+│   │   │   ├── FreezeSystem.ts
+│   │   │   ├── ProjectileSystem.ts
+│   │   │   ├── BounceZoneSystem.ts
+│   │   │   ├── AbilitySystem.ts
+│   │   │   ├── StackingSystem.ts
+│   │   │   ├── SpawningSystem.ts
+│   │   │   └── AnimationSystem.ts
+│   │   └── world.ts           # Miniplex World instance
+│   │
+│   ├── registry/
+│   │   └── AnimalRegistry.ts  # Centralized animal definitions with multi-LOD support
+│   │
+│   ├── entities/              # Entity logic classes
+│   │   ├── Animal.ts          # Base animal entity
+│   │   ├── Fireball.ts        # Projectile entity
+│   │   ├── FrozenAnimal.ts    # Frozen state entity
 │   │   ├── PowerUp.ts         # Collectible items
-│   │   ├── Fireball.ts        # Fire duck projectile
-│   │   ├── FrozenDuck.ts      # Ice-encased duck
-│   │   └── BossDuck.ts        # Boss variants
+│   │   └── BossAnimal.ts      # Boss variants
 │   │
-│   ├── renderer/
-│   │   ├── duck.ts            # Duck drawing functions
-│   │   └── background.ts      # Background rendering
+│   ├── effects/               # Visual effects
+│   │   ├── TornadoEffect.ts   # Procedural tornado with particle systems
+│   │   └── ParticleEffects.ts # Spawn, impact, ability particles
 │   │
-│   ├── hooks/
-│   │   ├── useGameEngine.ts   # React-game integration
-│   │   ├── useHighScore.ts    # localStorage persistence
-│   │   └── useResponsiveScale.ts
+│   ├── scene/                 # Babylon.js scene components
+│   │   ├── GameScene.tsx      # Main 3D scene container
+│   │   └── FarmEnvironment.tsx # Farm background elements
 │   │
+│   ├── hooks/                 # React-game integration
 │   ├── components/            # UI components (HUD, buttons, indicators)
 │   ├── screens/               # Menu, Game, GameOver screens
-│   ├── modes/                 # Game mode definitions
-│   ├── progression/           # Upgrades and coin system
-│   ├── utils/                 # Audio capture tooling
-│   ├── config.ts              # All game constants
-│   ├── audio.ts               # Tone.js audio manager (dev fallback)
-│   └── achievements.ts        # Achievement tracking
+│   └── config.ts              # All game constants
 │
 ├── platform/                  # Cross-platform abstraction layer
 │   ├── haptics.ts             # @capacitor/haptics wrapper
 │   ├── storage.ts             # @capacitor/preferences wrapper
 │   ├── audio.ts               # Pre-rendered OGG playback
 │   ├── feedback.ts            # Unified audio + haptics API
-│   ├── app-lifecycle.ts       # Pause/resume, back button
-│   └── index.ts               # Barrel exports + platform detection
+│   ├── input.ts               # Touch/mouse input handling
+│   ├── device.ts              # Device detection
+│   └── app-lifecycle.ts       # Pause/resume, back button
+│
+├── theme/                     # Nebraska homestead theming
+│   └── tokens/
+│       └── colors.ts          # barnRed, wheat, soil, wood, sky, storm palettes
+│
+├── graphics/                  # Multi-LOD graphics system
+│   ├── settings/
+│   │   ├── types.ts           # QualityLevel type
+│   │   ├── presets.ts         # high/medium/low presets
+│   │   └── storage.ts         # Persist quality settings
+│   └── manager/
+│       └── GraphicsManager.ts # LOD switching logic
+│
+├── random/                    # Deterministic RNG
+│   ├── seedrandom.ts          # Seeded RNG implementation
+│   ├── store.ts               # Zustand store for RNG state
+│   └── wordPools.ts           # Human-readable seed names
 │
 ├── components/ui/             # shadcn/ui components
 └── App.tsx                    # Main app entry
 
 # Native project directories
 android/                       # Capacitor Android project
-ios/                          # Capacitor iOS project  
+ios/                          # Capacitor iOS project
 electron/                     # Capacitor Electron project
-public/assets/audio/          # Pre-rendered audio files
-  ├── sfx/                    # Sound effects (OGG)
-  ├── music/                  # Background tracks (OGG)
-  └── ui/                     # UI sounds (OGG)
+.maestro/                     # Maestro E2E test flows
+public/assets/
+  ├── models/                 # GLB 3D models
+  ├── audio/                  # Pre-rendered audio (OGG)
+  └── textures/               # Texture assets
 ```
 
 ## Key Systems
 
-### 1. Platform Abstraction (`src/platform/`)
+### 1. ECS Components (`src/game/ecs/components/`)
 
-The platform layer provides unified APIs that work across all platforms:
+All game state is represented as ECS components:
+
+| Component | Purpose |
+|-----------|---------|
+| `FallingComponent` | Entity falling from sky (targetX, behaviorType, spawnTime) |
+| `StackedComponent` | Entity in the stack (stackIndex, stackOffset, baseEntityId) |
+| `FrozenComponent` | Entity frozen in ice (freezeTimer, crackStage, thawProgress) |
+| `ProjectileComponent` | Projectile entity (type: fireball/corn/poop, direction, speed) |
+| `BounceZoneComponent` | Temporary bounce zone (bounceForce, expiresAt, radius) |
+| `AbilityComponent` | Special ability (abilityId, cooldownMs, lastUsed, charges) |
+| `WobbleComponent` | Wobble physics (offset, velocity, damping, springiness) |
+| `PlayerComponent` | Player-controlled base (characterId, isDragging, smoothedVelocity) |
+| `BossComponent` | Boss animal (bossType, health, reward) |
+| `AnimationComponent` | Animation state (currentAnimation, isPlaying, blendWeight) |
+
+### 2. AnimalRegistry (`src/game/registry/AnimalRegistry.ts`)
+
+Centralized definitions for all animals with multi-LOD support:
+
+```typescript
+// Quality levels
+type QualityLevel = "high" | "medium" | "low";
+
+// Each animal has LOD-specific models
+models: {
+  high: { glbPath: "cow.glb", scale: 1.0 },
+  medium: { glbPath: "cow.glb", scale: 0.9 },
+  low: { glbPath: null, procedural: { shape: "capsule", color: ... } }
+}
+
+// API
+getAnimal(id: string)           // Get animal definition
+getSpawnableAnimals()           // Animals with spawnWeight > 0
+getVariants(baseAnimalId)       // Get all variants of base animal
+pickRandomAnimal(levelBonus)    // Weighted random pick
+getModelPath(id, quality)       // Get GLB path for quality level
+```
+
+### 3. Platform Abstraction (`src/platform/`)
+
+Unified APIs that work across all platforms:
 
 ```typescript
 import { feedback, haptics, storage, platform } from "@/platform";
@@ -95,10 +187,6 @@ import { feedback, haptics, storage, platform } from "@/platform";
 feedback.play("perfect");    // Plays sound + triggers haptic
 feedback.startMusic();       // Background music
 feedback.setIntensity(0.7);  // Dynamic music intensity
-
-// Direct haptics (native only)
-haptics.heavy();             // Strong impact
-haptics.success();           // Success notification
 
 // Storage (Capacitor Preferences on native, localStorage on web)
 await storage.set("highScore", 1000);
@@ -109,23 +197,25 @@ platform.isNative();         // true on iOS/Android/Electron
 platform.getPlatform();      // "ios" | "android" | "web" | "electron"
 ```
 
-### 2. Feedback System (`src/platform/feedback.ts`)
+### 4. Deterministic RNG (`src/random/store.ts`)
 
-The GameEngine uses the unified `feedback` manager:
+Zustand store for reproducible randomness:
 
-| Game Event | Sound | Haptic |
-|------------|-------|--------|
-| Duck lands | `land` | Medium impact |
-| Perfect catch | `perfect` | Heavy impact + Success |
-| Miss/Topple | `fail` | Error + Vibrate 200ms |
-| Power-up collected | `powerup` | Success |
-| Level up | `levelup` | Heavy + Success |
-| Life earned | `lifeup` | Success |
-| Fireball shot | `fireball` | Heavy |
-| Duck frozen | `freeze` | Medium |
-| Danger state | - | Warning pulse |
+```typescript
+import { useRandomStore, getRNG } from "@/random";
 
-### 3. YUKA AI Director (`src/game/ai/GameDirector.ts`)
+// Set seed by name (human-readable)
+useRandomStore.getState().setSeedByName("funky-tornado");
+
+// Generate random values
+const rng = getRNG();
+rng.next();                  // [0, 1)
+rng.nextInt(1, 10);          // [1, 10] inclusive
+rng.pick(animals);           // Random element
+rng.weightedPick(items);     // Weighted selection
+```
+
+### 5. YUKA AI Director (`src/game/ai/GameDirector.ts`)
 
 The Game Director is a goal-driven AI that orchestrates the entire game experience:
 
@@ -159,28 +249,28 @@ Controls stack wobble using goal-driven AI:
 - Goals: steady, pulse, mercy, chaos
 - Creates emergent tension that feels organic
 
-### 5. Audio System
+### 6. Theme System (`src/theme/tokens/colors.ts`)
+
+Nebraska homestead color palette:
+
+| Token | Description | Primary Value |
+|-------|-------------|---------------|
+| `barnRed` | Iconic barn red | `#b91c1c` |
+| `wheat` | Golden harvest | `#eab308` |
+| `sky` | Prairie sky blue | `#0ea5e9` |
+| `pasture` | Green pastures | `#22c55e` |
+| `soil` | Rich earth brown | `#8b7355` |
+| `wood` | Weathered barn wood | `#a08b64` |
+| `storm` | Tornado grays | `#64748b` |
+
+### 7. Audio System
 
 **Development:** Tone.js generates audio procedurally
 **Production:** Pre-rendered OGG files loaded via `src/platform/audio.ts`
 
-The audio system automatically falls back to Tone.js if OGG files aren't available:
+The audio system automatically falls back to Tone.js if OGG files aren't available.
 
-```typescript
-// src/platform/audio.ts
-async init() {
-  this.filesAvailable = await this.checkFilesExist();
-  if (!this.filesAvailable) {
-    // Fallback to Tone.js
-    const { audioManager } = await import("@/game/audio");
-    this.toneManager = audioManager;
-  }
-}
-```
-
-Music intensity crossfades between pre-rendered tracks at different intensity levels (0%, 25%, 50%, 75%, 100%).
-
-### 6. Physics System (`src/game/config.ts`)
+### 8. Physics System (`src/game/config.ts`)
 
 ```typescript
 physics: {
@@ -302,22 +392,28 @@ const config: CapacitorConfig = {
 - Uses `happy-dom` for DOM simulation
 - Run with `pnpm test:run`
 
-### E2E Tests (Playwright)
-- Located in `e2e/**/*.spec.ts`
-- Config: `playwright.config.ts`
-- Tests against Chromium, Firefox, WebKit
-- Run with `pnpm test:e2e`
+### E2E Tests (Maestro)
+- Located in `.maestro/flows/*.yaml`
+- Config: `.maestro/config.yaml`
+- Tests character selection, graphics quality settings
+- Run with Maestro CLI on iOS/Android simulators
+- Key flows:
+  - `test-farmer-john.yaml` - Test Farmer John character
+  - `test-farmer-mary.yaml` - Test Farmer Mary character
+  - `test-graphics-quality.yaml` - Test LOD quality switching
+  - `test-full-matrix.yaml` - Full character + quality matrix
 
 ### Manual Testing Considerations
 When testing gameplay:
 1. Verify wobble feels balanced (not too punishing)
 2. Check AI director responds to player performance
 3. Ensure power-ups spawn at appropriate times
-4. Test all duck abilities work correctly
+4. Test all animal abilities work correctly
 5. Verify audio plays without errors
 6. Check responsive scaling on mobile
 7. **Test haptics on real devices** (simulators don't support haptics)
 8. **Test audio on native** (ensure OGG files load correctly)
+9. **Test multi-LOD graphics** (switch between high/medium/low quality)
 
 ## Common Issues
 
@@ -350,30 +446,42 @@ When testing gameplay:
 
 ## Extension Points
 
-### Adding new duck types
-1. Add type to `DuckType` in `config.ts`
-2. Add spawn weight and ability config
-3. Implement renderer in `renderer/duck.ts`
-4. Handle ability in `Duck.ts` and `GameEngine.ts`
+### Adding new animal types
+1. Create directory in `src/game/animals/{animal}/`
+2. Add `config.ts` with animal stats and properties
+3. Add `components.ts` for animal-specific ECS components
+4. Add `systems.ts` for animal-specific systems
+5. Register in `src/game/registry/AnimalRegistry.ts` with:
+   - Multi-LOD models (high/medium/low)
+   - Sprite for 2D UI
+   - Animations
+   - Spawn weight and gameplay modifiers
+
+### Adding animal variants
+1. Create variant file in `src/game/animals/{animal}/variants/{variant}.ts`
+2. Define variant config with:
+   - Ability definition (id, cooldown, effectType)
+   - Visual effect colors
+   - Gameplay modifiers (weight, score, speed, stability multipliers)
+3. Register variant in AnimalRegistry with `isVariant: true`
+
+### Adding new ECS components
+1. Define interface in `src/game/ecs/components/index.ts`
+2. Add to `Entity` union type
+3. Create system in `src/game/ecs/systems/` if needed
+4. Register system in `src/game/ecs/systems/index.ts`
 
 ### Adding new power-ups
 1. Add type to `PowerUpType` in `config.ts`
 2. Add config (color, spawn weight, effect)
-3. Implement collection logic in `GameEngine.ts`
+3. Implement collection logic in ECS systems
 4. Add visual in `PowerUp.ts`
 
 ### Adding new AI behaviors
-1. Add behavior type to `DuckBehaviorType`
-2. Implement in `applyDuckAI()` function
+1. Add behavior type to `FallingComponent.behaviorType`
+2. Implement in AI systems
 3. Update `GameDirector.chooseBehaviorType()`
 4. Add threat weight in `WobbleGovernor`
-
-### Adding new sound effects
-1. Add to `SoundType` in `src/game/audio.ts`
-2. Implement Tone.js synthesis in `audioManager`
-3. Add to `SFX_FILES` in `src/platform/audio.ts`
-4. Add haptic mapping in `src/platform/feedback.ts`
-5. Capture to OGG: `window.captureAudio.captureSFX("newSound")`
 
 ### Adding Capacitor plugins
 1. Install: `pnpm add @capacitor/plugin-name`
@@ -384,5 +492,7 @@ When testing gameplay:
 ## Documentation
 
 - `README.md` - Public-facing project overview
+- `docs/VISION.md` - Project vision and creative direction
+- `docs/GAME_MANUAL.md` - Player guide and game mechanics
 - `docs/DEV_LOG.md` - Development history and decisions
 - `AGENTS.md` - This file (AI agent context)

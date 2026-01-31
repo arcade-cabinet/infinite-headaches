@@ -9,19 +9,20 @@ export const GAME_INFO = {
   tagline: "Everyone has bad Mondays. But on this Nebraska homestead, animals are falling from the sky.",
 } as const;
 
-// Animal types
-export type AnimalType = 
-  | "cow" 
-  | "pig" 
-  | "chicken" 
-  | "chick" 
-  | "duck" 
-  | "goat" 
-  | "horse" 
-  | "rabbit" 
+/**
+ * Animal types - ONLY types with actual GLB models in public/assets/models/
+ *
+ * Available models: chicken.glb, cow.glb, duck.glb, pig.glb, sheep.glb, farmer_john.glb, farmer_mary.glb
+ *
+ * IMPORTANT: Do NOT add animal types here without corresponding .glb models.
+ * The game will throw errors if models are missing.
+ */
+export type AnimalType =
+  | "cow"
+  | "pig"
+  | "chicken"
+  | "duck"
   | "sheep"
-  | "penguin" 
-  | "frog"
   | "farmer";
 
 // Special ability types (mapped to animals)
@@ -36,41 +37,48 @@ export type PowerUpType =
   | "x_attack"
   | "full_restore";
 
+/**
+ * Animal configuration - ONLY includes animals with GLB models
+ *
+ * To add a new animal:
+ * 1. Add the .glb model to public/assets/models/{animal_name}.glb
+ * 2. Add the type to AnimalType union above
+ * 3. Add the config here with hasModel: true
+ *
+ * DO NOT set hasModel: true unless the model file exists!
+ */
 export const ANIMAL_TYPES: Record<AnimalType, {
-  color: string; // Fallback color
+  color: string; // Debug/fallback color (SHOULD NOT BE USED IN PRODUCTION)
   spawnWeight: number;
   ability: string | null;
   abilityColor?: string;
   abilityCooldown?: number;
   freezeDuration?: { min: number; max: number };
+  hasModel: boolean; // REQUIRED: must be true, enforces that model exists
 }> = {
-  cow: { color: "#795548", spawnWeight: 0.15, ability: null },
-  pig: { color: "#F06292", spawnWeight: 0.15, ability: null },
-  chicken: { color: "#FFFFFF", spawnWeight: 0.15, ability: null },
-  chick: { color: "#FFEB3B", spawnWeight: 0.1, ability: null },
-  duck: { color: "#FDD835", spawnWeight: 0.1, ability: null },
-  goat: { color: "#BDBDBD", spawnWeight: 0.1, ability: null },
-  horse: { color: "#8D6E63", spawnWeight: 0.1, ability: null },
-  rabbit: { color: "#E0E0E0", spawnWeight: 0.1, ability: null },
-  sheep: { color: "#F5F5F5", spawnWeight: 0.1, ability: null },
-  
-  // Special Animals
-  frog: { 
-    color: "#4CAF50", 
-    spawnWeight: 0.025, 
-    ability: "fireball", // Renaming effect later? Keeping fireball logic for now
-    abilityColor: "#FF5722",
-    abilityCooldown: 3000 
-  },
-  penguin: { 
-    color: "#0277BD", 
-    spawnWeight: 0.025, 
-    ability: "freeze",
-    abilityColor: "#4FC3F7",
-    freezeDuration: { min: 3000, max: 6000 }
-  },
-  farmer: { color: "#1976D2", spawnWeight: 0, ability: null }
+  // Standard farm animals (all have models)
+  cow: { color: "#795548", spawnWeight: 0.2, ability: null, hasModel: true },
+  pig: { color: "#F06292", spawnWeight: 0.2, ability: null, hasModel: true },
+  chicken: { color: "#FFFFFF", spawnWeight: 0.25, ability: null, hasModel: true },
+  duck: { color: "#FDD835", spawnWeight: 0.2, ability: null, hasModel: true },
+  sheep: { color: "#F5F5F5", spawnWeight: 0.15, ability: null, hasModel: true },
+
+  // Player character - not spawned as falling animal
+  farmer: { color: "#1976D2", spawnWeight: 0, ability: null, hasModel: true }
 } as const;
+
+// Runtime validation - crash fast if config is wrong
+const AVAILABLE_MODELS = ["cow", "pig", "chicken", "duck", "sheep", "farmer_john", "farmer_mary"] as const;
+
+for (const [type, config] of Object.entries(ANIMAL_TYPES)) {
+  if (config.hasModel && type !== "farmer" && !AVAILABLE_MODELS.includes(type as typeof AVAILABLE_MODELS[number])) {
+    throw new Error(
+      `ANIMAL CONFIG ERROR: ${type} has hasModel:true but no .glb file exists in public/assets/models/. ` +
+      `Available models: ${AVAILABLE_MODELS.join(", ")}. ` +
+      `Either add the model file or remove this animal type.`
+    );
+  }
+}
 
 export const POWER_UPS = {
   rare_candy: {

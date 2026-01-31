@@ -8,6 +8,19 @@ export { storage, STORAGE_KEYS } from "./storage";
 export { platformAudio } from "./audio";
 export { appLifecycle, type AppState, type AppLifecycleCallbacks } from "./app-lifecycle";
 export { feedback } from "./feedback";
+export {
+  inputManager,
+  type InputSource,
+  type InputDirection,
+  type InputState,
+  type DragEventData,
+} from "./input";
+export {
+  deviceManager,
+  type DeviceInfo,
+  type DeviceType,
+  type Orientation,
+} from "./device";
 
 // Re-export Capacitor utilities
 export { Capacitor } from "@capacitor/core";
@@ -73,9 +86,17 @@ export const platform = {
 export async function initPlatform(): Promise<void> {
   const { platformAudio } = await import("./audio");
   const { appLifecycle } = await import("./app-lifecycle");
+  const { inputManager } = await import("./input");
+  const { deviceManager } = await import("./device");
+
+  // Initialize device detection first (other systems may depend on it)
+  await deviceManager.init();
 
   // Initialize audio system
   await platformAudio.init();
+
+  // Initialize input system
+  await inputManager.init();
 
   // Initialize app lifecycle with game-specific callbacks
   await appLifecycle.init({

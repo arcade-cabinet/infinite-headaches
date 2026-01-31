@@ -1,6 +1,26 @@
 /**
  * FrozenAnimal Entity
  * An animal encased in ice, suspended in the air
+ *
+ * LEGACY FILE - BLOCKED FROM DELETION
+ * ECS replacement exists but GameEngine.ts still uses this class directly.
+ *
+ * ECS Replacement: src/game/ecs/systems/FreezeSystem.ts
+ * - FrozenComponent in components/index.ts handles state
+ * - FreezeSystem handles updates and state transitions
+ * - Use freezeEntity() and thawEntity() for state management
+ *
+ * BLOCKING USAGES (must refactor these first):
+ * - GameEngine.ts line 128: private frozenAnimals: FrozenDuck[] = [];
+ * - GameEngine.ts line 549-559: activateFreeze() creates new FrozenDuck()
+ * - GameEngine.ts line 1415-1427: update loop processes frozenAnimals
+ *
+ * To complete migration:
+ * 1. Replace this.frozenAnimals array with ECS world.with("frozen") query
+ * 2. Replace activateFreeze() to use freezeEntity() from FreezeSystem
+ * 3. FreezeSystem already runs in runECSSystems() - just remove legacy loop
+ * 4. Remove 2D draw() calls - 3D ice rendering handled by GameScene
+ * 5. Delete this file
  */
 
 import { GAME_CONFIG } from "../config";

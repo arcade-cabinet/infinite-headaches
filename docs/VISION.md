@@ -39,23 +39,40 @@ We commit fully to the 3D pipeline.
 
 ## Roadmap
 
-### Phase 1: The Foundation (Current)
+### Phase 1: The Foundation (Complete)
 - [x] Rebrand to "Homestead Headaches".
 - [x] Establish ECS + Babylon.js architecture.
 - [x] Implement 3D Asset Pipeline (FBX -> GLB).
 - [x] Port core stacking physics to 3D.
+- [x] Nebraska homestead color palette (barnRed, wheat, soil, wood, sky, storm).
+- [x] AnimalRegistry with multi-LOD support (high/medium/low quality).
+- [x] Full ECS component system (20+ component types).
+- [x] Deterministic seeded RNG system.
+- [x] Farmer John & Farmer Mary player characters.
 
-### Phase 2: The Storm
-- [ ] Implement the **Tornado** visual effect (Vertex shader or Particle system).
+### Phase 2: The Storm (In Progress)
+- [x] Implement the **Tornado** visual effect (Particle system in TornadoEffect.ts).
+- [x] StormAtmosphere: Dynamic lighting that shifts based on storm intensity.
 - [ ] "Wind" physics: Lateral forces applied to the stack based on tornado proximity.
-- [ ] Dynamic lighting/skybox that darkens as danger increases.
 
-### Phase 3: Farm Life
+### Phase 3: Farm Life (In Progress)
+- [x] Animal variants with special abilities:
+  - Fire Chicken (fireball projectile)
+  - Ice Duck (freeze nearby animals)
+  - Brown Cow (poop -> bouncy bush)
+  - Golden Pig (3x points)
+  - Heavy Cow (2x points, destabilizes)
+- [x] BounceZone mechanic: Bush bounce pads from Brown Cow ability.
 - [ ] Animal "Reactions": Animals look at the player, panic when wobbling, or celebrate when banked.
-- [ ] New Animal Types: Goat (Headbutts neighbors), Chicken (Flaps to slow fall).
 - [ ] "Barn" Banking mechanic: Visually throw the stack into a barn silo.
 
 ### Phase 4: Polish & Juice
 - [ ] Camera shake and zoom-outs for tall stacks.
+- [x] SquishComponent: Squish animation state for landing impacts.
 - [ ] "Squish" and "Stretch" shader effects for landing impacts.
 - [ ] Spatial 3D Audio (Tone.js positional sounds).
+
+### Phase 5: Testing & Quality
+- [x] Maestro E2E test flows for character selection and graphics quality.
+- [x] Multi-LOD graphics testing (high/medium/low).
+- [ ] Full gameplay E2E test coverage.

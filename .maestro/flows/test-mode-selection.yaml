@@ -1,0 +1,291 @@
+# Mode Selection E2E Test
+# Tests the game mode selection flow
+#
+# VERIFIES:
+# 1. Mode select modal opens from NEW GAME
+# 2. Endless mode is always available/unlocked
+# 3. Locked modes show proper lock indicators
+# 4. Locked modes cannot be selected
+# 5. Each mode shows correct information (name, description, multipliers)
+# 6. BACK button closes mode select
+# 7. Selecting a mode leads to character select
+#
+# This test WILL FAIL if:
+# - Mode select doesn't appear from NEW GAME
+# - Endless mode is locked
+# - Locked mode can be clicked
+# - Mode information is incorrect
+
+appId: web
+---
+# ============================================================
+# SETUP: Get to main menu
+# ============================================================
+
+- openLink: https://homestead-headaches.netlify.app
+
+# Skip splash
+- evalScript: ${sessionStorage.setItem('homestead_splash_shown_session', 'true')}
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 15000
+
+# ============================================================
+# TEST 1: Open Mode Selection
+# ============================================================
+
+- tapOn: "NEW GAME"
+
+# VERIFY: Mode select modal appears (not character select!)
+- extendedWaitUntil:
+    visible: "SELECT MODE"
+    timeout: 5000
+
+- assertVisible: "SELECT MODE"
+
+- takeScreenshot: mode-01-modal-opened
+
+# ============================================================
+# TEST 2: Verify Endless Mode (always unlocked)
+# ============================================================
+
+# VERIFY: Endless mode card is visible
+- assertVisible: "Endless"
+- assertVisible: "Classic mode"
+
+# VERIFY: Endless has infinity icon
+- evalScript: |
+    ${
+      output.hasEndlessIcon = document.body.textContent.includes('♾️');
+    }
+
+# VERIFY: Endless is NOT disabled/locked
+- evalScript: |
+    ${
+      const endlessCard = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && b.textContent.includes('Endless')
+      );
+      output.endlessClickable = endlessCard && !endlessCard.disabled;
+      output.endlessNotLocked = endlessCard && !endlessCard.textContent.includes('🔒');
+      console.log('Endless clickable:', output.endlessClickable, 'Not locked:', output.endlessNotLocked);
+    }
+- assertTrue: ${output.endlessClickable == true}
+
+- takeScreenshot: mode-02-endless-available
+
+# ============================================================
+# TEST 3: Verify Time Attack Mode Info
+# ============================================================
+
+# VERIFY: Time Attack mode card exists
+- evalScript: |
+    ${
+      output.hasTimeAttack = document.body.textContent.includes('Time Attack');
+      output.hasTimeAttackDescription = document.body.textContent.includes('90 seconds') ||
+        document.body.textContent.includes('Score 1000+');
+    }
+
+# Check if Time Attack is locked
+- evalScript: |
+    ${
+      const timeAttackCard = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && b.textContent.includes('Time Attack')
+      );
+      output.timeAttackLocked = timeAttackCard && (
+        timeAttackCard.disabled ||
+        timeAttackCard.textContent.includes('🔒') ||
+        timeAttackCard.textContent.includes('Score 1000+')
+      );
+      console.log('Time Attack locked:', output.timeAttackLocked);
+    }
+
+# ============================================================
+# TEST 4: Verify Zen Mode Info
+# ============================================================
+
+# VERIFY: Zen mode exists
+- evalScript: |
+    ${
+      output.hasZenMode = document.body.textContent.includes('Zen');
+      output.hasZenDescription = document.body.textContent.includes('Relax') ||
+        document.body.textContent.includes('pressure') ||
+        document.body.textContent.includes('Play 10 games');
+    }
+
+# Check if Zen is locked
+- evalScript: |
+    ${
+      const zenCard = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && b.textContent.includes('Zen') && !b.textContent.includes('Time')
+      );
+      output.zenLocked = zenCard && (
+        zenCard.disabled ||
+        zenCard.textContent.includes('🔒') ||
+        zenCard.textContent.includes('Play 10 games')
+      );
+      console.log('Zen locked:', output.zenLocked);
+    }
+
+# ============================================================
+# TEST 5: Verify Boss Rush Mode Info
+# ============================================================
+
+# VERIFY: Boss Rush mode exists
+- evalScript: |
+    ${
+      output.hasBossRush = document.body.textContent.includes('Boss Rush');
+      output.hasBossRushDescription = document.body.textContent.includes('boss') ||
+        document.body.textContent.includes('Boss') ||
+        document.body.textContent.includes('Score 5000+');
+    }
+
+# Check if Boss Rush is locked
+- evalScript: |
+    ${
+      const bossCard = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && b.textContent.includes('Boss Rush')
+      );
+      output.bossRushLocked = bossCard && (
+        bossCard.disabled ||
+        bossCard.textContent.includes('🔒') ||
+        bossCard.textContent.includes('Score 5000+')
+      );
+      console.log('Boss Rush locked:', output.bossRushLocked);
+    }
+
+- takeScreenshot: mode-03-all-modes-visible
+
+# ============================================================
+# TEST 6: Try clicking locked mode (should not proceed)
+# ============================================================
+
+# Find a locked mode and try to click it
+- evalScript: |
+    ${
+      // Find any locked mode button
+      const lockedMode = Array.from(document.querySelectorAll('button')).find(b =>
+        b.disabled && (
+          b.textContent.includes('Time Attack') ||
+          b.textContent.includes('Zen') ||
+          b.textContent.includes('Boss Rush')
+        )
+      );
+
+      if (lockedMode) {
+        lockedMode.click(); // Try to click
+        output.triedClickingLocked = true;
+        output.lockedModeName = lockedMode.textContent.split('\n')[0].trim();
+      } else {
+        // All modes might be unlocked for this user
+        output.triedClickingLocked = false;
+        output.allModesUnlocked = true;
+      }
+    }
+
+- waitForAnimationToEnd
+
+# VERIFY: Still on mode select (didn't proceed to character select)
+- evalScript: |
+    ${
+      output.stayedOnModeSelect = document.body.textContent.includes('SELECT MODE');
+      output.didNotProceed = !document.body.textContent.includes('CHOOSE YOUR HAND');
+      console.log('Stayed on mode select:', output.stayedOnModeSelect);
+    }
+
+# If we tried clicking locked mode, verify it didn't work
+- runFlow:
+    when:
+      true: ${output.triedClickingLocked == true}
+    commands:
+      - assertTrue: ${output.stayedOnModeSelect == true}
+
+# ============================================================
+# TEST 7: Test BACK button
+# ============================================================
+
+- tapOn: "BACK"
+
+- waitForAnimationToEnd
+
+# VERIFY: Returns to main menu
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 3000
+
+- assertVisible: "NEW GAME"
+- assertVisible: "HOMESTEAD"
+
+# VERIFY: Mode select modal is gone
+- evalScript: |
+    ${
+      output.backWorked = !document.body.textContent.includes('SELECT MODE');
+    }
+- assertTrue: ${output.backWorked == true}
+
+- takeScreenshot: mode-04-back-to-menu
+
+# ============================================================
+# TEST 8: Select Endless and proceed to character select
+# ============================================================
+
+# Open mode select again
+- tapOn: "NEW GAME"
+
+- extendedWaitUntil:
+    visible: "SELECT MODE"
+    timeout: 5000
+
+# Click Endless mode
+- evalScript: |
+    ${
+      const endlessCard = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && b.textContent.includes('Endless') && !b.disabled
+      );
+      if (endlessCard) {
+        endlessCard.click();
+        output.endlessSelected = true;
+      }
+    }
+- assertTrue: ${output.endlessSelected == true}
+
+- waitForAnimationToEnd
+
+# VERIFY: Proceeds to character select
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- assertVisible: "CHOOSE YOUR HAND"
+- assertVisible: "Farmer John"
+
+- takeScreenshot: mode-05-proceeded-to-character-select
+
+# VERIFY: Mode select is gone
+- evalScript: |
+    ${
+      output.modeSelectClosed = !document.body.textContent.includes('SELECT MODE');
+    }
+- assertTrue: ${output.modeSelectClosed == true}
+
+# ============================================================
+# FINAL SUMMARY
+# ============================================================
+
+- evalScript: |
+    ${
+      console.log('=== MODE SELECTION TEST SUMMARY ===');
+      console.log('Endless available:', output.endlessClickable);
+      console.log('Endless not locked:', output.endlessNotLocked);
+      console.log('Has Time Attack:', output.hasTimeAttack);
+      console.log('Time Attack locked:', output.timeAttackLocked);
+      console.log('Has Zen Mode:', output.hasZenMode);
+      console.log('Zen locked:', output.zenLocked);
+      console.log('Has Boss Rush:', output.hasBossRush);
+      console.log('Boss Rush locked:', output.bossRushLocked);
+      console.log('Back button worked:', output.backWorked);
+      console.log('Endless selection worked:', output.endlessSelected);
+      console.log('Proceeded to character select:', output.modeSelectClosed);
+      console.log('===================================');
+    }

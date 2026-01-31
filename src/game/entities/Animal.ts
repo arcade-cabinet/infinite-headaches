@@ -277,6 +277,7 @@ export class Animal {
 
 /**
  * Get a random animal type based on spawn weights and level
+ * ONLY returns types that have actual 3D models (hasModel: true)
  */
 export function getRandomAnimalType(level: number): AnimalType {
   const rand = Math.random();
@@ -285,9 +286,21 @@ export function getRandomAnimalType(level: number): AnimalType {
   // Increase special animal chance with level
   const levelBonus = level * GAME_CONFIG.difficulty.specialDuckLevelBonus;
 
+  // Filter to only spawnable animals (hasModel: true, spawnWeight > 0)
+  const spawnableTypes = Object.entries(ANIMAL_TYPES).filter(
+    ([_, config]) => config.hasModel && config.spawnWeight > 0
+  );
+
+  if (spawnableTypes.length === 0) {
+    throw new Error(
+      "ANIMAL CONFIG ERROR: No spawnable animal types configured! " +
+      "At least one animal type must have hasModel: true and spawnWeight > 0."
+    );
+  }
+
   // Calculate total weight to normalize
   let totalWeight = 0;
-  for (const [_, config] of Object.entries(ANIMAL_TYPES)) {
+  for (const [_, config] of spawnableTypes) {
     let weight = config.spawnWeight;
     if (config.ability) {
       weight += levelBonus;
@@ -297,7 +310,7 @@ export function getRandomAnimalType(level: number): AnimalType {
 
   const normalizedRand = rand * totalWeight;
 
-  for (const [type, config] of Object.entries(ANIMAL_TYPES)) {
+  for (const [type, config] of spawnableTypes) {
     let weight = config.spawnWeight;
     if (config.ability) {
       weight += levelBonus;
@@ -308,5 +321,6 @@ export function getRandomAnimalType(level: number): AnimalType {
     }
   }
 
-  return "cow";
+  // Fallback to first spawnable type (should never reach here)
+  return spawnableTypes[0][0] as AnimalType;
 }

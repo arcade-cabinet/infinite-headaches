@@ -24,13 +24,32 @@
 
 ## Animals of the Farm
 
-| Animal | Type | Description | Special Ability (Tap to Activate) |
+### Base Animals
+
+| Animal | Weight | Description | Modifiers |
 | :--- | :--- | :--- | :--- |
-| **Cow** | Normal | The backbone of any stack. Sturdy and reliable. | *Moo!* (Just cute) |
-| **Pig** | Normal | Round and bouncy. | *Oink!* |
-| **Chicken** | Normal | Small and light. | *Cluck!* |
-| **Frog** | Special | A fiery little friend. | **Fire Breath:** Clears falling hazards! |
-| **Penguin** | Special | Lost? Maybe. Cool under pressure. | **Freeze:** Stops time for a falling animal! |
+| **Cow** | Heavy | The backbone of any stack. Sturdy and reliable. | +20% weight, +10% stability |
+| **Pig** | Normal | Round and bouncy. | Standard stats |
+| **Chicken** | Light | Small and fluttery. | -30% weight, -10% fall speed |
+| **Duck** | Light | The classic farm friend. | -20% weight |
+| **Sheep** | Normal | Fluffy and stable. | +20% stability |
+
+### Special Variants
+
+| Variant | Base | Special Ability (Tap to Activate) | Spawn Rate |
+| :--- | :--- | :--- | :--- |
+| **Fire Chicken** | Chicken | **Fireball:** Shoots fireballs that destroy falling animals! | Rare (3%) |
+| **Ice Duck** | Duck | **Freeze:** Freezes the nearest falling animal in ice! | Rare (3%) |
+| **Brown Cow** | Cow | **Poop Projectile:** Launches poop that grows bouncy bushes! | Rare (5%) |
+| **Golden Pig** | Pig | No ability, but worth **3x points**! Falls faster. | Very Rare (2%) |
+| **Heavy Cow** | Cow | No ability, but worth **2x points**! Destabilizes the stack. | Very Rare (2%) |
+
+### Player Characters
+
+| Character | Description |
+| :--- | :--- |
+| **Farmer John** | Nebraska homestead farmer with blue overalls |
+| **Farmer Mary** | Nebraska homestead farmer with red dress |
 
 ---
 
