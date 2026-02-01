@@ -1,15 +1,16 @@
 /**
- * useGameEngine Hook
- * React hook for managing the game engine lifecycle
+ * useGameLogic Hook
+ * React hook for the pure logic game engine (no canvas dependency)
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Vector3 } from "@babylonjs/core";
 import { audioManager } from "../audio";
 import { GAME_CONFIG } from "../config";
-import { GameEngine } from "../engine/GameEngine";
+import { GameLogic, type GameLogicState, screenToWorld } from "../engine/GameLogic";
 
-export interface UseGameEngineReturn {
-  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+export interface UseGameLogicReturn {
+  // State
   score: number;
   multiplier: number;
   combo: number;
@@ -22,18 +23,26 @@ export interface UseGameEngineReturn {
   isGameOver: boolean;
   isPaused: boolean;
   canBank: boolean;
+  inDanger: boolean;
+  screenShake: number;
+  // Perfect/Good indicators
   perfectKey: number;
   showPerfect: boolean;
   showGood: boolean;
-  inDanger: boolean;
   // Actions
   startGame: (characterId?: "farmer_john" | "farmer_mary") => void;
   bankStack: () => void;
   pauseGame: () => void;
   resumeGame: () => void;
+  // Input handlers (called by Babylon InputManager)
+  handlePointerDown: (worldX: number) => void;
+  handlePointerMove: (worldX: number) => void;
+  handlePointerUp: () => void;
+  // Screen dimension update
+  setScreenDimensions: (width: number, height: number) => void;
 }
 
-interface UseGameEngineOptions {
+interface UseGameLogicOptions {
   onGameOver?: (finalScore: number, bankedAnimals: number) => void;
   onLevelUp?: (level: number) => void;
   onLifeEarned?: () => void;
@@ -42,12 +51,12 @@ interface UseGameEngineOptions {
   onMerge?: (count: number) => void;
   onPerfectCatch?: () => void;
   onFireballShot?: () => void;
-  onDuckFrozen?: () => void;
+  onAnimalFrozen?: () => void;
 }
 
-export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngineReturn {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<GameEngine | null>(null);
+export function useGameLogic(options: UseGameLogicOptions = {}): UseGameLogicReturn {
+  const engineRef = useRef<GameLogic | null>(null);
+  const characterRef = useRef<"farmer_john" | "farmer_mary">("farmer_john");
 
   const [score, setScore] = useState(0);
   const [multiplier, setMultiplier] = useState(1);
@@ -61,17 +70,15 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
   const [isGameOver, setIsGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [canBank, setCanBank] = useState(false);
+  const [inDanger, setInDanger] = useState(false);
+  const [screenShake, setScreenShake] = useState(0);
   const [perfectKey, setPerfectKey] = useState(0);
   const [showPerfect, setShowPerfect] = useState(false);
   const [showGood, setShowGood] = useState(false);
-  const [inDanger, setInDanger] = useState(false);
 
   // Initialize engine
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const engine = new GameEngine(canvas, {
+    const engine = new GameLogic({
       onScoreChange: (newScore, newMultiplier, newCombo) => {
         setScore(newScore);
         setMultiplier(newMultiplier);
@@ -87,19 +94,18 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
       onGameOver: (finalScore, totalBanked) => {
         setIsPlaying(false);
         setIsGameOver(true);
-        // Stop music and play game over voice
-        audioManager.stopMusic();
+        // Play game over voice
         audioManager.playVoice("gameover");
         options.onGameOver?.(finalScore, totalBanked);
       },
-      onPerfectCatch: () => {
+      onPerfectCatch: (_pos: Vector3) => {
         setPerfectKey((prev) => prev + 1);
         setShowPerfect(true);
         setTimeout(() => setShowPerfect(false), 800);
         audioManager.playWithVoice("perfect", "perfect");
         options.onPerfectCatch?.();
       },
-      onGoodCatch: () => {
+      onGoodCatch: (_pos: Vector3) => {
         setShowGood(true);
         setTimeout(() => setShowGood(false), 600);
       },
@@ -111,7 +117,6 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
       },
       onLevelUp: (newLevel) => {
         setLevel(newLevel);
-        // Increase music intensity as level increases
         audioManager.setIntensity(Math.min(1, newLevel / 15));
         audioManager.playWithVoice("levelup", "levelup");
         options.onLevelUp?.(newLevel);
@@ -122,7 +127,6 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
       },
       onDangerState: (danger) => {
         setInDanger(danger);
-        // Increase music intensity when in danger (YUKA tension)
         if (danger) {
           audioManager.setIntensity(Math.min(1, 0.7 + Math.random() * 0.3));
           audioManager.playVoice("danger");
@@ -142,13 +146,24 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
         audioManager.play("fireball");
         options.onFireballShot?.();
       },
-      onDuckFrozen: () => {
+      onAnimalFrozen: () => {
         audioManager.play("freeze");
-        options.onDuckFrozen?.();
+        options.onAnimalFrozen?.();
+      },
+      onScreenShake: (intensity) => {
+        setScreenShake(intensity);
+      },
+      onParticleEffect: (_type, _position) => {
+        // Particle effects are handled by the 3D renderer
       },
     });
 
     engineRef.current = engine;
+
+    // Set initial screen dimensions
+    if (typeof window !== "undefined") {
+      engine.setScreenDimensions(window.innerWidth, window.innerHeight);
+    }
 
     return () => {
       engine.destroy();
@@ -158,16 +173,20 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
     options.onLevelUp,
     options.onLifeEarned,
     options.onStackTopple,
-    options.onDuckFrozen,
+    options.onAnimalFrozen,
     options.onFireballShot,
     options.onMerge,
     options.onPerfectCatch,
     options.onPowerUp,
   ]);
 
-  const startGame = useCallback(async (characterId: "farmer_john" | "farmer_mary" = "farmer_john") => {
-    if (engineRef.current) {
-      // Initialize and start audio/music
+  const startGame = useCallback(
+    async (characterId: "farmer_john" | "farmer_mary" = "farmer_john") => {
+      if (!engineRef.current) return;
+
+      characterRef.current = characterId;
+
+      // Initialize audio
       await audioManager.init();
 
       // Set character voice (male for John, female for Mary)
@@ -176,9 +195,12 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
       // Check if user has muted sound
       const isMuted =
         typeof window !== "undefined" && localStorage.getItem("animal-muted") === "true";
+
       if (!isMuted) {
-        audioManager.startMusic();
-        audioManager.setIntensity(0.2); // Start with low intensity
+        // Play character-specific music track
+        const trackName = characterId === "farmer_john" ? "farmerJohn" : "farmerMary";
+        audioManager.playTrack(trackName);
+        audioManager.setIntensity(0.2);
       }
 
       setIsGameOver(false);
@@ -193,9 +215,12 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
       setLives(GAME_CONFIG.lives.starting);
       setCanBank(false);
       setInDanger(false);
+      setScreenShake(0);
+
       engineRef.current.start(characterId);
-    }
-  }, []);
+    },
+    []
+  );
 
   const bankStack = useCallback(() => {
     if (engineRef.current && canBank) {
@@ -207,7 +232,7 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
     if (engineRef.current && isPlaying && !isPaused) {
       engineRef.current.pause();
       setIsPaused(true);
-      audioManager.stopMusic();
+      audioManager.pauseMusic();
     }
   }, [isPlaying, isPaused]);
 
@@ -215,12 +240,27 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
     if (engineRef.current && isPaused) {
       engineRef.current.resume();
       setIsPaused(false);
-      audioManager.startMusic();
+      audioManager.resumeMusic();
     }
   }, [isPaused]);
 
+  const handlePointerDown = useCallback((worldX: number) => {
+    engineRef.current?.handlePointerDown(worldX);
+  }, []);
+
+  const handlePointerMove = useCallback((worldX: number) => {
+    engineRef.current?.handlePointerMove(worldX);
+  }, []);
+
+  const handlePointerUp = useCallback(() => {
+    engineRef.current?.handlePointerUp();
+  }, []);
+
+  const setScreenDimensions = useCallback((width: number, height: number) => {
+    engineRef.current?.setScreenDimensions(width, height);
+  }, []);
+
   return {
-    canvasRef,
     score,
     multiplier,
     combo,
@@ -233,14 +273,21 @@ export function useGameEngine(options: UseGameEngineOptions = {}): UseGameEngine
     isGameOver,
     isPaused,
     canBank,
+    inDanger,
+    screenShake,
     perfectKey,
     showPerfect,
     showGood,
-    inDanger,
     // Actions
     startGame,
     bankStack,
     pauseGame,
     resumeGame,
+    // Input handlers
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    // Screen dimensions
+    setScreenDimensions,
   };
 }
