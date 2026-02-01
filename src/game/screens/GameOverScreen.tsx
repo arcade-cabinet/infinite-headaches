@@ -16,7 +16,7 @@ interface GameOverScreenProps {
   bankedAnimals: number;
   highScore: number;
   isNewHighScore: boolean;
-  earnedCoins?: number;
+  earnedCoins: number;
   onRetry: () => void;
   onMainMenu: () => void;
 }
@@ -42,6 +42,7 @@ export function GameOverScreen({
 
   // Entrance animations
   useEffect(() => {
+    console.log("GameOverScreen mounted");
     const timeline = new Timeline({
       defaults: { ease: "outExpo" },
     });
@@ -103,7 +104,13 @@ export function GameOverScreen({
   }, [score, isNewHighScore]);
 
   return (
-    <div ref={cardRef} className="opacity-0">
+    <div 
+      ref={cardRef} 
+      className="opacity-0"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="game-over-title"
+    >
       <GameCard
         style={{
           padding: spacing.lg,
@@ -112,6 +119,7 @@ export function GameOverScreen({
       >
         {/* Title */}
         <h1
+          id="game-over-title"
           ref={titleRef}
           className="game-font text-yellow-400 text-center mb-2"
           style={{
@@ -123,7 +131,7 @@ export function GameOverScreen({
         </h1>
 
         {/* Score */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-4" role="status">
           <p className="game-font text-purple-300" style={{ fontSize: fontSize.md }}>
             FINAL SCORE
           </p>
@@ -131,6 +139,7 @@ export function GameOverScreen({
             <span
               ref={scoreRef}
               className="game-font text-white"
+              aria-label={`Final Score: ${score}`}
               style={{
                 fontSize: `clamp(2.5rem, ${parseFloat(fontSize.title)}px, 5rem)`,
                 textShadow: "3px 3px 0 #000",
@@ -142,12 +151,12 @@ export function GameOverScreen({
         </div>
 
         {/* Stats row */}
-        <div className="flex justify-center gap-4 mb-4">
+        <div className="flex justify-center gap-4 mb-4" role="group" aria-label="Game Stats">
           {/* Banked animals */}
           {bankedAnimals > 0 && (
             <div className="text-center py-2 px-4 bg-pink-500/20 rounded-xl border-2 border-pink-400">
               <p className="game-font text-pink-300" style={{ fontSize: fontSize.sm }}>
-                🏦 {bankedAnimals} BANKED
+                <span aria-hidden="true">🏦</span> {bankedAnimals} BANKED
               </p>
             </div>
           )}
@@ -156,7 +165,7 @@ export function GameOverScreen({
           {earnedCoins > 0 && (
             <div className="text-center py-2 px-4 bg-yellow-500/20 rounded-xl border-2 border-yellow-400">
               <p className="game-font text-yellow-300" style={{ fontSize: fontSize.sm }}>
-                🪙 +{earnedCoins.toLocaleString()}
+                <span aria-hidden="true">🪙</span> +{earnedCoins.toLocaleString()}
               </p>
             </div>
           )}

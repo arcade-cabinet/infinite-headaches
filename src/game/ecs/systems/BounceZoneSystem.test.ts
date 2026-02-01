@@ -101,11 +101,11 @@ describe("BounceZoneSystem", () => {
 
   describe("createBounceZone", () => {
     it("should create and add zone to world", () => {
-      const initialCount = world.entities.size;
+      const initialCount = world.entities.length;
 
       createBounceZone(0, 0, 5, 1000, 2);
 
-      expect(world.entities.size).toBe(initialCount + 1);
+      expect(world.entities.length).toBe(initialCount + 1);
     });
 
     it("should set position correctly", () => {
@@ -278,7 +278,7 @@ describe("BounceZoneSystem", () => {
 
       BounceZoneSystem(100);
 
-      expect(world.entities.has(zone)).toBe(false);
+      expect(world.entities.includes(zone)).toBe(false);
     });
 
     it("should call onExpire callback when zone expires", () => {
@@ -307,7 +307,7 @@ describe("BounceZoneSystem", () => {
 
       BounceZoneSystem(100);
 
-      expect(world.entities.has(zone)).toBe(true);
+      expect(world.entities.includes(zone)).toBe(true);
     });
 
     it("should skip expired zones when checking for bounces", () => {

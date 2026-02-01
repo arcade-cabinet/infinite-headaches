@@ -15,6 +15,7 @@ export interface ScaleComponent {
 
 export interface ModelComponent {
   model: string; // Path to GLTF/GLB
+  skinTexture?: string; // Path to skin texture
   offset?: Vector3; // Visual offset
   rotation?: Vector3;
 }
@@ -31,7 +32,7 @@ export interface PhysicsComponent {
   isStatic?: boolean;
 }
 
-export type CharacterId = "farmer_john" | "farmer_mary";
+export type CharacterId = "farmer_john" | "farmer_mary" | "farmer_ben" | "farmhand_sue";
 
 export interface TagComponent {
   type: "animal" | "player" | "powerup" | "platform";
@@ -183,7 +184,7 @@ export interface ScatteringComponent {
  * PlayerComponent - Entity is the player-controlled base
  */
 export interface PlayerComponent {
-  characterId: "farmer_john" | "farmer_mary";
+  characterId: CharacterId;
   isDragging: boolean;
   lastDragX: number;
   smoothedVelocity: number;
@@ -238,6 +239,7 @@ export type Entity = {
   velocity?: Vector3;
   scale?: Vector3;
   model?: string;
+  skinTexture?: string; // Added for skin support
   modelOffset?: Vector3;
   modelRotation?: Vector3;
   colorOverlay?: ColorOverlayComponent;

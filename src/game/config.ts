@@ -50,6 +50,7 @@ export type PowerUpType =
 export const ANIMAL_TYPES: Record<AnimalType, {
   color: string; // Debug wireframe color (used only in development mode)
   spawnWeight: number;
+  weight: number; // Physics weight
   ability: string | null;
   abilityColor?: string;
   abilityCooldown?: number;
@@ -57,14 +58,14 @@ export const ANIMAL_TYPES: Record<AnimalType, {
   hasModel: boolean; // REQUIRED: must be true, enforces that model exists
 }> = {
   // Standard farm animals (all have models)
-  cow: { color: "#795548", spawnWeight: 0.2, ability: null, hasModel: true },
-  pig: { color: "#F06292", spawnWeight: 0.2, ability: null, hasModel: true },
-  chicken: { color: "#FFFFFF", spawnWeight: 0.25, ability: null, hasModel: true },
-  duck: { color: "#FDD835", spawnWeight: 0.2, ability: null, hasModel: true },
-  sheep: { color: "#F5F5F5", spawnWeight: 0.15, ability: null, hasModel: true },
+  cow: { color: "#795548", spawnWeight: 0.2, weight: 2.0, ability: null, hasModel: true },
+  pig: { color: "#F06292", spawnWeight: 0.2, weight: 1.2, ability: null, hasModel: true },
+  chicken: { color: "#FFFFFF", spawnWeight: 0.25, weight: 0.3, ability: null, hasModel: true },
+  duck: { color: "#FDD835", spawnWeight: 0.2, weight: 0.5, ability: null, hasModel: true },
+  sheep: { color: "#F5F5F5", spawnWeight: 0.15, weight: 1.5, ability: null, hasModel: true },
 
   // Player character - not spawned as falling animal
-  farmer: { color: "#1976D2", spawnWeight: 0, ability: null, hasModel: true }
+  farmer: { color: "#1976D2", spawnWeight: 0, weight: 1.0, ability: null, hasModel: true }
 } as const;
 
 // Runtime validation - crash fast if config is wrong
@@ -142,8 +143,8 @@ export const GAME_CONFIG = {
 
   // Physics
   physics: {
-    gravity: 0.35,
-    maxFallSpeed: 14,
+    gravity: 20, // Increased for snappy falling (was 0.35)
+    maxFallSpeed: 25,
     wobbleStrength: 0.045,
     wobbleDamping: 0.94,
     wobbleSpringiness: 0.08,

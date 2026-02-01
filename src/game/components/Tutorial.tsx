@@ -108,7 +108,12 @@ export function Tutorial({ onComplete }: TutorialProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tutorial-title"
+    >
       <div ref={cardRef} className="opacity-0">
         <GameCard
           className="text-center"
@@ -118,7 +123,7 @@ export function Tutorial({ onComplete }: TutorialProps) {
           }}
         >
           {/* Progress dots */}
-          <div className="flex justify-center gap-2 mb-4">
+          <div className="flex justify-center gap-2 mb-4" role="img" aria-label={`Step ${currentStep + 1} of ${TUTORIAL_STEPS.length}`}>
             {TUTORIAL_STEPS.map((_, i) => (
               <div
                 key={i}
@@ -129,6 +134,7 @@ export function Tutorial({ onComplete }: TutorialProps) {
                       ? "bg-purple-400 w-2 h-2"
                       : "bg-purple-700 w-2 h-2"
                 }`}
+                aria-hidden="true"
               />
             ))}
           </div>
@@ -138,6 +144,7 @@ export function Tutorial({ onComplete }: TutorialProps) {
             {/* Icon */}
             <div
               className="mb-3"
+              aria-hidden="true"
               style={{ fontSize: `clamp(2.5rem, ${parseFloat(fontSize.title) * 0.8}px, 4rem)` }}
             >
               {step.icon}
@@ -145,6 +152,7 @@ export function Tutorial({ onComplete }: TutorialProps) {
 
             {/* Title */}
             <h3
+              id="tutorial-title"
               className="game-font text-yellow-400 mb-3"
               style={{
                 fontSize: fontSize.lg,
@@ -167,8 +175,9 @@ export function Tutorial({ onComplete }: TutorialProps) {
               <div
                 className="game-font text-cyan-300 bg-cyan-900/30 rounded-lg py-2 px-3 mb-4"
                 style={{ fontSize: fontSize.xs }}
+                role="status"
               >
-                💡 {step.highlight}
+                <span aria-hidden="true">💡</span> {step.highlight}
               </div>
             )}
           </div>

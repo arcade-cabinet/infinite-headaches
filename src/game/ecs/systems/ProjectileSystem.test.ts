@@ -486,11 +486,11 @@ describe("ProjectileSystem", () => {
       projectile.gameProjectile!.trailParticles = []; // No trails left
       world.add(projectile);
 
-      const initialCount = world.entities.size;
+      const initialCount = world.entities.length;
 
       ProjectileSystem(100, 1000);
 
-      expect(world.entities.size).toBeLessThan(initialCount);
+      expect(world.entities.length).toBeLessThan(initialCount);
     });
 
     it("should keep projectile while trails still exist", () => {
@@ -501,13 +501,13 @@ describe("ProjectileSystem", () => {
       ];
       world.add(projectile);
 
-      const initialCount = world.entities.size;
+      const initialCount = world.entities.length;
 
       // Run once - trail should fade but projectile should still exist
       ProjectileSystem(100, 1000);
 
       // Projectile should still exist (trail life decreases by 0.08, so 0.5 -> 0.42)
-      expect(world.entities.has(projectile)).toBe(true);
+      expect(world.entities.includes(projectile)).toBe(true);
     });
   });
 });

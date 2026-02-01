@@ -49,6 +49,9 @@ export function PauseMenu({ onResume, onMainMenu, onRestart, score, level }: Pau
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onResume}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pause-menu-title"
     >
       <div ref={containerRef} onClick={(e) => e.stopPropagation()} className="opacity-0">
         <GameCard
@@ -60,6 +63,7 @@ export function PauseMenu({ onResume, onMainMenu, onRestart, score, level }: Pau
         >
           {/* Title */}
           <h2
+            id="pause-menu-title"
             className="game-font text-yellow-400 mb-4"
             style={{
               fontSize: fontSize.xl,
@@ -70,12 +74,12 @@ export function PauseMenu({ onResume, onMainMenu, onRestart, score, level }: Pau
           </h2>
 
           {/* Current stats */}
-          <div className="game-font text-purple-200 mb-6" style={{ fontSize: fontSize.sm }}>
+          <div className="game-font text-purple-200 mb-6" style={{ fontSize: fontSize.sm }} role="status">
             <div>
-              Score: <span className="text-white">{score.toLocaleString()}</span>
+              Score: <span className="text-white" aria-label={`Current Score: ${score}`}>{score.toLocaleString()}</span>
             </div>
             <div>
-              Level: <span className="text-white">{level}</span>
+              Level: <span className="text-white" aria-label={`Current Level: ${level}`}>{level}</span>
             </div>
           </div>
 

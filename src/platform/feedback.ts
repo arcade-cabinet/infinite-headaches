@@ -5,7 +5,6 @@
 
 import { haptics } from "./haptics";
 import { platformAudio } from "./audio";
-import type { SoundType } from "@/game/audio";
 
 /**
  * Feedback manager that coordinates audio and haptics
@@ -39,10 +38,10 @@ class FeedbackManager {
   /**
    * Play feedback for a game event
    */
-  async play(type: SoundType): Promise<void> {
+  async play(type: string): Promise<void> {
     // Play audio
     if (this.audioEnabled) {
-      platformAudio.play(type);
+      platformAudio.play(type as any);
     }
 
     // Trigger haptics based on sound type

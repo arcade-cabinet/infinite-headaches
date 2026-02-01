@@ -80,7 +80,7 @@ export function ScoreDisplay({
   }, [combo]);
 
   return (
-    <>
+    <header className="contents">
       {/* Top left - Lives and Score */}
       <div
         className="absolute pointer-events-none z-30"
@@ -88,6 +88,8 @@ export function ScoreDisplay({
           top: `calc(${spacing.sm} + env(safe-area-inset-top, 0px))`,
           left: spacing.sm,
         }}
+        role="status"
+        aria-live="polite"
       >
         {/* Lives */}
         <HeartsDisplay lives={lives} maxLives={maxLives} />
@@ -96,6 +98,7 @@ export function ScoreDisplay({
         <div
           ref={scoreRef}
           className="game-font text-white"
+          aria-label={`Score: ${score}`}
           style={{
             fontSize: `clamp(1.3rem, ${parseFloat(fontSize.title) * 0.45}px, 2.5rem)`,
             textShadow: "2px 2px 0 #000",
@@ -110,6 +113,7 @@ export function ScoreDisplay({
         {multiplier > 1 && (
           <div
             className="game-font text-yellow-300"
+            aria-label={`Multiplier: ${multiplier.toFixed(1)}`}
             style={{
               fontSize: fontSize.sm,
               textShadow: "1px 1px 0 #000",
@@ -124,6 +128,7 @@ export function ScoreDisplay({
           <div
             ref={comboRef}
             className="game-font text-cyan-300"
+            aria-label={`${combo} combo`}
             style={{
               fontSize: fontSize.sm,
               textShadow: "1px 1px 0 #000",
@@ -136,6 +141,7 @@ export function ScoreDisplay({
         {/* High score */}
         <div
           className="game-font text-amber-200"
+          aria-label={`High score: ${highScore}`}
           style={{
             fontSize: fontSize.xs,
             textShadow: "1px 1px 0 #000",
@@ -154,11 +160,13 @@ export function ScoreDisplay({
           top: `calc(${spacing.sm} + env(safe-area-inset-top, 0px))`,
           right: `calc(${spacing.sm} + 65px)`, // Account for bank zone
         }}
+        role="status"
       >
         {/* Level */}
         <div
           ref={levelRef}
           className="game-font text-white"
+          aria-label={`Level ${level}`}
           style={{
             fontSize: fontSize.md,
             textShadow: "2px 2px 0 #000",
@@ -170,6 +178,7 @@ export function ScoreDisplay({
         {/* Stack height with danger indicator */}
         <div
           className={`game-font ${inDanger ? "text-red-400" : "text-orange-300"}`}
+          aria-label={`Stack height: ${stackHeight}${inDanger ? ", Danger!" : ""}`}
           style={{
             fontSize: fontSize.sm,
             textShadow: "1px 1px 0 #000",
@@ -177,13 +186,14 @@ export function ScoreDisplay({
           }}
         >
           STACK: {stackHeight}
-          {inDanger && " ⚠️"}
+          {inDanger && <span aria-hidden="true"> ⚠️</span>}
         </div>
 
           {/* Banked animals */}
           {bankedAnimals > 0 && (
             <div
               className="game-font text-pink-300"
+              aria-label={`Banked animals: ${bankedAnimals}`}
               style={{
                 fontSize: fontSize.xs,
                 textShadow: "1px 1px 0 #000",
@@ -193,6 +203,6 @@ export function ScoreDisplay({
             </div>
           )}
       </div>
-    </>
+    </header>
   );
 }

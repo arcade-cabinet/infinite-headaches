@@ -22,7 +22,7 @@ import type { GameModeType } from "../modes/GameMode";
 import { getCoins } from "../progression/Upgrades";
 
 interface MainMenuProps {
-  onPlay: (mode?: GameModeType, characterId?: "farmer_john" | "farmer_mary") => void;
+  onPlay: (mode: GameModeType, characterId: "farmer_john" | "farmer_mary") => void;
   highScore: number;
 }
 
@@ -41,7 +41,7 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
   const [coins, setCoins] = useState(0);
   const [selectedMode, setSelectedMode] = useState<GameModeType>("endless");
   const [selectedCharacter, setSelectedCharacter] = useState<"farmer_john" | "farmer_mary" | null>(null);
-  const [showTornadoTransition, setShowTornadoTransition] = useState(false);
+  const [showTransition, setShowTransition] = useState(false);
 
   // Load coins
   useEffect(() => {
@@ -124,26 +124,23 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
     setShowCharacterSelect(true);
   };
 
-  // After selecting character, trigger tornado transition (on HIGH/MEDIUM) or start immediately (LOW)
+  // After selecting character, trigger transition
   const handleSelectCharacter = (charId: string) => {
     setShowCharacterSelect(false);
     setSelectedCharacter(charId as "farmer_john" | "farmer_mary");
-    setShowTornadoTransition(true);
+    setShowTransition(true);
   };
 
-  // When tornado transition completes, start the game
-  const handleTornadoComplete = useCallback(() => {
-    setShowTornadoTransition(false);
+  // When transition completes, start the game
+  const handleTransitionComplete = useCallback(() => {
+    setShowTransition(false);
     if (selectedCharacter) {
       onPlay(selectedMode, selectedCharacter);
     }
   }, [selectedMode, selectedCharacter, onPlay]);
 
   return (
-    <>
-      {/* Peeking Animal */}
-      <PeekingAnimal scale={game * 1.2} />
-
+    <main className="contents">
       {/* Main Content */}
       <div className="flex flex-col items-center justify-center w-full h-full px-4">
         {/* Title Section */}
@@ -198,7 +195,7 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
           >
             {/* High Score Display */}
             {highScore > 0 && (
-              <div className="game-font text-center mb-4" style={{ fontSize: fontSize.sm }}>
+              <div className="game-font text-center mb-4" style={{ fontSize: fontSize.sm }} role="status">
                 <span className="text-[#d4c4ac]">YOUR BEST</span>
                 <div className="text-[#eab308] font-bold" style={{ fontSize: fontSize.lg }}>
                   {highScore.toLocaleString()} POINTS
@@ -207,7 +204,7 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
             )}
 
             {/* Button Grid - 2x2 with Help below */}
-            <div className="grid grid-cols-2 gap-3">
+            <nav className="grid grid-cols-2 gap-3" aria-label="Game Menu">
               {/* Left Column */}
               <div className="flex flex-col gap-3">
                 <GameButton
@@ -222,6 +219,7 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
                 <GameButton
                   onClick={() => {/* TODO: Continue from saved state */}}
                   variant="secondary"
+                  aria-label="Continue Game (Coming Soon)"
                   style={{
                     fontSize: fontSize.sm,
                     padding: `${spacing.sm} ${spacing.md}`,
@@ -255,7 +253,7 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
                   SETTINGS
                 </GameButton>
               </div>
-            </div>
+            </nav>
 
             {/* Help button - centered below */}
             <div className="flex justify-center mt-3">
@@ -276,6 +274,7 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
               <div
                 className="game-font text-center mt-3 text-[#eab308]"
                 style={{ fontSize: fontSize.xs }}
+                role="status"
               >
                 {coins.toLocaleString()} coins
               </div>
@@ -284,13 +283,14 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
         </div>
 
         {/* Credits */}
-        <p
+        <footer
           className="game-font text-[#6b5a3a] mt-4 text-center"
           style={{ fontSize: fontSize.xs }}
         >
-          A Nebraska tornado tale
-        </p>
+          A Nebraska farm adventure
+        </footer>
       </div>
+
 
       {/* Decorative warm glow in background - Nebraska sunset feel */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -332,9 +332,9 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
 
       {/* Game Transition - quality-tiered fade between menu and gameplay */}
       <GameTransition
-        active={showTornadoTransition}
-        onComplete={handleTornadoComplete}
+        active={showTransition}
+        onComplete={handleTransitionComplete}
       />
-    </>
+    </main>
   );
 }

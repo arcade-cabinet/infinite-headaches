@@ -34,7 +34,7 @@ export const createAnimal = (type: AnimalType, position: Vector3): Entity => {
     );
   }
 
-  const modelPath = `assets/models/${type}.glb`;
+  const modelPath = `assets/models/animals/${type}.glb`;
 
   return {
     id: crypto.randomUUID(),
@@ -50,29 +50,42 @@ export const createAnimal = (type: AnimalType, position: Vector3): Entity => {
   };
 };
 
-type CharacterId = 'farmer_john' | 'farmer_mary';
+type CharacterId = 'farmer_john' | 'farmer_ben' | 'farmer_mary' | 'farmhand_sue';
 
 const CHARACTER_CONFIG: Record<CharacterId, {
   model: string;
   name: string;
   positiveTraits: string[];
   negativeTraits: string[];
+  scale?: Vector3;
 }> = {
   farmer_john: {
-    // TODO: Replace with actual farmer_john.glb when model is ready
-    // Current farmer_john.glb is empty (132 bytes, no geometry)
-    model: "assets/models/cow.glb", // Using cow as placeholder
+    model: "assets/models/farmers/john.glb",
     name: "Farmer John",
     positiveTraits: ["Steady Hands"],
     negativeTraits: ["Slow Walker"],
+    scale: new Vector3(1.2, 1.2, 1.2),
+  },
+  farmer_ben: {
+    model: "assets/models/farmers/john.glb", // Using John as placeholder for Ben
+    name: "Farmer Ben",
+    positiveTraits: ["Sprints"],
+    negativeTraits: ["Low Stamina"],
+    scale: new Vector3(1.0, 1.0, 1.0),
   },
   farmer_mary: {
-    // TODO: Replace with actual farmer_mary.glb when model is ready
-    // Current farmer_mary.glb is empty (132 bytes, no geometry)
-    model: "assets/models/pig.glb", // Using pig as placeholder
+    model: "assets/models/farmers/mary.glb",
     name: "Farmer Mary",
     positiveTraits: ["Fast Reflexes"],
     negativeTraits: ["Easily Startled"],
+    scale: new Vector3(1.1, 1.1, 1.1),
+  },
+  farmhand_sue: {
+    model: "assets/models/farmers/mary.glb", // Using Mary as placeholder for Sue
+    name: "Farmhand Sue",
+    positiveTraits: ["Animal Whisperer"],
+    negativeTraits: ["Clumsy"],
+    scale: new Vector3(0.9, 0.9, 0.9),
   },
 };
 
@@ -83,8 +96,9 @@ export const createPlayer = (characterId: CharacterId, position: Vector3): Entit
     id: crypto.randomUUID(),
     position,
     velocity: new Vector3(0, 0, 0),
-    scale: new Vector3(1.2, 1.2, 1.2),
+    scale: config.scale || new Vector3(1.2, 1.2, 1.2),
     model: config.model,
+    // skinTexture removed as we use pre-baked unique GLBs
     tag: { type: "player", subtype: characterId },
     input: { speed: 10, smoothness: 0.1 },
     wobble: { offset: 0, velocity: 0, damping: 0.9, springiness: 0.05 },
@@ -122,7 +136,7 @@ export const createFallingAnimal = (
     throw new Error(`Cannot create falling animal: "${type}" has no 3D model`);
   }
 
-  const modelPath = `assets/models/${type}.glb`;
+  const modelPath = `assets/models/animals/${type}.glb`;
   const { physics } = GAME_CONFIG;
 
   const entity: Entity = {
@@ -185,18 +199,18 @@ export const convertToStacked = (
   baseEntityId: string
 ): void => {
   // Remove falling component
-  delete entity.falling;
+  world.removeComponent(entity, "falling");
 
   // Add stacked component
-  entity.stacked = {
+  world.addComponent(entity, "stacked", {
     stackIndex,
     stackOffset,
     baseEntityId,
-  };
+  });
 
   // Reset velocity
   if (entity.velocity) {
-    entity.velocity = new Vector3(0, 0, 0);
+    entity.velocity.set(0, 0, 0);
   }
 };
 
@@ -209,14 +223,14 @@ export const convertToBanking = (
   targetY: number
 ): void => {
   // Remove stacked component
-  delete entity.stacked;
+  world.removeComponent(entity, "stacked");
 
   // Add banking component
-  entity.banking = {
+  world.addComponent(entity, "banking", {
     targetX,
     targetY,
     startedAt: Date.now(),
-  };
+  });
 };
 
 /**
@@ -224,13 +238,13 @@ export const convertToBanking = (
  */
 export const convertToScattering = (entity: Entity): void => {
   // Remove stacked component
-  delete entity.stacked;
+  world.removeComponent(entity, "stacked");
 
   // Add scattering component
-  entity.scattering = {
+  world.addComponent(entity, "scattering", {
     rotationVelocity: (Math.random() - 0.5) * 0.3,
     startedAt: Date.now(),
-  };
+  });
 
   // Give random velocity
   if (entity.velocity) {
@@ -254,11 +268,11 @@ export const freezeEntityArchetype = (
   const { physics, animal } = GAME_CONFIG;
 
   // Remove falling component
-  delete entity.falling;
+  world.removeComponent(entity, "falling");
 
   // Stop movement
   if (entity.velocity) {
-    entity.velocity = new Vector3(0, 0, 0);
+    entity.velocity.set(0, 0, 0);
   }
 
   // Generate cracks
@@ -305,7 +319,7 @@ export const freezeEntityArchetype = (
   }
 
   // Add frozen component
-  entity.frozen = {
+  world.addComponent(entity, "frozen", {
     freezeTimer: freezeDuration,
     thawProgress: 0,
     crackStage: 0,
@@ -314,7 +328,7 @@ export const freezeEntityArchetype = (
     bobTime: Math.random() * 100,
     iceRotation: (Math.random() - 0.5) * 0.3,
     cracks,
-  };
+  });
 };
 
 /**

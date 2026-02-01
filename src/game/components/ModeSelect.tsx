@@ -36,6 +36,9 @@ export function ModeSelect({ onSelectMode, onClose }: ModeSelectProps) {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mode-select-title"
     >
       <div
         ref={containerRef}
@@ -45,6 +48,7 @@ export function ModeSelect({ onSelectMode, onClose }: ModeSelectProps) {
         <GameCard style={{ padding: spacing.lg }}>
           {/* Header */}
           <h2
+            id="mode-select-title"
             className="game-font text-yellow-400 text-center mb-4"
             style={{ fontSize: fontSize.xl, textShadow: "2px 2px 0 #000" }}
           >
@@ -52,7 +56,7 @@ export function ModeSelect({ onSelectMode, onClose }: ModeSelectProps) {
           </h2>
 
           {/* Mode cards */}
-          <div className="space-y-3">
+          <div className="space-y-3" role="group" aria-label="Game Modes">
             {modes.map((mode) => (
               <ModeCard
                 key={mode.id}

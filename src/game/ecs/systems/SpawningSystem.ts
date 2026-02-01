@@ -12,7 +12,7 @@ import { world } from "../world";
 import { createAnimal } from "../archetypes";
 import { GAME_CONFIG, AnimalType, ANIMAL_TYPES } from "../../config";
 import { Entity, FallingComponent, WobbleComponent, EmotionComponent, SquishComponent } from "../components";
-import type { SpawnDecision } from "../../ai/GameDirector";
+import type { SpawnDecision } from "../../ai/types";
 
 const { spawning, animal: animalConfig } = GAME_CONFIG;
 

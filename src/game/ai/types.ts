@@ -28,7 +28,7 @@ export interface PlayerState {
   screenWidth: number;
   screenHeight: number;
   level: number;
-  bankedDucks: number;
+  bankedAnimals: number;
 }
 
 export interface SpawnDecision {

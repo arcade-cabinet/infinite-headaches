@@ -22,10 +22,11 @@ import { addCoins, calculateCoinsFromScore } from "../progression/Upgrades";
 import { GameOverScreen } from "./GameOverScreen";
 import { MainMenu } from "./MainMenu";
 import { GameScene3D } from "../scene/GameScene3D";
+import { LoadingScreen } from "../components/LoadingScreen";
 import { VideoSplash } from "../components/VideoSplash";
 import { audioManager } from "../audio";
 
-type ScreenState = "splash" | "menu" | "playing" | "gameover";
+type ScreenState = "splash" | "menu" | "loading" | "playing" | "gameover";
 
 const SPLASH_SHOWN_KEY = "homestead_splash_shown_session";
 
@@ -40,16 +41,20 @@ export function GameScreen3D() {
 
   const [screen, setScreen] = useState<ScreenState>(getInitialScreen);
   const [currentMode, setCurrentMode] = useState<GameModeType>("endless");
-  const [selectedCharacter, setSelectedCharacter] = useState<"farmer_john" | "farmer_mary">("farmer_john");
+  const [selectedCharacter, setSelectedCharacter] = useState<"farmer_john" | "farmer_mary" | null>(null);
   const [finalScore, setFinalScore] = useState(0);
   const [finalBanked, setFinalBanked] = useState(0);
   const [earnedCoins, setEarnedCoins] = useState(0);
   const [isNewHighScore, setIsNewHighScore] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
-  const [stormIntensity, setStormIntensity] = useState(0.3);
+  
+  // Loading State
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingStatus, setLoadingStatus] = useState("Initializing...");
+  
   const { highScore, updateHighScore } = useHighScore();
-  const { isMobile, fontSize, spacing } = useResponsiveScale();
+  const { spacing } = useResponsiveScale();
 
   // Start main menu music when entering menu
   useEffect(() => {
@@ -68,65 +73,52 @@ export function GameScreen3D() {
 
   const handleGameOver = useCallback(
     (score: number, bankedAnimals: number) => {
-      setFinalScore(score);
-      setFinalBanked(bankedAnimals);
-      const isNew = updateHighScore(score);
-      setIsNewHighScore(isNew);
+      console.log("handleGameOver called", score, bankedAnimals);
+      try {
+        setFinalScore(score);
+        setFinalBanked(bankedAnimals);
+        const isNew = updateHighScore(score);
+        setIsNewHighScore(isNew);
 
-      // Award coins (except in Zen mode)
-      if (currentMode !== "zen") {
-        const baseCoins = calculateCoinsFromScore(score);
-        const coins = addCoins(baseCoins);
-        setEarnedCoins(coins);
-      } else {
-        setEarnedCoins(0);
+        // Award coins (except in Zen mode)
+        if (currentMode !== "zen") {
+          const baseCoins = calculateCoinsFromScore(score);
+          const coins = addCoins(baseCoins);
+          setEarnedCoins(coins);
+        } else {
+          setEarnedCoins(0);
+        }
+
+        // Update stats and check achievements
+        const stats = loadStats();
+        stats.totalScore += score;
+        stats.highScore = Math.max(stats.highScore, score);
+        stats.totalGames += 1;
+        stats.totalBanked += bankedAnimals;
+        saveStats(stats);
+
+        // Check for mode unlocks
+        const newModes = checkModeUnlocks({
+          highScore: stats.highScore,
+          totalGames: stats.totalGames,
+        });
+        if (newModes.length > 0) {
+          saveUnlockedModes();
+        }
+
+        const newAchievements = checkAchievements(stats);
+        if (newAchievements.length > 0) {
+          setUnlockedAchievements((prev) => [...prev, ...newAchievements]);
+        }
+
+        console.log("Setting screen to gameover");
+        setScreen("gameover");
+      } catch (e) {
+        console.error("Error in handleGameOver:", e);
       }
-
-      // Update stats and check achievements
-      const stats = loadStats();
-      stats.totalScore += score;
-      stats.highScore = Math.max(stats.highScore, score);
-      stats.totalGames += 1;
-      stats.totalBanked += bankedAnimals;
-      saveStats(stats);
-
-      // Check for mode unlocks
-      const newModes = checkModeUnlocks({
-        highScore: stats.highScore,
-        totalGames: stats.totalGames,
-      });
-      if (newModes.length > 0) {
-        saveUnlockedModes();
-      }
-
-      const newAchievements = checkAchievements(stats);
-      if (newAchievements.length > 0) {
-        setUnlockedAchievements((prev) => [...prev, ...newAchievements]);
-      }
-
-      setScreen("gameover");
     },
     [updateHighScore, currentMode]
   );
-
-  const handleLevelUp = useCallback((level: number) => {
-    // Increase storm intensity as level increases
-    setStormIntensity(Math.min(0.9, 0.3 + level * 0.05));
-  }, []);
-
-  const handleLifeEarned = useCallback(() => {
-    const stats = loadStats();
-    stats.livesEarned += 1;
-    saveStats(stats);
-  }, []);
-
-  const handleStackTopple = useCallback(() => {
-    // Brief intensity spike on topple
-    setStormIntensity((prev) => Math.min(1, prev + 0.2));
-    setTimeout(() => {
-      setStormIntensity((prev) => Math.max(0.3, prev - 0.2));
-    }, 2000);
-  }, []);
 
   const {
     score,
@@ -151,12 +143,47 @@ export function GameScreen3D() {
     handlePointerMove,
     handlePointerUp,
     setScreenDimensions,
-  } = useGameLogic({
-    onGameOver: handleGameOver,
-    onLevelUp: handleLevelUp,
-    onLifeEarned: handleLifeEarned,
-    onStackTopple: handleStackTopple,
-  });
+  } = useGameLogic({ onGameOver: handleGameOver });
+
+  // Handle Loading Simulation
+  useEffect(() => {
+    if (screen === "loading") {
+      setLoadingProgress(0);
+      setLoadingStatus("Preparing Diorama...");
+
+      const stages = [
+        { progress: 20, text: "Planting Crops..." },
+        { progress: 40, text: "Polishing Tractors..." },
+        { progress: 60, text: "Waking up Roosters..." },
+        { progress: 80, text: "Loading Farmers..." },
+        { progress: 100, text: "Ready!" }
+      ];
+
+      let currentStage = 0;
+      const interval = setInterval(() => {
+        if (currentStage >= stages.length) {
+          clearInterval(interval);
+          
+          // Transition to gameplay
+          if (selectedCharacter) {
+             setScreen("playing");
+             setIsNewHighScore(false);
+             setEarnedCoins(0);
+             startGame(selectedCharacter);
+          }
+          return;
+        }
+
+        const stage = stages[currentStage];
+        setLoadingProgress(stage.progress);
+        setLoadingStatus(stage.text);
+        currentStage++;
+
+      }, 400); // Simulate 2s load time
+
+      return () => clearInterval(interval);
+    }
+  }, [screen, selectedCharacter, startGame]);
 
   // Update screen dimensions on resize
   useEffect(() => {
@@ -169,54 +196,27 @@ export function GameScreen3D() {
     return () => window.removeEventListener("resize", handleResize);
   }, [setScreenDimensions]);
 
-  // Track max stack for achievements
-  useEffect(() => {
-    if (screen === "playing" && stackHeight > 0) {
-      const stats = loadStats();
-      if (stackHeight > stats.maxStack) {
-        stats.maxStack = stackHeight;
-        saveStats(stats);
-      }
-    }
-  }, [stackHeight, screen]);
-
-  // Track max combo for achievements
-  useEffect(() => {
-    if (screen === "playing" && combo > 0) {
-      const stats = loadStats();
-      if (combo > stats.maxCombo) {
-        stats.maxCombo = combo;
-        saveStats(stats);
-      }
-    }
-  }, [combo, screen]);
-
   const handlePlay = useCallback(
-    (mode: GameModeType = "endless", characterId: "farmer_john" | "farmer_mary" = "farmer_john") => {
+    (mode: GameModeType, characterId: "farmer_john" | "farmer_mary") => {
       setSelectedCharacter(characterId);
+      setCurrentMode(mode);
 
       if (!hasCompletedTutorial()) {
         setShowTutorial(true);
-        setCurrentMode(mode);
         return;
       }
-
-      setCurrentMode(mode);
-      setScreen("playing");
-      setIsNewHighScore(false);
-      setEarnedCoins(0);
-      setStormIntensity(0.3);
-      startGame(characterId);
+      
+      // Start Loading Sequence
+      setScreen("loading");
     },
-    [startGame]
+    []
   );
 
   const handleTutorialComplete = useCallback(() => {
     setShowTutorial(false);
-    setScreen("playing");
-    setIsNewHighScore(false);
-    startGame(selectedCharacter);
-  }, [startGame, selectedCharacter]);
+    // After tutorial, go to loading
+    setScreen("loading");
+  }, []);
 
   const handleMainMenu = useCallback(() => {
     setScreen("menu");
@@ -224,10 +224,12 @@ export function GameScreen3D() {
   }, []);
 
   const handleRestart = useCallback(() => {
+    if (!selectedCharacter) return;
     resumeGame();
+    // Quick restart (skip full loading screen, or maybe show a fast one?)
+    // For now, instant restart
     setScreen("playing");
     setIsNewHighScore(false);
-    setStormIntensity(0.3);
     startGame(selectedCharacter);
   }, [resumeGame, startGame, selectedCharacter]);
 
@@ -259,22 +261,23 @@ export function GameScreen3D() {
   };
 
   // Only render 3D scene during gameplay for performance
-  const showScene3D = screen === "playing";
+  // We ALSO render it during "loading" but hidden behind the overlay 
+  // to ensure assets are actually in memory when the overlay vanishes.
+  const showScene3D = screen === "playing" || screen === "loading";
 
   return (
     <div className="fixed inset-0 overflow-hidden select-none touch-none no-zoom safe-area-inset">
       <GameStyles />
 
-      {/* Static background for menu/gameover screens */}
-      {!showScene3D && screen !== "splash" && <MainMenuBackground />}
+      {/* Static background for menu/gameover/loading screens */}
+      {(screen === "menu" || screen === "gameover" || screen === "loading") && <MainMenuBackground />}
 
-      {/* 3D Game Scene - Only during gameplay */}
+      {/* 3D Game Scene - Pre-mount during loading */}
       {showScene3D && (
         <div className="absolute inset-0" style={{ zIndex: 1 }}>
           <GameScene3D
             inputCallbacks={inputCallbacks}
-            inputEnabled={!isPaused}
-            stormIntensity={stormIntensity}
+            inputEnabled={!isPaused && screen === "playing"}
             showGameplayElements={true}
           />
         </div>
@@ -290,7 +293,7 @@ export function GameScreen3D() {
             combo={combo}
             level={level}
             stackHeight={stackHeight}
-            bankedDucks={bankedAnimals}
+            bankedAnimals={bankedAnimals}
             highScore={highScore}
             lives={lives}
             maxLives={maxLives}
@@ -298,18 +301,17 @@ export function GameScreen3D() {
           />
         )}
 
+        {/* Loading Screen */}
+        {screen === "loading" && (
+          <LoadingScreen progress={loadingProgress} status={loadingStatus} />
+        )}
+
         {/* Perfect Catch Indicator */}
         <PerfectIndicator show={showPerfect} animationKey={perfectKey} />
 
         {/* Good Catch Indicator */}
         {showGood && (
-          <div
-            className="absolute left-1/2 top-[30%] -translate-x-1/2 game-font text-green-300 animate-pulse"
-            style={{
-              fontSize: fontSize.lg,
-              textShadow: "0 0 10px rgba(34, 197, 94, 0.8), 2px 2px 0 #000",
-            }}
-          >
+          <div className="absolute left-1/2 top-[30%] -translate-x-1/2 game-font text-green-300 animate-pulse">
             NICE!
           </div>
         )}
@@ -324,7 +326,7 @@ export function GameScreen3D() {
             highScore={highScore}
             isNewHighScore={isNewHighScore}
             earnedCoins={earnedCoins}
-            onRetry={() => handlePlay(currentMode)}
+            onRetry={handleRestart}
             onMainMenu={handleMainMenu}
           />
         )}
@@ -338,51 +340,12 @@ export function GameScreen3D() {
           right: spacing.sm,
         }}
       >
-        {screen === "playing" && !isPaused && <PauseButton onClick={pauseGame} />}
+        {/* Pause button removed - tap anywhere to pause */}
       </div>
 
       {/* CaptureBall Bank Button */}
       {screen === "playing" && (
         <CaptureBallButton visible={canBank} stackCount={stackHeight} onClick={bankStack} />
-      )}
-
-      {/* Gameplay hints */}
-      {screen === "playing" && stackHeight === 0 && lives > 0 && !isPaused && (
-        <div className="absolute bottom-28 left-0 right-16 text-center pointer-events-none z-10">
-          <p className="game-font text-white/50 animate-pulse" style={{ fontSize: fontSize.sm }}>
-            {isMobile ? "DRAG to catch falling animals!" : "DRAG to move • Catch falling animals!"}
-          </p>
-        </div>
-      )}
-
-      {/* Danger warning */}
-      {screen === "playing" && inDanger && !isPaused && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30">
-          <div
-            className="game-font text-red-500 animate-pulse"
-            style={{
-              fontSize: `clamp(1.5rem, ${parseFloat(fontSize.title) * 0.4}px, 2.5rem)`,
-              textShadow: "0 0 20px rgba(244, 67, 54, 0.8), 3px 3px 0 #000",
-              opacity: 0.9,
-            }}
-          >
-            WOBBLE WARNING!
-          </div>
-        </div>
-      )}
-
-      {/* Pause Menu */}
-      {isPaused && (
-        <PauseMenu
-          onResume={resumeGame}
-          onMainMenu={() => {
-            resumeGame();
-            handleMainMenu();
-          }}
-          onRestart={handleRestart}
-          score={score}
-          level={level}
-        />
       )}
 
       {/* Tutorial Overlay */}
