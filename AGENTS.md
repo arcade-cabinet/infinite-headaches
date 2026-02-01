@@ -1,41 +1,49 @@
 # AI Agent Context for Homestead Headaches
 
+## 🟢 STATUS: STABLE (RELEASE 1.0)
+The project is in a stable state following a massive refactor to `reactylon` and Havok Physics.
+All E2E tests pass. The "White Model" bug and "Git Disaster" are resolved history.
+
 ## 🛑 CRITICAL INSTRUCTIONS (READ FIRST) 🛑
 
 ### 1. MEMORY BANK PROTOCOL
 You MUST read the `memory-bank/` directory at the start of EVERY session.
-*   `activeContext.md`: Contains the immediate state and **recent disasters**. Read this to avoid repeating mistakes.
-*   `productContext.md`: Explains the "Tornado" theme. **Do not delete tornado-related files** without understanding this.
-*   `systemPatterns.md`: Explains the ECS architecture and Asset Pipeline.
+*   `activeContext.md`: The single source of truth for project status.
+*   `techContext.md`: The architecture guide (Reactylon + Havok).
 
-### 2. SAFETY FIRST
-*   **NEVER** run `git checkout HEAD -- .` or `git reset --hard` without EXPLICIT user permission. You deleted user work once; do not do it again.
-*   **CONFIRM DELETIONS:** Before deleting a file, check `grep` for imports AND consider its thematic value (e.g., `SplashScreen.tsx` plays the intro video).
+### 2. KNOWN TRAPS (DO NOT REPEAT)
+*   **Havok Physics Loading:**
+    *   **Trap:** `HavokPhysics()` fails silently or causes a "Blue then Brown screen" if the `GameScene` mounts before the plugin is ready.
+    *   **Rule:** Always load Havok in `GameScreen3D` (parent) using `useEffect`.
+    *   **Rule:** Always use relative path `locateFile: () => "./HavokPhysics.wasm"` to support subpath deployments.
+    *   **Rule:** Always show a Loading Screen (`!isPhysicsReady`) until the plugin is initialized.
+*   **Canvas Layout:**
+    *   **Trap:** Canvas collapses to a "Tiny Corner" or has 0 height.
+    *   **Rule:** `src/index.css` MUST enforce `html, body, #root, canvas { width: 100%; height: 100%; }`.
+*   **Build & Runtime:**
+    *   **Trap:** React 19 + `reactylon` causes `SyntaxError` or build crashes.
+    *   **Rule:** `scripts/patch-reactylon.cjs` MUST run via `postinstall`.
+    *   **Rule:** Do not remove the `postinstall` script.
 
-### 3. THE "WHITE MODEL" BUG
-*   Current focus is fixing `john.glb` and `mary.glb` rendering white.
-*   The issue is in `scripts/bpy/export_farmer_models.py` or the textures themselves.
-*   Do not try to "clean up" the codebase until this is fixed.
+### 3. SAFETY FIRST
+*   **NEVER** run `git checkout HEAD -- .` or `git reset --hard` without EXPLICIT user permission.
+*   **Tests:** Always verify changes with `pnpm exec playwright test`.
 
 ---
 
-## Project Overview
-
-**Homestead Headaches** is a cross-platform 3D tower-stacking arcade game.
-*   **Tech:** React 19, Babylon.js, Miniplex ECS, Capacitor.
-*   **Theme:** Nebraska farm, Tornado threat.
-
-## Architecture
-*   **Hybrid ECS:** `GameEngine` (Logic) -> Miniplex (State) -> `GameScene3D` (Babylon Render).
-*   **Assets:** Blender pipeline converts FBX to GLB.
+## Architecture Summary
+*   **Engine:** React 19 + `reactylon` (Babylon.js bindings).
+*   **Physics:** Havok (WASM).
+*   **State:** Miniplex (ECS) + Zustand.
+*   **Native:** Capacitor.
 
 ## Key Directories
+*   `src/features/core`: Entry point (`GameScreen3D`).
+*   `src/features/gameplay`: Game Loop & Scene (`GameScene`).
 *   `src/game/ecs`: Entity Component System.
-*   `src/game/scene`: Babylon.js rendering components.
-*   `scripts/bpy`: Python scripts for Blender automation (Critical for fixing models).
-*   `public/assets`: Generated assets.
+*   `scripts/bpy`: Asset pipeline.
 
 ## Commands
 *   `pnpm dev`: Start dev server.
 *   `pnpm build`: Build for production.
-*   `blender --background --python scripts/bpy/export_farmer_models.py`: Run model export.
+*   `pnpm test:e2e`: Run Playwright tests.
