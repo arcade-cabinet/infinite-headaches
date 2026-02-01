@@ -411,5 +411,5 @@ export function getRandomPowerUpType(): PowerUpType {
     }
   }
 
-  return "potion"; // Fallback
+  return "potion"; // Default (weighted selection should always succeed above)
 }

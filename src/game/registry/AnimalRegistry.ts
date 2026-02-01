@@ -32,8 +32,8 @@ export interface Model3DDefinition {
 }
 
 /**
- * Procedural 3D geometry for low-quality rendering
- * Used when GLB models aren't loaded (low settings or fallback)
+ * Procedural 3D geometry for low-quality graphics mode
+ * Provides lightweight primitives for mobile/low-end devices
  */
 export interface ProceduralGeometry {
   /** Base shape to generate */
@@ -52,7 +52,7 @@ export interface ProceduralGeometry {
 export interface Sprite2DDefinition {
   /** Path to sprite image relative to public/assets/sprites/ */
   spritePath: string | null;
-  /** Fallback emoji if no sprite */
+  /** Emoji representation for UI elements */
   emoji: string;
   /** Procedural drawing instructions if no sprite */
   procedural?: {
@@ -782,7 +782,7 @@ export function pickRandomAnimal(levelBonus: number = 0): AnimalDefinition {
     }
   }
 
-  // Fallback (should never reach)
+  // Default return (weighted selection should always succeed above)
   return spawnable[0];
 }
 

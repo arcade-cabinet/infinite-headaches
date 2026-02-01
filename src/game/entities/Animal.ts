@@ -321,6 +321,6 @@ export function getRandomAnimalType(level: number): AnimalType {
     }
   }
 
-  // Fallback to first spawnable type (should never reach here)
+  // Default return (weighted selection should always succeed above)
   return spawnableTypes[0][0] as AnimalType;
 }

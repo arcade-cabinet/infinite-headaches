@@ -166,7 +166,7 @@ export const gameColors = {
     successGlow: 'rgba(34, 197, 94, 0.3)',
   },
 
-  // Animal colors (for 2D rendering fallback)
+  // Animal colors (for UI indicators and debug views)
   animals: {
     cow: { primary: '#4a3728', spots: '#f5f5f5' },
     pig: { primary: '#f8a5b5', snout: '#ffcdd2' },

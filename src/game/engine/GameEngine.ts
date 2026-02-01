@@ -1524,7 +1524,7 @@ export class GameEngine {
       return;
     }
 
-    // Legacy fallback: check Animal class instances
+    // Check Animal class instances for ability state
     let fireReady = 0;
     let iceReady = 0;
     let hasFire = false;
@@ -1608,9 +1608,8 @@ export class GameEngine {
     this.drawBankZone();
     this.drawFloorZone();
     
-    // We render 2D UI elements like particles and indicators on the canvas
-    // The 3D entities are rendered by GameScene via ECS
-    // But we still render some 2D fallbacks or UI effects here if needed
+    // Render 2D overlay elements (particles, indicators, UI)
+    // 3D entities are rendered by GameScene via ECS
 
     // Draw power-ups (2D for now)
     for (const powerUp of this.powerUps) {

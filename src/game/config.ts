@@ -48,7 +48,7 @@ export type PowerUpType =
  * DO NOT set hasModel: true unless the model file exists!
  */
 export const ANIMAL_TYPES: Record<AnimalType, {
-  color: string; // Debug/fallback color (SHOULD NOT BE USED IN PRODUCTION)
+  color: string; // Debug wireframe color (used only in development mode)
   spawnWeight: number;
   ability: string | null;
   abilityColor?: string;
@@ -279,7 +279,7 @@ export const GAME_CONFIG = {
       secondary: "#795548",
       tertiary: "#3E2723",
     },
-    // Keep these for fallback, but we use sprites now
+    // Debug wireframe colors (3D models are always used)
     duck: { body: "#FDD835", beak: "#FFE082", feet: "#FFCCBC", outline: "#3E2723" },
     fireDuck: { body: "#FF7043", beak: "#FFAB91", flame: "#FF5722" },
     iceDuck: { body: "#81D4FA", beak: "#B3E5FC", frost: "#E1F5FE" },
