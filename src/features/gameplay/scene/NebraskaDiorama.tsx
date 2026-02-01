@@ -5,8 +5,8 @@
  * NO storm logic. Uses PBR materials and high-quality environment textures.
  */
 
-import { QualityLevel } from "../../graphics";
-import { EnvironmentDome, NebraskaGround, PostProcessEffects, Lighting } from "../graphics/environment";
+import { QualityLevel } from "@/graphics";
+import { EnvironmentDome, NebraskaGround, PostProcessEffects, Lighting } from "@/game/graphics/environment";
 
 interface NebraskaDioramaProps {
   quality: QualityLevel;

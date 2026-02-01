@@ -5,10 +5,11 @@
 
 import { useEffect, useCallback } from "react";
 import { useScene } from "reactylon";
-import { useGraphics } from "@/game/graphics";
+import { useGraphics } from "@/graphics";
 import { Engine, Scene as BabylonScene } from "@babylonjs/core";
 
 export const GraphicsIntegration = () => {
+  const { manager: graphicsManager } = useGraphics();
   const scene = useScene();
   const { registerEngine, registerScene } = useGraphicsManagerRegistration();
 

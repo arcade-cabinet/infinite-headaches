@@ -17,12 +17,12 @@ import {
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
-import { Entity } from "../../../../../game/ecs/components";
+import { Entity } from "@/game/ecs/components";
 import {
   registerEntityAnimations,
   unregisterEntityAnimations,
   createAnimationComponent,
-} from "../../../../../game/ecs/systems/AnimationSystem";
+} from "@/game/ecs/systems/AnimationSystem";
 
 interface EntityRendererProps {
   entity: Entity;

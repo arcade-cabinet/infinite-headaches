@@ -1,22 +1,18 @@
-/**
- * GameScene - Pure Babylon.js 3D scene for Homestead Headaches
- *
- * Clean, cartoon 3D renderer. NO storm effects.
- */
-
 import { createReactAPI, useEntities } from "miniplex-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useScene, Scene } from "reactylon";
 import {
   Vector3,
   Color4,
   FreeCamera,
+  HavokPlugin,
 } from "@babylonjs/core";
+import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/loaders/glTF";
 
-import { world } from "../../../../game/ecs/world";
-import { Entity } from "../../../../game/ecs/components";
-import { useGraphics } from "@/game/graphics";
+import { world } from "@/game/ecs/world";
+import { Entity } from "@/game/ecs/components";
+import { useGraphics } from "@/graphics";
 import { NebraskaDiorama } from "./NebraskaDiorama";
 import { InputManager, type InputCallbacks } from "./InputManager";
 import {
@@ -106,9 +102,29 @@ export const GameScene = ({
   const bucket = useEntities(world);
   const entities = bucket?.entities ?? [];
   const { settings } = useGraphics();
+  const [havokPlugin, setHavokPlugin] = useState<HavokPlugin | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const havokInstance = await HavokPhysics({ locateFile: () => "/HavokPhysics.wasm" });
+        setHavokPlugin(new HavokPlugin(true, havokInstance));
+      } catch (e) {
+        console.error("Failed to load Havok Physics:", e);
+      }
+    })();
+  }, []);
+
+  if (!havokPlugin) return null; // Or visual loading placeholder
 
   return (
-    <Scene onSceneReady={(scene) => { scene.clearColor = new Color4(0.5, 0.8, 1.0, 1); }}>
+    <Scene 
+        onSceneReady={(scene) => { scene.clearColor = new Color4(0.5, 0.8, 1.0, 1); }}
+        physicsOptions={{
+            plugin: havokPlugin,
+            gravity: new Vector3(0, -9.81, 0)
+        }}
+    >
       <GameSceneContent
         entities={entities}
         quality={settings.quality}

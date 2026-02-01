@@ -6,8 +6,8 @@
 import { useEffect, useRef } from "react";
 import { useScene } from "reactylon";
 import { Vector3, Color3, StandardMaterial, Texture, MeshBuilder } from "@babylonjs/core";
-import { WobbleSystem } from "../../ecs/systems/WobbleSystem";
-import { AnimationSystem } from "../../ecs/systems/AnimationSystem";
+import { WobbleSystem } from "@/game/ecs/systems/WobbleSystem";
+import { AnimationSystem } from "@/game/ecs/systems/AnimationSystem";
 
 export const GameSystems = () => {
   const scene = useScene();
