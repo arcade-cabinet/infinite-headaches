@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Scene, useScene } from "reactylon";
-import { Vector3, Color4, VideoTexture, StandardMaterial, Color3, MeshBuilder, Texture } from "@babylonjs/core";
+import { Vector3, Color4, VideoTexture, StandardMaterial, Color3, MeshBuilder, Texture, FreeCamera } from "@babylonjs/core";
 
 interface SplashSceneProps {
   onComplete: () => void;
@@ -103,12 +103,23 @@ const SplashContent = ({ onComplete }: { onComplete: () => void }) => {
     };
   }, [scene, onComplete]);
 
-  return <freeCamera name="splashCam" position={Vector3.Zero()} />;
+  return null; // Camera handled procedurally
 };
 
 export const SplashScene = ({ onComplete, ...props }: SplashSceneProps & { [key: string]: any }) => {
   return (
-    <Scene {...props} onSceneReady={(scene) => { scene.clearColor = new Color4(0, 0, 0, 1); }}>
+    <Scene 
+        {...props} 
+        onSceneReady={(scene) => { 
+            scene.clearColor = new Color4(0, 0, 0, 1); 
+            // Create camera procedurally to satisfy Reactylon check
+            if (!scene.activeCamera) {
+                const camera = new FreeCamera("splashCam", Vector3.Zero(), scene);
+                scene.activeCamera = camera;
+                camera.setTarget(Vector3.Forward());
+            }
+        }}
+    >
       <SplashContent onComplete={onComplete} />
     </Scene>
   );

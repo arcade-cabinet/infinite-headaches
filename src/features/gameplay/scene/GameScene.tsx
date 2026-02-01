@@ -26,16 +26,6 @@ import { GameSystems } from "./components/GameSystems";
 
 const ECS = createReactAPI(world);
 
-const GameCamera = () => {
-  return (
-    <freeCamera 
-        name="gameCamera" 
-        position={new Vector3(0, 8, -15)} 
-        target={new Vector3(0, 0, 5)}
-    />
-  );
-};
-
 interface GameSceneContentProps {
   entities: Entity[];
   quality: "low" | "medium" | "high";
@@ -57,7 +47,6 @@ const GameSceneContent = ({
 
   return (
     <>
-      <GameCamera />
       <NebraskaDiorama quality={quality} />
       <GameSystems />
       <InputManager
@@ -123,7 +112,21 @@ export const GameScene = ({
   return (
     <Scene 
         {...props} // Pass _context to Scene
-        onSceneReady={(scene) => { scene.clearColor = new Color4(0.5, 0.8, 1.0, 1); }}
+        onSceneReady={(scene) => { 
+            scene.clearColor = new Color4(0.5, 0.8, 1.0, 1); 
+            
+            // Create camera procedurally to satisfy Reactylon's first-commit check
+            if (!scene.activeCamera) {
+                const camera = new FreeCamera("gameCamera", new Vector3(0, 8, -15), scene);
+                camera.setTarget(new Vector3(0, 0, 5));
+                scene.activeCamera = camera;
+                
+                const canvas = scene.getEngine().getRenderingCanvas();
+                if (canvas) {
+                    camera.attachControl(canvas, true);
+                }
+            }
+        }}
         isGui3DManager={true}
         physicsOptions={{
             plugin: havokPlugin,
