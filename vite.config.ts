@@ -12,11 +12,9 @@ export default defineConfig({
   cacheDir: ".vite",
   plugins: [
     react({
+      exclude: [/node_modules/, /\.vite/],
       babel: {
-        plugins: [
-          "styled-jsx/babel", 
-          // ["babel-plugin-reactylon", { sideEffectPaths: [] }] // Disabled due to "sideEffectPaths is not iterable" error
-        ],
+        plugins: ["styled-jsx/babel", "babel-plugin-reactylon"],
       },
     }),
     tailwindcss(),

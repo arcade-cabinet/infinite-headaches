@@ -37,7 +37,8 @@
     "native:sync": "pnpm build:capacitor && npx cap sync",
     "native:android": "pnpm native:sync && npx cap open android",
     "native:ios": "pnpm native:sync && npx cap open ios",
-    "native:electron": "pnpm native:sync && pnpm electron:dev"
+    "native:electron": "pnpm native:sync && pnpm electron:dev",
+    "postinstall": "node scripts/patch-reactylon.js"
   },
   "dependencies": {
     "@babylonjs/core": "^8.49.6",

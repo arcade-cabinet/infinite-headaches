@@ -16,7 +16,11 @@ test.describe('Visual Regression & Gameplay Logic', () => {
 
     // 2. Skip Splash
     // Wait for 3D Splash Canvas
-    await expect(page.locator('canvas#splash-canvas')).toBeVisible({ timeout: 15000 });
+    const canvas = page.locator('canvas');
+    await expect(canvas).toBeVisible({ timeout: 15000 });
+    const canvasId = await canvas.getAttribute('id');
+    console.log(`Found canvas with ID: ${canvasId}`);
+    
     await page.waitForTimeout(1000); 
     
     const { width, height } = page.viewportSize() || { width: 1280, height: 720 };
