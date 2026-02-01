@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { type Achievement, checkAchievements, loadStats, saveStats } from "../achievements";
 import { AchievementToastList } from "../components/AchievementToast";
 import { GameStyles } from "../components/GameStyles";
+import { MainMenuBackground } from "../components/MainMenuBackground";
 import { PauseButton } from "../components/PauseButton";
 import { PauseMenu } from "../components/PauseMenu";
 import { PerfectIndicator } from "../components/PerfectIndicator";
@@ -257,19 +258,27 @@ export function GameScreen3D() {
     onDragEnd: handlePointerUp,
   };
 
+  // Only render 3D scene during gameplay for performance
+  const showScene3D = screen === "playing";
+
   return (
     <div className="fixed inset-0 overflow-hidden select-none touch-none no-zoom safe-area-inset">
       <GameStyles />
 
-      {/* 3D Game Scene - Full Screen */}
-      <div className="absolute inset-0" style={{ zIndex: 1 }}>
-        <GameScene3D
-          inputCallbacks={inputCallbacks}
-          inputEnabled={screen === "playing" && !isPaused}
-          stormIntensity={stormIntensity}
-          showGameplayElements={screen === "playing"}
-        />
-      </div>
+      {/* Static background for menu/gameover screens */}
+      {!showScene3D && screen !== "splash" && <MainMenuBackground />}
+
+      {/* 3D Game Scene - Only during gameplay */}
+      {showScene3D && (
+        <div className="absolute inset-0" style={{ zIndex: 1 }}>
+          <GameScene3D
+            inputCallbacks={inputCallbacks}
+            inputEnabled={!isPaused}
+            stormIntensity={stormIntensity}
+            showGameplayElements={true}
+          />
+        </div>
+      )}
 
       {/* UI Overlay */}
       <div className="absolute inset-0 pointer-events-none flex flex-col justify-center items-center text-center z-20 safe-area-inset">
