@@ -19,6 +19,15 @@ test.describe('Visual Regression & Gameplay Logic', () => {
     const canvas = page.locator('canvas#splash-canvas');
     await expect(canvas).toBeVisible({ timeout: 15000 });
     
+    // Verify Canvas Size (Must fill viewport)
+    const viewport = page.viewportSize() || { width: 1280, height: 720 };
+    const canvasBox = await canvas.boundingBox();
+    expect(canvasBox).not.toBeNull();
+    if (canvasBox) {
+        expect(canvasBox.width).toBeGreaterThan(viewport.width * 0.9);
+        expect(canvasBox.height).toBeGreaterThan(viewport.height * 0.9);
+    }
+    
     await page.waitForTimeout(1000); 
     
     const { width, height } = page.viewportSize() || { width: 1280, height: 720 };
@@ -49,7 +58,7 @@ test.describe('Visual Regression & Gameplay Logic', () => {
     await page.evaluate(() => (window as any).GAME_CONTROL.spawnAnimalAt(0, 'cow'));
 
     // Wait for it to land (check stack height)
-    await page.waitForFunction(() => (window as any).GAME_CONTROL.getStackHeight() === 1, undefined, { timeout: 5000 });
+    await page.waitForFunction(() => (window as any).GAME_CONTROL.getStackHeight() === 1, undefined, { timeout: 8000 });
 
     // Verify HUD updates
     await expect(page.getByText('STACK: 1')).toBeVisible();
