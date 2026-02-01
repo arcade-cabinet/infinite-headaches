@@ -780,6 +780,7 @@ describe("StackingSystem", () => {
       // Regular entity
       const regularEntity = createStackedEntity(0);
       regularEntity.wobble!.velocity = 1;
+      regularEntity.wobble!.offset = 1; // Set offset to engage springiness
       world.add(regularEntity);
 
       StackingSystem(100, base);
@@ -791,6 +792,7 @@ describe("StackingSystem", () => {
       // Merged entity
       const mergedEntity = createStackedEntity(0);
       mergedEntity.wobble!.velocity = 1;
+      mergedEntity.wobble!.offset = 1; // Set offset to engage springiness
       mergedEntity.merged = {
         mergeLevel: 4,
         mergeScale: 1.5,

@@ -367,6 +367,8 @@ describe("AbilitySystem", () => {
 
   describe("AbilitySystem update loop", () => {
     it("should call onAbilityCooldownComplete when ability becomes ready", () => {
+      vi.useFakeTimers();
+      
       const entity = createTestEntityWithAbility("fireball", 100);
       // Set lastUsed so it's on cooldown but about to complete
       entity.ability!.lastUsed = Date.now() - 99;
@@ -375,7 +377,6 @@ describe("AbilitySystem", () => {
       const onAbilityCooldownComplete = vi.fn();
 
       // Wait a bit so cooldown completes
-      vi.useFakeTimers();
       vi.advanceTimersByTime(10);
 
       AbilitySystem(10, { onAbilityCooldownComplete });

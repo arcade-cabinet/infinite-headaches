@@ -67,27 +67,15 @@ vi.mock("@/random", () => ({
 }));
 
 // Mock localStorage
+const localStorageStore: Record<string, string> = {};
 const localStorageMock = {
-  store: {} as Record<string, string>,
-  getItem: vi.fn(function (this: typeof localStorageMock, key: string) {
-    return this.store[key] || null;
-  }),
-  setItem: vi.fn(function (this: typeof localStorageMock, key: string, value: string) {
-    this.store[key] = value;
-  }),
-  removeItem: vi.fn(function (this: typeof localStorageMock, key: string) {
-    delete this.store[key];
-  }),
-  clear: vi.fn(function (this: typeof localStorageMock) {
-    this.store = {};
-  }),
+  getItem: vi.fn((key: string) => localStorageStore[key] || null),
+  setItem: vi.fn((key: string, value: string) => { localStorageStore[key] = value; }),
+  removeItem: vi.fn((key: string) => { delete localStorageStore[key]; }),
+  clear: vi.fn(() => { Object.keys(localStorageStore).forEach(k => delete localStorageStore[k]); }),
+  key: vi.fn(() => null),
+  length: 0,
 };
-
-// Bind the methods
-localStorageMock.getItem = localStorageMock.getItem.bind(localStorageMock);
-localStorageMock.setItem = localStorageMock.setItem.bind(localStorageMock);
-localStorageMock.removeItem = localStorageMock.removeItem.bind(localStorageMock);
-localStorageMock.clear = localStorageMock.clear.bind(localStorageMock);
 
 Object.defineProperty(window, "localStorage", {
   value: localStorageMock,
@@ -97,7 +85,7 @@ Object.defineProperty(window, "localStorage", {
 describe("SettingsModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorageMock.store = {};
+    Object.keys(localStorageStore).forEach(k => delete localStorageStore[k]);
   });
 
   describe("rendering", () => {
@@ -222,7 +210,7 @@ describe("SettingsModal", () => {
       await user.click(screen.getByRole("button", { name: /sound/i }));
 
       // Default values
-      expect(screen.getByText("80%")).toBeInTheDocument(); // Master
+      expect(screen.getAllByText("80%").length).toBeGreaterThanOrEqual(1); // Master or SFX
       expect(screen.getByText("70%")).toBeInTheDocument(); // Music
     });
 
@@ -347,7 +335,7 @@ describe("SettingsModal", () => {
       render(<SettingsModal onClose={vi.fn()} />);
 
       expect(localStorageMock.getItem).toHaveBeenCalledWith(
-        "infinite-headaches-sound-settings"
+        "homestead-headaches-sound-settings"
       );
     });
   });

@@ -13,6 +13,7 @@ import "@babylonjs/loaders/glTF";
 import { world } from "@/game/ecs/world";
 import { Entity } from "@/game/ecs/components";
 import { useGraphics } from "@/graphics";
+import { useResponsiveScale } from "@/game/hooks/useResponsiveScale";
 import { NebraskaDiorama } from "./NebraskaDiorama";
 import { InputManager, type InputCallbacks } from "./InputManager";
 import {
@@ -44,6 +45,30 @@ const GameSceneContent = ({
   const modelEntities = entities.filter((e) => e.model && e.position);
   const powerUpEntities = entities.filter((e) => e.tag?.type === "powerup");
   const fireballEntities = entities.filter((e) => e.gameProjectile?.type === "fireball");
+
+  // Responsive Camera Logic
+  const { aspectRatio } = useResponsiveScale();
+  const scene = useScene();
+
+  useEffect(() => {
+    if (!scene || !scene.activeCamera) return;
+
+    // Calculate required distance to fit ~16 units horizontally
+    // FOV is typically ~0.8 rad. tan(0.4) ~ 0.422
+    // VisibleWidth = 2 * dist * tan(fov/2) * aspect
+    // dist = VisibleWidth / (2 * tan(fov/2) * aspect)
+    // dist = 16 / (0.844 * aspect)
+    const requiredWidth = 16;
+    const dist = requiredWidth / (0.844 * aspectRatio);
+    const targetZ = -Math.max(15, dist); // Min distance 15
+
+    const camera = scene.activeCamera as FreeCamera;
+    
+    // Smoothly interpolate if needed, but for resize instant is fine
+    camera.position.z = targetZ;
+    camera.setTarget(new Vector3(0, 0, 5)); // Look at game center
+    
+  }, [scene, aspectRatio]);
 
   return (
     <>

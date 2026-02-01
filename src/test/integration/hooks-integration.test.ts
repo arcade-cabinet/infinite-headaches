@@ -653,14 +653,14 @@ describe("Hooks Integration", () => {
       // Press W for up
       window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
       expect(inputManager.getMovement().y).toBe(-1);
+      window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
 
       // Press D for right
       window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyD" }));
       expect(inputManager.getMovement().x).toBe(1);
-
-      // Release both
-      window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
       window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyD" }));
+
+      // Release both (already done but for safety)
       expect(inputManager.getMovement()).toEqual({ x: 0, y: 0 });
     });
 

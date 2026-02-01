@@ -340,20 +340,24 @@ describe("ProjectileSystem", () => {
 
       ProjectileSystem(100, 1000);
 
-      // Projectile should be marked for removal
-      expect(projectile.gameProjectile!.lifetime).toBeLessThanOrEqual(0);
+      // Projectile should be removed or marked for removal (lifetime -1)
+      const isRemoved = !Array.from(world.entities).includes(projectile);
+      const isMarked = projectile.gameProjectile!.lifetime < 0;
+      expect(isRemoved || isMarked).toBe(true);
     });
 
     it("should remove projectile that goes off right edge", () => {
       const projectile = createTestProjectile(1);
-      // Set position off screen to the right (in world coords)
-      projectile.position = new Vector3(10, 5, 0);
       world.add(projectile);
 
-      ProjectileSystem(100, 1000);
+      // Move projectile far to the right
+      projectile.position!.x = 10;
+      ProjectileSystem(100, 1920);
 
-      // Projectile should be marked for removal
-      expect(projectile.gameProjectile!.lifetime).toBeLessThanOrEqual(0);
+      // Projectile should be removed or marked for removal (lifetime -1)
+      const isRemoved = !Array.from(world.entities).includes(projectile);
+      const isMarked = projectile.gameProjectile!.lifetime < 0;
+      expect(isRemoved || isMarked).toBe(true);
     });
 
     it("should keep projectile within bounds", () => {

@@ -157,10 +157,10 @@ describe("HelpModal", () => {
 
       // Desktop controls
       expect(screen.getByText(/Keyboard Controls/i)).toBeInTheDocument();
-      expect(screen.getByText(/LEFT/i)).toBeInTheDocument();
-      expect(screen.getByText(/RIGHT/i)).toBeInTheDocument();
-      expect(screen.getByText(/SPACE/i)).toBeInTheDocument();
-      expect(screen.getByText(/ESC/i)).toBeInTheDocument();
+      expect(screen.getByText(/^LEFT$/i)).toBeInTheDocument();
+      expect(screen.getByText(/^RIGHT$/i)).toBeInTheDocument();
+      expect(screen.getByText(/^SPACE$/i)).toBeInTheDocument();
+      expect(screen.getByText(/^ESC$/i)).toBeInTheDocument();
     });
 
     it("displays mouse controls for desktop", async () => {

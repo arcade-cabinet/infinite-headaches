@@ -123,6 +123,17 @@ class InputManager {
 
     this.listeners.clear();
     this.keysPressed.clear();
+    this.touchStartPos = null;
+    this.currentTouchPos = null;
+    this.dragStartPos = null;
+    this.gamepadIndex = null;
+    this.state = {
+      movement: { x: 0, y: 0 },
+      primaryAction: false,
+      secondaryAction: false,
+      pause: false,
+      activeSource: "keyboard",
+    };
     this.initialized = false;
     console.log("[Input] Destroyed");
   }

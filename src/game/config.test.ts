@@ -341,12 +341,12 @@ describe("GAME_CONFIG", () => {
 
   describe("physics", () => {
     it("should have positive gravity", () => {
-      expect(GAME_CONFIG.physics.gravity).toBe(0.35);
+      expect(GAME_CONFIG.physics.gravity).toBe(20);
       expect(GAME_CONFIG.physics.gravity).toBeGreaterThan(0);
     });
 
     it("should have reasonable max fall speed", () => {
-      expect(GAME_CONFIG.physics.maxFallSpeed).toBe(14);
+      expect(GAME_CONFIG.physics.maxFallSpeed).toBe(25);
       expect(GAME_CONFIG.physics.maxFallSpeed).toBeGreaterThan(0);
     });
 

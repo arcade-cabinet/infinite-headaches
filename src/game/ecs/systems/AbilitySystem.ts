@@ -138,7 +138,8 @@ export function AbilitySystem(
     const { ability } = entity;
 
     // Track if ability just became ready
-    const wasOnCooldown = Date.now() - ability.lastUsed < ability.cooldownMs;
+    const now = Date.now();
+    const wasOnCooldown = (now - deltaTime) - ability.lastUsed < ability.cooldownMs;
     const nowReady = isAbilityReady(ability);
 
     // Fire cooldown complete callback

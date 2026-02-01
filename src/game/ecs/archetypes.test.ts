@@ -44,7 +44,7 @@ describe("createAnimal", () => {
     expect(entity.scale?.x).toBe(1);
     expect(entity.scale?.y).toBe(1);
     expect(entity.scale?.z).toBe(1);
-    expect(entity.model).toBe("assets/models/cow.glb");
+    expect(entity.model).toBe("assets/models/animals/cow.glb");
     expect(entity.tag?.type).toBe("animal");
     expect(entity.tag?.subtype).toBe("cow");
     expect(entity.physics?.mass).toBe(1);
@@ -67,7 +67,7 @@ describe("createAnimal", () => {
     for (const type of animalTypes) {
       const entity = createAnimal(type, position);
       expect(entity.tag?.subtype).toBe(type);
-      expect(entity.model).toBe(`assets/models/${type}.glb`);
+      expect(entity.model).toBe(`assets/models/animals/${type}.glb`);
     }
   });
 
@@ -87,7 +87,7 @@ describe("createAnimal", () => {
 
     // Farmer is a valid type and has a model, so it should work
     const entity = createAnimal("farmer", position);
-    expect(entity.model).toBe("assets/models/farmer.glb");
+    expect(entity.model).toBe("assets/models/animals/farmer.glb");
   });
 
   it("should preserve position reference", () => {
@@ -114,7 +114,7 @@ describe("createPlayer", () => {
     expect(entity.scale?.x).toBe(1.2);
     expect(entity.scale?.y).toBe(1.2);
     expect(entity.scale?.z).toBe(1.2);
-    expect(entity.model).toBe("assets/models/farmer_john.glb");
+    expect(entity.model).toBe("assets/models/farmers/john.glb");
     expect(entity.tag?.type).toBe("player");
     expect(entity.tag?.subtype).toBe("farmer_john");
     expect(entity.input?.speed).toBe(10);
@@ -134,12 +134,15 @@ describe("createPlayer", () => {
     const position = new Vector3(200, 500, 0);
     const entity = createPlayer("farmer_mary", position);
 
-    expect(entity.model).toBe("assets/models/farmer_mary.glb");
+    expect(entity.model).toBe("assets/models/farmers/mary.glb");
     expect(entity.tag?.subtype).toBe("farmer_mary");
     expect(entity.traits?.name).toBe("Farmer Mary");
     expect(entity.traits?.positiveTraits).toContain("Fast Reflexes");
     expect(entity.traits?.negativeTraits).toContain("Easily Startled");
     expect(entity.player?.characterId).toBe("farmer_mary");
+    expect(entity.scale?.x).toBe(1.1);
+    expect(entity.scale?.y).toBe(1.1);
+    expect(entity.scale?.z).toBe(1.1);
   });
 
   it("should have different springiness than animals", () => {
@@ -162,7 +165,7 @@ describe("createFallingAnimal", () => {
     expect(entity.position?.y).toBe(50);
     expect(entity.velocity).toBeDefined();
     expect(entity.scale?.x).toBe(1);
-    expect(entity.model).toBe("assets/models/chicken.glb");
+    expect(entity.model).toBe("assets/models/animals/chicken.glb");
     expect(entity.tag?.type).toBe("animal");
     expect(entity.tag?.subtype).toBe("chicken");
     expect(entity.physics).toBeDefined();
@@ -768,7 +771,7 @@ describe("createBossAnimal", () => {
     const entity = createBossAnimal("duck", "mega", position, 150, 400);
 
     // Should have all components from createFallingAnimal
-    expect(entity.model).toBe("assets/models/duck.glb");
+    expect(entity.model).toBe("assets/models/animals/duck.glb");
     expect(entity.physics).toBeDefined();
     expect(entity.wobble).toBeDefined();
     expect(entity.mergeable).toBeDefined();
