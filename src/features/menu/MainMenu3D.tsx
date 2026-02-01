@@ -1,6 +1,57 @@
-import { useEffect } from "react";
-import { Vector3, Color3 } from "@babylonjs/core";
-import { Control } from "@babylonjs/gui/2D/controls/control";
+import { useEffect, useRef } from "react";
+import { Vector3 } from "@babylonjs/core";
+import { AdvancedDynamicTexture, StackPanel, TextBlock } from "@babylonjs/gui";
+import { useScene } from "reactylon";
+
+interface SignboardProps {
+  name: string;
+  position: Vector3;
+  scaling: Vector3;
+  textLines: { text: string; color: string; size: number }[];
+  width: number;
+  height: number;
+}
+
+const Signboard = ({ name, position, scaling, textLines, width, height }: SignboardProps) => {
+  const scene = useScene();
+  const planeRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!planeRef.current || !scene) return;
+
+    // Create ADT imperatively to avoid Reactylon nesting issues with CreateForMesh
+    const adt = AdvancedDynamicTexture.CreateForMesh(
+      planeRef.current,
+      width,
+      height,
+      false // supportPointerMove
+    );
+
+    const panel = new StackPanel();
+    panel.isVertical = true;
+    panel.top = 0;
+    adt.addControl(panel);
+
+    textLines.forEach((line) => {
+      const textBlock = new TextBlock();
+      textBlock.text = line.text;
+      textBlock.color = line.color;
+      textBlock.fontSize = line.size;
+      textBlock.fontFamily = "Fredoka One";
+      textBlock.fontStyle = "bold";
+      textBlock.height = `${line.size + 20}px`;
+      textBlock.outlineWidth = 8;
+      textBlock.outlineColor = "#7f1d1d";
+      panel.addControl(textBlock);
+    });
+
+    return () => {
+      adt.dispose();
+    };
+  }, [scene, width, height, JSON.stringify(textLines)]); // Re-create if props change
+
+  return <plane name={name} position={position} scaling={scaling} ref={planeRef} />;
+};
 
 interface MainMenu3DProps {
   onPlay: () => void;
@@ -10,6 +61,7 @@ interface MainMenu3DProps {
 }
 
 export const MainMenu3D = ({ onPlay, onSettings, onUpgrades, highScore }: MainMenu3DProps) => {
+  // Expose API for E2E tests
   useEffect(() => {
     if (typeof window !== "undefined") {
       (window as any).GAME_MENU = {
@@ -23,63 +75,32 @@ export const MainMenu3D = ({ onPlay, onSettings, onUpgrades, highScore }: MainMe
 
   return (
     <>
-      {/* Title Board (2D Texture on 3D Plane) */}
-      {/* 
-      <plane name="titlePlane" position={new Vector3(0, 3.5, 0)} scaling={new Vector3(10, 3, 1)}>
-         <advancedDynamicTexture 
-            name="titleADT" 
-            createForParentMesh={true}
-            width={1024}
-            height={256}
-         >
-            <stackPanel isVertical={true} top={0} height="100%">
-                <textBlock 
-                    text="HOMESTEAD" 
-                    color="#eab308" 
-                    fontSize={120} 
-                    fontFamily="Fredoka One"
-                    fontStyle="bold"
-                    outlineWidth={8}
-                    outlineColor="#7f1d1d"
-                    height="140px"
-                />
-                <textBlock 
-                    text="HEADACHES" 
-                    color="#eab308" 
-                    fontSize={120} 
-                    fontFamily="Fredoka One"
-                    fontStyle="bold"
-                    outlineWidth={8}
-                    outlineColor="#7f1d1d"
-                    height="140px"
-                />
-            </stackPanel>
-         </advancedDynamicTexture>
-      </plane>
-      */}
+      {/* Title Board */}
+      <Signboard 
+        name="titlePlane" 
+        position={new Vector3(0, 3.5, 0)} 
+        scaling={new Vector3(10, 3, 1)}
+        width={1024}
+        height={256}
+        textLines={[
+            { text: "HOMESTEAD", color: "#eab308", size: 120 },
+            { text: "HEADACHES", color: "#eab308", size: 120 }
+        ]}
+      />
 
       {/* High Score Board */}
-      {/* 
-      <plane name="scorePlane" position={new Vector3(0, 2, 0)} scaling={new Vector3(5, 1, 1)}>
-         <advancedDynamicTexture 
-            name="scoreADT" 
-            createForParentMesh={true}
-            width={512}
-            height={128}
-         >
-            <textBlock 
-                text={`BEST: ${highScore.toLocaleString()}`} 
-                color="#fef9c3" 
-                fontSize={60} 
-                fontFamily="Nunito"
-            />
-         </advancedDynamicTexture>
-      </plane>
-      */}
+      <Signboard 
+        name="scorePlane" 
+        position={new Vector3(0, 2, 0)} 
+        scaling={new Vector3(5, 1, 1)}
+        width={512}
+        height={128}
+        textLines={[
+            { text: `BEST: ${highScore.toLocaleString()}`, color: "#fef9c3", size: 60 }
+        ]}
+      />
 
-      {/* 3D Buttons */}
-      {/* reactylon <stackPanel3D> puts children in 3D stack */}
-      {/* Position 0,0,0 is center. We might want to move it down/forward? */}
+      {/* 3D Buttons - Using standard Reactylon components */}
       <stackPanel3D 
         name="menuPanel" 
         position={new Vector3(0, -1, 0)} 

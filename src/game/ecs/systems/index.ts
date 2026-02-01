@@ -6,7 +6,6 @@
  */
 
 // Import systems for use in runAllSystems
-import { MovementSystem as _MovementSystem } from "./MovementSystem";
 import { WobbleSystem as _WobbleSystem } from "./WobbleSystem";
 import { AnimationSystem as _AnimationSystem } from "./AnimationSystem";
 import { StackingSystem as _StackingSystem } from "./StackingSystem";
@@ -16,7 +15,6 @@ import { BounceZoneSystem as _BounceZoneSystem } from "./BounceZoneSystem";
 import { AbilitySystem as _AbilitySystem } from "./AbilitySystem";
 
 // Core movement and physics
-export { MovementSystem } from "./MovementSystem";
 export { WobbleSystem } from "./WobbleSystem";
 
 // Animation
@@ -157,10 +155,8 @@ export function runAllSystems(
   screenHeight: number,
   callbacks?: AllSystemsCallbacks
 ): void {
-  // 1. Movement (applies velocity to position)
-  // Disabled for Havok Physics integration - Physics engine handles movement
-  // _MovementSystem(deltaTime / 1000); // Convert to seconds
-
+  // 1. Movement - Handled by Havok Physics
+  
   // 2. Wobble physics
   _WobbleSystem(deltaTime / 1000);
 
