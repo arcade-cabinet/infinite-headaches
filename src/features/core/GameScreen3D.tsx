@@ -5,9 +5,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Engine } from "reactylon/web";
+import { Vector3, HavokPlugin } from "@babylonjs/core";
+import HavokPhysics from "@babylonjs/havok";
 import { type Achievement, checkAchievements, loadStats, saveStats } from "@/game/achievements";
 import { AchievementToastList } from "@/game/components/AchievementToast";
 import { GameStyles } from "@/game/components/GameStyles";
+import { MainMenuBackground } from "@/game/components/MainMenuBackground";
 import { CaptureBallButton } from "@/game/components/CaptureBallButton";
 import { ScoreDisplay } from "@/game/components/ScoreDisplay";
 import { hasCompletedTutorial, Tutorial } from "@/game/components/Tutorial";
@@ -44,6 +47,24 @@ export function GameScreen3D() {
   };
 
   const [screen, setScreen] = useState<ScreenState>(getInitialScreen);
+  const [havokPlugin, setHavokPlugin] = useState<HavokPlugin | null>(null);
+  const [isPhysicsReady, setIsPhysicsReady] = useState(false);
+  const [physicsError, setPhysicsError] = useState<string | null>(null);
+
+  // Load Physics Engine
+  useEffect(() => {
+    (async () => {
+      try {
+        const havokInstance = await HavokPhysics({ locateFile: () => "./HavokPhysics.wasm" });
+        setHavokPlugin(new HavokPlugin(true, havokInstance));
+        setIsPhysicsReady(true);
+      } catch (e) {
+        console.error("Failed to load Havok Physics:", e);
+        setPhysicsError("Failed to load Physics Engine. Please reload.");
+      }
+    })();
+  }, []);
+
   const [currentMode, setCurrentMode] = useState<GameModeType>("endless");
   const [selectedCharacter, setSelectedCharacter] = useState<"farmer_john" | "farmer_mary" | null>(null);
   const [finalScore, setFinalScore] = useState(0);
@@ -259,11 +280,26 @@ export function GameScreen3D() {
   };
 
   // Render GameScene for Menu, Loading, Playing (keeps context alive)
-  const showGameScene = screen === "menu" || screen === "loading" || screen === "playing" || screen === "gameover";
+  const showGameScene = (screen === "menu" || screen === "loading" || screen === "playing" || screen === "gameover") && isPhysicsReady;
 
   return (
     <div className="fixed inset-0 overflow-hidden select-none touch-none no-zoom safe-area-inset">
       <GameStyles />
+
+      {/* Background for GameOver (Menu now uses 3D background) */}
+      {(screen === "gameover" || screen === "loading") && <MainMenuBackground />}
+      
+      {/* Show Loading Screen if Physics is initializing */}
+      {!isPhysicsReady && screen !== "splash" && !physicsError && (
+        <LoadingScreen progress={50} status="Initializing Physics Engine..." />
+      )}
+      
+      {/* Error Screen */}
+      {physicsError && (
+        <div className="absolute inset-0 z-50 bg-black flex items-center justify-center text-red-500 font-bold p-4">
+            {physicsError}
+        </div>
+      )}
 
       {/* Splash Scene Engine */}
       {screen === "splash" && (
@@ -278,7 +314,7 @@ export function GameScreen3D() {
       )}
 
       {/* Game Scene Engine (Persistent) */}
-      {showGameScene && (
+      {showGameScene && havokPlugin && (
         <div className="absolute inset-0" style={{ zIndex: 1 }}>
           <Engine 
             engineOptions={{ antialias: settings.antialiasing, adaptToDeviceRatio: true }} 
@@ -288,6 +324,7 @@ export function GameScreen3D() {
               inputCallbacks={inputCallbacks}
               inputEnabled={!isPaused && screen === "playing"}
               showGameplayElements={screen === "playing"}
+              havokPlugin={havokPlugin}
             >
                 {screen === "menu" && (
                     <MainMenu3D 
