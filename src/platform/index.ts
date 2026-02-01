@@ -3,6 +3,8 @@
  * Unified API for cross-platform features
  */
 
+import { Capacitor } from "@capacitor/core";
+
 export { haptics } from "./haptics";
 export { storage, STORAGE_KEYS } from "./storage";
 export { platformAudio } from "./audio";
@@ -23,51 +25,37 @@ export {
 } from "./device";
 
 // Re-export Capacitor utilities
-export { Capacitor } from "@capacitor/core";
+export { Capacitor };
 
 /**
  * Platform detection utilities
+ * Uses cached Capacitor import for efficient repeated calls
  */
 export const platform = {
   /**
    * Check if running on native platform (iOS/Android)
    */
-  isNative: () => {
-    const { Capacitor } = require("@capacitor/core");
-    return Capacitor.isNativePlatform();
-  },
+  isNative: () => Capacitor.isNativePlatform(),
 
   /**
    * Get current platform
    */
-  getPlatform: (): "ios" | "android" | "web" => {
-    const { Capacitor } = require("@capacitor/core");
-    return Capacitor.getPlatform() as "ios" | "android" | "web";
-  },
+  getPlatform: (): "ios" | "android" | "web" => Capacitor.getPlatform() as "ios" | "android" | "web",
 
   /**
    * Check if running on iOS
    */
-  isIOS: () => {
-    const { Capacitor } = require("@capacitor/core");
-    return Capacitor.getPlatform() === "ios";
-  },
+  isIOS: () => Capacitor.getPlatform() === "ios",
 
   /**
    * Check if running on Android
    */
-  isAndroid: () => {
-    const { Capacitor } = require("@capacitor/core");
-    return Capacitor.getPlatform() === "android";
-  },
+  isAndroid: () => Capacitor.getPlatform() === "android",
 
   /**
    * Check if running in web browser
    */
-  isWeb: () => {
-    const { Capacitor } = require("@capacitor/core");
-    return Capacitor.getPlatform() === "web";
-  },
+  isWeb: () => Capacitor.getPlatform() === "web",
 
   /**
    * Check if PWA installed

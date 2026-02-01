@@ -11,56 +11,88 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          node-version: 20
-      - uses: actions/setup-java@v3
+          lfs: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Setup Java
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: 'temurin'
           java-version: '17'
-      - run: npm install -g pnpm
-      - run: pnpm install
-      - run: pnpm build
-      - run: npx cap sync android
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build for Capacitor
+        run: pnpm run build:capacitor
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
       - name: Build Android APK
         run: cd android && ./gradlew assembleDebug
-      - name: Upload APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: android/app/build/outputs/apk/debug/app-debug.apk
-          asset_name: homestead-headaches-debug.apk
-          asset_content_type: application/vnd.android.package-archive
+          name: android-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
 
   build-electron:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win
+          - os: macos-latest
+            platform: mac
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          node-version: 20
-      - run: npm install -g pnpm
-      - run: pnpm install
-      - run: pnpm build
-      - name: Install Electron Deps
-        run: |
-          cd electron
-          npm install
-      - name: Build Electron (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: cd electron && npm run electron:make -- --linux --publish never
-      - name: Build Electron (Windows)
-        if: matrix.os == 'windows-latest'
-        run: cd electron && npm run electron:make -- --win --publish never
-      - name: Build Electron (Mac)
-        if: matrix.os == 'macos-latest'
-        run: cd electron && npm run electron:make -- --mac --publish never
-      
-      # Simplified upload - assuming dist folders match standard electron-builder output
-      # In a real scenario, we'd find the specific artifact paths
+          lfs: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build for Capacitor
+        run: pnpm run build:capacitor
+
+      - name: Install Electron dependencies
+        run: cd electron && npm install
+
+      - name: Build Electron
+        run: cd electron && npm run electron:make -- --${{ matrix.platform }} --publish never
+
+      - name: Upload Electron artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: electron-${{ matrix.platform }}
+          path: electron/dist/*

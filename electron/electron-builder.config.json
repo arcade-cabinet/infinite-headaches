@@ -1,5 +1,6 @@
 {
-  "appId": "com.yourdoamnin.yourapp",
+  "appId": "com.arcadecabinet.homestead-headaches",
+  "productName": "Homestead Headaches",
   "directories": {
     "buildResources": "resources"
   },
@@ -10,7 +11,9 @@
     "app/**/*"
   ],
   "publish": {
-    "provider": "github"
+    "provider": "github",
+    "owner": "arcade-cabinet",
+    "repo": "infinite-headaches"
   },
   "nsis": {
     "allowElevation": true,
@@ -22,7 +25,12 @@
     "icon": "assets/appIcon.ico"
   },
   "mac": {
-    "category": "your.app.category.type",
-    "target": "dmg"
+    "category": "public.app-category.games",
+    "target": "dmg",
+    "icon": "assets/appIcon.icns"
+  },
+  "linux": {
+    "target": "AppImage",
+    "category": "Game"
   }
 }

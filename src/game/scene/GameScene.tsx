@@ -478,11 +478,14 @@ export const GameScene = () => {
   // Get graphics settings for Engine configuration
   const { settings } = useGraphics();
 
-  // Expose tornado intensity control globally for game director
+  // Listen for tornado intensity changes from game director via custom events
   useEffect(() => {
-    (window as any).__setTornadoIntensity = setTornadoIntensity;
+    const handleIntensityChange = (event: CustomEvent<number>) => {
+      setTornadoIntensity(event.detail);
+    };
+    window.addEventListener("tornado:intensity", handleIntensityChange as EventListener);
     return () => {
-      delete (window as any).__setTornadoIntensity;
+      window.removeEventListener("tornado:intensity", handleIntensityChange as EventListener);
     };
   }, []);
 
@@ -504,6 +507,15 @@ export const GameScene = () => {
     </div>
   );
 };
+
+/**
+ * Dispatch tornado intensity change event.
+ * Use this from game director to control tornado visuals.
+ * @param intensity - Value from 0 (calm) to 1 (maximum chaos)
+ */
+export function dispatchTornadoIntensity(intensity: number): void {
+  window.dispatchEvent(new CustomEvent("tornado:intensity", { detail: intensity }));
+}
 
 // Export tornado control for external use
 export { setTornadoIntensity as controlTornadoIntensity };

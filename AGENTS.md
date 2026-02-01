@@ -17,7 +17,7 @@
 | react-babylonjs | 3.2.x | React bindings for Babylon.js |
 | Miniplex | 2.x | Entity Component System (ECS) |
 | Zustand | 5.x | UI state management |
-| Tone.js | 15.x | Audio synthesis (dev fallback) |
+| Web Audio API | native | Audio playback (Kenney assets) |
 | YUKA | 0.7.8 | AI/goal-driven behavior |
 | Capacitor | 8.x | Cross-platform native |
 | Tailwind CSS | 4.x | Styling |
@@ -227,8 +227,8 @@ The Game Director is a goal-driven AI that orchestrates the entire game experien
 - `reward` - Spawn power-ups for good performance
 
 **Responsibilities:**
-- Strategic duck spawn positioning (not random)
-- Duck type selection based on difficulty
+- Strategic animal spawn positioning (not random)
+- Animal type selection based on difficulty
 - AI behavior assignment (seeker, dive, zigzag, etc.)
 - Power-up timing and type selection
 - Logarithmic difficulty scaling based on:
@@ -237,12 +237,12 @@ The Game Director is a goal-driven AI that orchestrates the entire game experien
   - Score: `log10(1 + score / 100) / log10(1001)`
 
 **Player Modeling:**
-- `playerSkill` - Estimated from catch rate
+- `playerSkill` - Estimated from animal catch rate
 - `playerFatigue` - Builds over time
 - `playerFrustration` - From recent misses
 - `playerEngagement` - Flow state detection
 
-### 4. Wobble Governor (`src/game/ai/WobbleGovernor.ts`)
+### Wobble Governor (`src/game/ai/WobbleGovernor.ts`)
 
 Controls stack wobble using goal-driven AI:
 - Evaluates stack height, threat level, player stress
@@ -265,12 +265,12 @@ Nebraska homestead color palette:
 
 ### 7. Audio System
 
-**Development:** Tone.js generates audio procedurally
-**Production:** Pre-rendered OGG files loaded via `src/platform/audio.ts`
+Audio uses pre-rendered OGG files from the Kenney audio library loaded via Web Audio API.
+- `src/game/audio/AudioManager.ts` - Main audio manager
+- `src/platform/audio.ts` - Cross-platform wrapper
+- Voice clips support male/female variants for John/Mary characters
 
-The audio system automatically falls back to Tone.js if OGG files aren't available.
-
-### 8. Physics System (`src/game/config.ts`)
+### Physics System (`src/game/config.ts`)
 
 ```typescript
 physics: {
@@ -278,10 +278,10 @@ physics: {
   wobbleDamping: 0.94,        // Wobble decay rate
   wobbleSpringiness: 0.08,    // Snap-back force
   stackStability: 0.72,       // Propagation up stack
-  
+
   tipping: {
     criticalAngleBase: 0.58,  // Base tipping angle
-    heightPenalty: 0.007,     // Per-duck penalty
+    heightPenalty: 0.007,     // Per-animal penalty
     warningThreshold: 0.60,   // Show warning
     dangerThreshold: 0.88,    // Show danger
   }

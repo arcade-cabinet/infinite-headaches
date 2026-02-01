@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'release/**'
   pull_request:
     branches:
       - main
@@ -14,15 +15,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          lfs: true
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
         with:
           version: 9
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: 'pnpm'
@@ -30,14 +33,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm run build
+      - name: Build for production
+        run: pnpm run build:prod
         env:
           VITE_APP_TITLE: "Homestead Headaches"
 
       - name: Deploy to Netlify (Production)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: nwtgck/actions-netlify@v3
+        uses: nwtgck/actions-netlify@dbedb29b68382c3d884447aa3968acec7af4fe73 # v3.0.0
         with:
           publish-dir: './dist'
           production-branch: main
@@ -46,16 +49,16 @@ jobs:
           deploy-message: "Deploy from GitHub Actions - ${{ github.sha }}"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: e3867756-62cb-4fcc-9d3c-44e8f42e8d8e
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 
-      - name: Deploy Preview (Pull Requests)
-        if: github.event_name == 'pull_request'
-        uses: nwtgck/actions-netlify@v3
+      - name: Deploy Preview (Pull Requests & Release Branches)
+        if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/release/')
+        uses: nwtgck/actions-netlify@dbedb29b68382c3d884447aa3968acec7af4fe73 # v3.0.0
         with:
           publish-dir: './dist'
           production-deploy: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Preview Deploy - PR #${{ github.event.pull_request.number }}"
+          deploy-message: "Preview Deploy - ${{ github.ref_name }}"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: e3867756-62cb-4fcc-9d3c-44e8f42e8d8e
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

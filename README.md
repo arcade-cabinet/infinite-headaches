@@ -59,7 +59,7 @@ The game features a YUKA-powered AI that adapts to your skill:
 - **Babylon.js** via **react-babylonjs** - 3D rendering engine
 - **Miniplex** - Entity Component System (ECS) for game state
 - **Zustand** - UI state management (settings, seeds)
-- **Tone.js** - Procedural audio synthesis
+- **Web Audio API** - Native audio (Kenney assets)
 - **YUKA** - Goal-driven AI for game direction
 - **Capacitor 8** - Cross-platform native builds
 - **Vite 6** - Lightning-fast builds
@@ -119,20 +119,18 @@ pnpm cap:run:android
 pnpm cap:run:ios
 ```
 
-### Audio Asset Generation
+### Audio Assets
 
-The game uses Tone.js for procedural audio during development. For production builds, audio is pre-rendered to OGG files:
+The game uses file-based audio from the Kenney audio library:
 
-```bash
-# Capture audio (in browser console)
-window.captureAudio.captureAllAudio()
-
-# Convert WAV to OGG
-ffmpeg -i input.wav -c:a libvorbis -q:a 6 output.ogg
-
-# Audio files go in:
-# public/assets/audio/sfx/    - Sound effects
-# public/assets/audio/music/  - Background music tracks
+```
+public/assets/audio/
+├── music/           # Background music (background.wav)
+├── sfx/             # Sound effects (drop.ogg, land.ogg, etc.)
+│   └── voice/       # Character voice clips
+│       ├── male/    # Farmer John voices
+│       └── female/  # Farmer Mary voices
+└── ui/              # UI sounds (click.ogg, toggle.ogg, back.ogg)
 ```
 
 ## Project Structure
@@ -163,7 +161,7 @@ ffmpeg -i input.wav -c:a libvorbis -q:a 6 output.ogg
 │   ├── platform/                # Cross-platform abstraction
 │   │   ├── haptics.ts           # Native haptic feedback
 │   │   ├── storage.ts           # Capacitor Preferences / localStorage
-│   │   ├── audio.ts             # Pre-rendered audio with Tone.js fallback
+│   │   ├── audio.ts             # Web Audio API wrapper
 │   │   ├── feedback.ts          # Unified audio + haptics API
 │   │   └── app-lifecycle.ts     # Pause/resume handling
 │   │
@@ -191,20 +189,20 @@ ffmpeg -i input.wav -c:a libvorbis -q:a 6 output.ogg
 ### Scoring
 | Action | Points |
 |--------|--------|
-| Catch duck | 10 × stack multiplier |
+| Catch animal | 10 × stack multiplier |
 | Perfect catch | ×2.5 bonus |
 | Combo chain | +15% per catch |
 | Fireball kill | 25 points |
 
 ### Lives
 - Start with 3 lives (max 5, can extend to 8)
-- Lose a life when ducks hit the floor or stack topples
+- Lose a life when animals hit the floor or stack topples
 - Earn lives through perfect catches, score milestones, and power-ups
 
 ### Banking
-When you have 5+ ducks stacked, bank them to safety:
-- Banked ducks are protected from topples
-- Banking 10+ ducks earns a bonus life
+When you have 5+ animals stacked, bank them to safety:
+- Banked animals are protected from topples
+- Banking 10+ animals earns a bonus life
 - Trade-off: Your multiplier is reduced by 40%
 
 ## Documentation
