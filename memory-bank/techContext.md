@@ -9,17 +9,31 @@
 
 ## Rendering Engine
 *   **Library:** Babylon.js 8.
-*   **Bindings:** `react-babylonjs`.
-*   **Format:** GLTF/GLB (Binary glTF).
+*   **Integration:** `reactylon` (v3.5.2) + `babel-plugin-reactylon`.
+*   **Format:** GLTF/GLB (Binary glTF) + Procedural Meshes.
+*   **Environment:** Hybrid 3D (3D Menu + Gameplay).
+
+## Physics Engine
+*   **Engine:** Havok Physics (v1.3.11).
+*   **Integration:** `@babylonjs/havok` (WASM).
+*   **Sync Strategy:** `EntityRenderer` synchronizes Havok Bodies (Physics) with Miniplex ECS (Logic) and Babylon Meshes (View).
+    *   Falling: `PhysicsMotionType.DYNAMIC`.
+    *   Stacked/Player: `PhysicsMotionType.KINEMATIC`.
 
 ## Game Logic
-*   **ECS:** Miniplex.
-*   **AI:** YUKA (for Game Director/Difficulty scaling).
-*   **Physics:** Custom verlet/euler integration for wobble (not using a heavy physics engine like Cannon/Havok for the core stack mechanic to maintain arcade feel).
+*   **ECS:** Miniplex (Hybrid Architecture).
+*   **AI:** YUKA (Game Director).
+*   **State:** Zustand (Store).
 
 ## Mobile / Native
 *   **Framework:** Capacitor 8.
 *   **Platforms:** Android, iOS, Electron (Desktop).
+*   **Build Type:** `viteSingleFile` for Capacitor.
+
+## Build System & Patches
+*   **Patch:** `scripts/patch-reactylon.cjs` (Postinstall).
+    *   Fixes `babel-plugin-reactylon` iterable crash.
+    *   Stubs `renderToStaticMarkup` for React 19 compatibility.
 
 ## Project Structure
 ```
@@ -27,22 +41,27 @@
 ├── src/
 │   ├── game/
 │   │   ├── ecs/          # Miniplex Components & Systems
+│   │   │   ├── components/ # Entity Data
+│   │   │   └── systems/    # Logic (Spawning, Stacking, Abilities)
 │   │   ├── engine/       # Game Loop & Director
-│   │   ├── scene/        # Babylon.js View Components
-│   │   ├── screens/      # React UI Screens (Menu, HUD)
-│   │   └── config.ts     # Game Tuning Constants
+│   │   └── hooks/        # React Hooks (Game Logic, Scaling)
+│   ├── features/         # Feature-based Modules
+│   │   ├── core/         # GameScreen3D, App Entry
+│   │   ├── gameplay/     # GameScene, GameElements3D
+│   │   ├── menu/         # MainMenu3D, CharacterSelect
+│   │   └── splash/       # SplashScene
 │   ├── platform/         # Native abstractions
 │   └── assets/           # 2D Images
 ├── public/
-│   └── assets/
-│       ├── models/       # 3D GLB Models
-│       └── audio/        # Audio Files
-├── scripts/
-│   └── bpy/              # Blender Export Scripts (Python)
-└── Farmers_Family/       # Raw Source Assets (FBX)
+│   ├── assets/
+│   │   ├── models/       # 3D GLB Models
+│   │   └── audio/        # Audio Files
+│   └── HavokPhysics.wasm # Physics Engine
+└── scripts/
+    └── patch-reactylon.cjs # Critical Build Patch
 ```
 
 ## Development Environment
 *   **OS:** Darwin (macOS).
-*   **Blender:** Used for asset conversion.
-*   **Git:** Version control (critical for recovery).
+*   **Git:** Version control.
+*   **Tests:** Playwright (E2E), Vitest (Unit).

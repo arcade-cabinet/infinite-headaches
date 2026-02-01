@@ -127,3 +127,20 @@ src/
 - **Wind Physics:** Tornado should apply lateral forces to falling animals.
 - **Camera Effects:** Camera shake and zoom-outs for tall stacks not yet implemented.
 - **Animal Reactions:** Animals should look at player, panic when wobbling.
+
+## Recent Updates (Phase 13: Release 1.0 - Reactylon & Havok)
+
+### Engine Overhaul
+- **React 19 + Reactylon:** Migrated core engine to React 19 and `reactylon` v3.5.2.
+- **Havok Physics:** Replaced custom verlet physics with industry-standard **Havok Physics** (WASM).
+  - Implemented `EntityRenderer` to synchronize Havok rigid bodies with Miniplex ECS.
+  - Robust loading mechanism (`GameScreen3D`) ensures physics is ready before scene mount.
+
+### UI/UX Refinement
+- **Responsive Design:** Implemented dynamic camera positioning (`useResponsiveScale`) to ensure the game fits any aspect ratio (Mobile Portrait vs Desktop Landscape).
+- **3D Menu:** Replaced declarative texture planes with imperative `Signboard` components for stability.
+- **Loading Experience:** Added "Initializing Physics..." screen and removed legacy 2D backgrounds to showcase the 3D Diorama.
+
+### Infrastructure
+- **Build Patches:** Created `scripts/patch-reactylon.cjs` to fix React 19 compatibility issues in the build pipeline.
+- **Tests:** Achieved 100% E2E test pass rate with Playwright, verifying full gameplay flows and visuals.
