@@ -1,5 +1,5 @@
 {
-  "name": "infinite-headaches",
+  "name": "homestead-headaches",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -36,8 +36,7 @@
     "native:sync": "pnpm build:prod && npx cap sync",
     "native:android": "pnpm native:sync && npx cap open android",
     "native:ios": "pnpm native:sync && npx cap open ios",
-    "native:electron": "pnpm native:sync && pnpm electron:dev",
-    "audio:capture": "echo 'Open browser dev tools and run: window.captureAudio.captureAllAudio()'"
+    "native:electron": "pnpm native:sync && pnpm electron:dev"
   },
   "dependencies": {
     "@babylonjs/core": "^8.49.6",
@@ -55,6 +54,7 @@
     "@capacitor/share": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
+    "@google/genai": "^1.39.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -84,10 +84,8 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@remixicon/react": "4.6.0",
     "@tailwindcss/vite": "^4.1.18",
-    "@types/animejs": "^3.1.13",
     "@typescript/native-preview": "7.0.0-dev.20250522.2",
     "animejs": "^4.3.5",
-    "babylonjs": "^8.49.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -112,7 +110,6 @@
     "styled-jsx": "^5.1.7",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
-    "tone": "^15.1.22",
     "vaul": "^1.1.2",
     "yuka": "^0.7.8",
     "zod": "^3.25.76",
@@ -120,6 +117,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.13",
+    "@types/animejs": "^3.1.13",
     "@playwright/test": "^1.58.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -133,6 +131,7 @@
     "electron": "^40.1.0",
     "electron-builder": "^26.4.0",
     "happy-dom": "^20.4.0",
+    "tsx": "^4.21.0",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3",
     "vite": "^6.4.1",

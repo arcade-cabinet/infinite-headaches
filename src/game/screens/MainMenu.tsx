@@ -6,13 +6,14 @@
  */
 
 import { animate, Timeline } from "animejs";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { GameButton } from "../components/GameButton";
 import { GameCard } from "../components/GameCard";
 import { HelpModal } from "../components/HelpModal";
 import { ModeSelect } from "../components/ModeSelect";
 import { PeekingAnimal } from "../components/PeekingAnimal";
 import { SettingsModal } from "../components/SettingsModal";
+import { GameTransition } from "../components/GameTransition";
 import { UpgradeShop } from "../components/UpgradeShop";
 import { CharacterSelect } from "./CharacterSelect";
 import { GAME_INFO } from "../config";
@@ -39,6 +40,8 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [coins, setCoins] = useState(0);
   const [selectedMode, setSelectedMode] = useState<GameModeType>("endless");
+  const [selectedCharacter, setSelectedCharacter] = useState<"farmer_john" | "farmer_mary" | null>(null);
+  const [showTornadoTransition, setShowTornadoTransition] = useState(false);
 
   // Load coins
   useEffect(() => {
@@ -121,11 +124,20 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
     setShowCharacterSelect(true);
   };
 
-  // After selecting character, start the game
+  // After selecting character, trigger tornado transition (on HIGH/MEDIUM) or start immediately (LOW)
   const handleSelectCharacter = (charId: string) => {
     setShowCharacterSelect(false);
-    onPlay(selectedMode, charId as "farmer_john" | "farmer_mary");
+    setSelectedCharacter(charId as "farmer_john" | "farmer_mary");
+    setShowTornadoTransition(true);
   };
+
+  // When tornado transition completes, start the game
+  const handleTornadoComplete = useCallback(() => {
+    setShowTornadoTransition(false);
+    if (selectedCharacter) {
+      onPlay(selectedMode, selectedCharacter);
+    }
+  }, [selectedMode, selectedCharacter, onPlay]);
 
   return (
     <>
@@ -317,6 +329,12 @@ export function MainMenu({ onPlay, highScore }: MainMenuProps) {
 
       {/* Settings Modal */}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
+      {/* Game Transition - quality-tiered fade between menu and gameplay */}
+      <GameTransition
+        active={showTornadoTransition}
+        onComplete={handleTornadoComplete}
+      />
     </>
   );
 }

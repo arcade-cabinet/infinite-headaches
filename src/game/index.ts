@@ -1,5 +1,5 @@
 /**
- * Infinite Headaches Game
+ * Homestead Headaches Game
  * Main export file
  */
 

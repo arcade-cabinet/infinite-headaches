@@ -297,7 +297,7 @@ export class GameEngine {
 
   constructor(canvas: HTMLCanvasElement, callbacks: GameCallbacks) {
     this.canvas = canvas;
-    const ctx = canvas.getContext("2d", { alpha: false });
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) throw new Error("Failed to get canvas context");
     this.ctx = ctx;
     this.callbacks = callbacks;
@@ -929,8 +929,10 @@ export class GameEngine {
       animal.targetY = this.canvas.height * 0.8;
     }
     
-    // Create ECS entity
-    animal.ecsEntity = createAnimal(animal.type, this.mapToWorld(animal.x, animal.y));
+    // Create ECS entity and add to world for 3D rendering
+    const ecsEntity = createAnimal(animal.type, this.mapToWorld(animal.x, animal.y));
+    world.add(ecsEntity);
+    animal.ecsEntity = ecsEntity;
 
     this.fallingAnimals.push(animal);
   }
@@ -1422,7 +1424,9 @@ export class GameEngine {
         
         // Re-create ECS entity (since it was removed or we can just hide/unhide if we managed state)
         // For simplicity, let's create a new one to match the "falling" state
-        frozen.duck.ecsEntity = createAnimal(frozen.duck.type, this.mapToWorld(frozen.duck.x, frozen.duck.y));
+        const thawedEntity = createAnimal(frozen.duck.type, this.mapToWorld(frozen.duck.x, frozen.duck.y));
+        world.add(thawedEntity);
+        frozen.duck.ecsEntity = thawedEntity;
       }
     }
 

@@ -334,8 +334,8 @@ window.captureAudio.captureMusic(0.5)   # Music at 50% intensity
 ```typescript
 // capacitor.config.ts
 const config: CapacitorConfig = {
-  appId: "com.arcadecabinet.infinite_headaches",
-  appName: "Infinite Headaches",
+  appId: "com.arcadecabinet.homestead_headaches",
+  appName: "Homestead Headaches",
   webDir: "dist",
   plugins: {
     SplashScreen: {

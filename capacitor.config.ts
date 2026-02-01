@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.arcadecabinet.infinite_headaches",
-  appName: "Infinite Headaches",
+  appId: "com.arcadecabinet.homestead_headaches",
+  appName: "Homestead Headaches",
   webDir: "dist",
   server: {
     // Enable for development with live reload
@@ -31,7 +31,7 @@ const config: CapacitorConfig = {
     },
     Preferences: {
       // Group name for iOS keychain sharing if needed
-      // group: "com.arcadecabinet.infinite_headaches.shared"
+      // group: "com.arcadecabinet.homestead_headaches.shared"
     },
   },
   // Android-specific configuration

@@ -92,10 +92,10 @@ function ModeCard({ mode, onSelect }: ModeCardProps) {
         ${
           isLocked
             ? "bg-gray-800/50 opacity-60 cursor-not-allowed"
-            : "bg-purple-800/50 hover:bg-purple-700/50 hover:scale-[1.02] cursor-pointer"
+            : "bg-amber-900/50 hover:bg-amber-800/50 hover:scale-[1.02] cursor-pointer"
         }
-        border-2 
-        ${isLocked ? "border-gray-600/30" : "border-purple-400/40"}
+        border-2
+        ${isLocked ? "border-gray-600/30" : "border-amber-600/40"}
       `}
       style={{ borderLeftColor: isLocked ? undefined : mode.color, borderLeftWidth: "4px" }}
     >
@@ -104,7 +104,7 @@ function ModeCard({ mode, onSelect }: ModeCardProps) {
         <div
           className={`
             flex items-center justify-center w-14 h-14 rounded-xl
-            ${isLocked ? "bg-gray-700/50" : "bg-purple-900/50"}
+            ${isLocked ? "bg-gray-700/50" : "bg-amber-950/50"}
           `}
           style={{ fontSize: "1.8rem" }}
         >
@@ -129,7 +129,7 @@ function ModeCard({ mode, onSelect }: ModeCardProps) {
           </div>
 
           <p
-            className={`${isLocked ? "text-gray-500" : "text-purple-300"} mt-1`}
+            className={`${isLocked ? "text-gray-500" : "text-amber-200"} mt-1`}
             style={{ fontSize: fontSize.sm }}
           >
             {isLocked ? mode.unlockCondition : mode.description}
@@ -141,7 +141,7 @@ function ModeCard({ mode, onSelect }: ModeCardProps) {
               {mode.specialRules.slice(0, 2).map((rule, i) => (
                 <span
                   key={i}
-                  className="px-2 py-0.5 rounded-full bg-purple-900/50 text-purple-300"
+                  className="px-2 py-0.5 rounded-full bg-amber-950/50 text-amber-200"
                   style={{ fontSize: "10px" }}
                 >
                   {rule}
@@ -152,7 +152,7 @@ function ModeCard({ mode, onSelect }: ModeCardProps) {
         </div>
 
         {/* Chevron or lock */}
-        <div className={`text-2xl ${isLocked ? "text-gray-600" : "text-purple-400"}`}>
+        <div className={`text-2xl ${isLocked ? "text-gray-600" : "text-amber-400"}`}>
           {isLocked ? "" : "›"}
         </div>
       </div>

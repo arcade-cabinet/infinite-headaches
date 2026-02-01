@@ -101,7 +101,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 // Storage Key
 // ============================================================================
 
-const THEME_STORAGE_KEY = 'infinite-headaches-theme';
+const THEME_STORAGE_KEY = 'homestead-headaches-theme';
 
 // ============================================================================
 // Provider Component

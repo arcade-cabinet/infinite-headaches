@@ -1,5 +1,10 @@
 node_modules
 dist
+
+# Environment files (contain API keys)
+.env
+.env.local
+
 # Temp files
 .!*!repo.zip
 repo.zip

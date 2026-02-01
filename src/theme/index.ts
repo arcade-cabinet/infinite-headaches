@@ -1,7 +1,7 @@
 /**
  * Nebraska Homestead Theme System
  *
- * A comprehensive theming system for the Infinite Headaches game
+ * A comprehensive theming system for the Homestead Headaches game
  * featuring Nebraska farmland-inspired colors, playful typography,
  * and responsive design tokens.
  *

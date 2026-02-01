@@ -61,7 +61,7 @@ const DEFAULT_SOUND_SETTINGS: SoundSettings = {
   muted: false,
 };
 
-const STORAGE_KEY = "infinite-headaches-sound-settings";
+const STORAGE_KEY = "homestead-headaches-sound-settings";
 
 /**
  * Load sound settings from localStorage

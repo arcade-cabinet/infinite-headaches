@@ -59,13 +59,17 @@ const CHARACTER_CONFIG: Record<CharacterId, {
   negativeTraits: string[];
 }> = {
   farmer_john: {
-    model: "assets/models/farmer_john.glb",
+    // TODO: Replace with actual farmer_john.glb when model is ready
+    // Current farmer_john.glb is empty (132 bytes, no geometry)
+    model: "assets/models/cow.glb", // Using cow as placeholder
     name: "Farmer John",
     positiveTraits: ["Steady Hands"],
     negativeTraits: ["Slow Walker"],
   },
   farmer_mary: {
-    model: "assets/models/farmer_mary.glb",
+    // TODO: Replace with actual farmer_mary.glb when model is ready
+    // Current farmer_mary.glb is empty (132 bytes, no geometry)
+    model: "assets/models/pig.glb", // Using pig as placeholder
     name: "Farmer Mary",
     positiveTraits: ["Fast Reflexes"],
     negativeTraits: ["Easily Startled"],

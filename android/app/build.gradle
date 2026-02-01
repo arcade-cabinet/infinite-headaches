@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.arcadecabinet.infinite_headaches"
+    namespace = "com.arcadecabinet.homestead_headaches"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.arcadecabinet.infinite_headaches"
+        applicationId "com.arcadecabinet.homestead_headaches"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

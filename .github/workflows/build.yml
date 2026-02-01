@@ -32,7 +32,7 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: android/app/build/outputs/apk/debug/app-debug.apk
-          asset_name: infinite-headaches-debug.apk
+          asset_name: homestead-headaches-debug.apk
           asset_content_type: application/vnd.android.package-archive
 
   build-electron:

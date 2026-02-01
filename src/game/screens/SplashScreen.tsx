@@ -13,6 +13,7 @@ import { animate, Timeline } from "animejs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { colors, gameColors } from "@/theme/tokens/colors";
 import { feedback } from "@/platform/feedback";
+import { audioManager } from "../audio";
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -195,6 +196,9 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
 
   // Main animation sequence
   useEffect(() => {
+    // Start splash music (tornado theme)
+    audioManager.playTrack("splash");
+
     // Play whoosh sound
     feedback.play("drop");
 
@@ -313,9 +317,13 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     }
   }, [isSkipping, onComplete]);
 
-  // Handle click/tap to skip
+  // Handle click/tap to skip - also ensures audio context is ready
   useEffect(() => {
-    const handleInteraction = () => handleSkip();
+    const handleInteraction = () => {
+      // Initialize audio on first interaction (browser requirement)
+      audioManager.init();
+      handleSkip();
+    };
 
     window.addEventListener("click", handleInteraction);
     window.addEventListener("touchstart", handleInteraction);

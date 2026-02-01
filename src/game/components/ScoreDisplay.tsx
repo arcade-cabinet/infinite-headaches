@@ -135,7 +135,7 @@ export function ScoreDisplay({
 
         {/* High score */}
         <div
-          className="game-font text-purple-300"
+          className="game-font text-amber-200"
           style={{
             fontSize: fontSize.xs,
             textShadow: "1px 1px 0 #000",

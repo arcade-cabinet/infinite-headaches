@@ -46,13 +46,13 @@ export function SoundToggle({ className = "" }: SoundToggleProps) {
       onClick={toggleSound}
       className={`
         pointer-events-auto
-        w-12 h-12 
-        rounded-full 
-        bg-purple-900/80 
-        border-2 border-purple-400/50
+        w-12 h-12
+        rounded-full
+        bg-amber-900/80
+        border-2 border-amber-600/50
         flex items-center justify-center
         transition-all duration-200
-        hover:bg-purple-800/80 hover:scale-110
+        hover:bg-amber-800/80 hover:scale-110
         active:scale-95
         shadow-lg
         ${className}
@@ -70,7 +70,7 @@ export function SoundToggle({ className = "" }: SoundToggleProps) {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-purple-300"
+          className="text-amber-200"
         >
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
           <line x1="23" y1="9" x2="17" y2="15" />

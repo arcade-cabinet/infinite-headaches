@@ -1,6 +1,6 @@
 {
-	"appId": "com.arcadecabinet.infinite_headaches",
-	"appName": "Infinite Headaches",
+	"appId": "com.arcadecabinet.homestead_headaches",
+	"appName": "Homestead Headaches",
 	"webDir": "dist",
 	"server": {},
 	"plugins": {

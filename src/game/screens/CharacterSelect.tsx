@@ -79,7 +79,7 @@ export function CharacterSelect({ onSelect, onBack }: CharacterSelectProps) {
             </div>
             
             <h3 className="game-font text-white text-2xl mb-1">{character.name}</h3>
-            <p className="game-font text-purple-300 text-sm mb-4">{character.role}</p>
+            <p className="game-font text-amber-200 text-sm mb-4">{character.role}</p>
             
             <div className="bg-slate-800/50 p-4 rounded-lg w-full">
               <p className="text-slate-300 text-sm italic mb-3">"{character.description}"</p>
