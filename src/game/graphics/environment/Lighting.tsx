@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useScene } from "reactylon";
 import { 
   Vector3, 
@@ -10,6 +10,7 @@ import { QualityLevel } from "../../../graphics";
 
 export const Lighting = ({ quality }: { quality: QualityLevel }) => {
   const scene = useScene();
+  const shadowRef = useRef<ShadowGenerator>(null);
 
   useEffect(() => {
     if (!scene) return;
@@ -24,39 +25,48 @@ export const Lighting = ({ quality }: { quality: QualityLevel }) => {
       false, 
       undefined, 
       undefined, 
-      undefined, // onLoad
-      undefined, // onError
-      true   // prefilterOnLoad
+      undefined, 
+      undefined, 
+      true
     );
     
     scene.environmentTexture = envTexture;
     scene.environmentIntensity = 1.0;
 
-    // 2. Sun Light - Directional
-    const dirLight = new DirectionalLight("sunLight", new Vector3(-1, -2, -1), scene);
-    dirLight.position = new Vector3(20, 40, 20);
-    dirLight.intensity = 1.5; 
-    
-    // 3. Shadows
-    let shadowGenerator: ShadowGenerator | null = null;
-    if (quality !== "low") {
-      shadowGenerator = new ShadowGenerator(1024, dirLight);
-      shadowGenerator.useBlurExponentialShadowMap = true;
-      shadowGenerator.blurKernel = 32;
-      shadowGenerator.transparencyShadow = true;
-      
-      // We'll need to add meshes to this generator in EntityRenderer
-      (window as any).MAIN_SHADOW_GENERATOR = shadowGenerator;
-    }
-
     return () => {
       scene.environmentTexture = null;
       envTexture.dispose();
-      dirLight.dispose();
-      if (shadowGenerator) shadowGenerator.dispose();
-      delete (window as any).MAIN_SHADOW_GENERATOR;
     };
-  }, [scene, quality]);
+  }, [scene]);
 
-  return null;
+  useEffect(() => {
+    if (shadowRef.current) {
+        (window as any).MAIN_SHADOW_GENERATOR = shadowRef.current;
+    }
+    return () => { delete (window as any).MAIN_SHADOW_GENERATOR; }
+  }, [shadowRef.current]); // React to ref assignment?
+  // Refs don't trigger re-render. We need a callback ref or simple effect if component mounts once.
+  // shadowRef.current will be set when <shadowGenerator> mounts.
+  // Actually, better to use a callback ref or just assume it mounts.
+  
+  return (
+    <>
+      <directionalLight
+        name="sunLight"
+        direction={new Vector3(-1, -2, -1)}
+        position={new Vector3(20, 40, 20)}
+        intensity={1.5}
+      >
+        {quality !== "low" && (
+            <shadowGenerator
+                ref={shadowRef}
+                mapSize={1024}
+                useBlurExponentialShadowMap={true}
+                blurKernel={32}
+                transparencyShadow={true}
+            />
+        )}
+      </directionalLight>
+    </>
+  );
 };

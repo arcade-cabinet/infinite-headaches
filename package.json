@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@babylonjs/core": "^8.49.6",
+    "@babylonjs/gui": "^8.49.6",
     "@babylonjs/loaders": "^8.49.6",
     "@capacitor-community/electron": "^5.0.1",
     "@capacitor/android": "^8.0.2",

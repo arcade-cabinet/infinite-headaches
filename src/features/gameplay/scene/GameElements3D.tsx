@@ -3,7 +3,7 @@
  * Replaces 2D canvas rendering for power-ups, fireballs, particles, and UI indicators
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useScene } from "reactylon";
 import {
   MeshBuilder,
@@ -15,11 +15,10 @@ import {
   ParticleSystem,
   Texture,
   Animation,
-  GlowLayer,
   PointLight,
 } from "@babylonjs/core";
-import type { PowerUpType } from "../config";
-import { POWER_UPS } from "../config";
+import type { PowerUpType } from "@/game/config";
+import { POWER_UPS } from "@/game/config";
 
 // ============================================================
 // POWER-UP 3D RENDERER

@@ -31,16 +31,13 @@ import { GameSystems } from "./components/GameSystems";
 const ECS = createReactAPI(world);
 
 const GameCamera = () => {
-  const scene = useScene();
-  useEffect(() => {
-    if (!scene) return;
-    const camera = new FreeCamera("gameCamera", new Vector3(0, 8, -15), scene);
-    camera.setTarget(new Vector3(0, 0, 5));
-    camera.inputs.clear();
-    scene.activeCamera = camera;
-    return () => camera.dispose();
-  }, [scene]);
-  return null;
+  return (
+    <freeCamera 
+        name="gameCamera" 
+        position={new Vector3(0, 8, -15)} 
+        target={new Vector3(0, 0, 5)}
+    />
+  );
 };
 
 interface GameSceneContentProps {

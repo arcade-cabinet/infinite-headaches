@@ -24,7 +24,7 @@ import { MainMenu } from "@/features/menu/MainMenu";
 import { GameScene } from "@/features/gameplay/scene/GameScene";
 import { SplashScene } from "@/features/splash/SplashScene";
 import { audioManager } from "@/game/audio";
-import { useGraphics } from "@/game/graphics";
+import { useGraphics } from "@/graphics";
 
 type ScreenState = "splash" | "menu" | "loading" | "playing" | "gameover";
 
@@ -248,7 +248,10 @@ export function GameScreen3D() {
       {/* Splash Scene Engine */}
       {screen === "splash" && (
         <div className="absolute inset-0 z-50 bg-black">
-          <Engine antialias={true} adaptToDeviceRatio canvasId="splash-canvas">
+          <Engine 
+            engineOptions={{ antialias: true, adaptToDeviceRatio: true }} 
+            canvasId="splash-canvas"
+          >
             <SplashScene onComplete={handleSplashComplete} />
           </Engine>
         </div>
@@ -257,7 +260,10 @@ export function GameScreen3D() {
       {/* Game Scene Engine */}
       {showGameScene && (
         <div className="absolute inset-0" style={{ zIndex: 1 }}>
-          <Engine antialias={settings.antialiasing} adaptToDeviceRatio canvasId="game-canvas">
+          <Engine 
+            engineOptions={{ antialias: settings.antialiasing, adaptToDeviceRatio: true }} 
+            canvasId="game-canvas"
+          >
             <GameScene
               inputCallbacks={inputCallbacks}
               inputEnabled={!isPaused && screen === "playing"}
