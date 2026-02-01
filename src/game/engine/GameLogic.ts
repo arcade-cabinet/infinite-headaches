@@ -314,7 +314,7 @@ export class GameLogic {
     for (const f of falling) {
       if (!f.position) continue;
       if (f.position.y < -3) {
-        console.log("Entity fell out of bounds", f.id, f.position.y);
+        // console.log("[Gameplay] Missed entity", f.id);
         world.remove(f);
         this.lives--;
         this.callbacks.onLivesChange(this.lives, this.maxLives);

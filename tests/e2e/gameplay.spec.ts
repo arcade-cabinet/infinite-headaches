@@ -1,8 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 test('Full Game Flow: Menu -> Start -> Gameplay', async ({ page }) => {
-  // Capture console logs
-  page.on('console', msg => console.log(`BROWSER: ${msg.text()}`));
+  // Capture console logs, filtering out noise
+  page.on('console', msg => {
+    const text = msg.text();
+    if (text.includes('GL Driver Message') || text.includes('GPU stall')) return;
+    console.log(`BROWSER: ${text}`);
+  });
   page.on('pageerror', err => console.log(`BROWSER ERROR: ${err}`));
 
   // 1. Launch Game

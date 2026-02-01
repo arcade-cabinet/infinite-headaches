@@ -2,8 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Visual Regression & Gameplay Logic', () => {
   test.beforeEach(async ({ page }) => {
-    // Debug Console
-    page.on('console', msg => console.log(`BROWSER: ${msg.text()}`));
+    // Debug Console, filtering noise
+    page.on('console', msg => {
+        const text = msg.text();
+        if (text.includes('GL Driver Message') || text.includes('GPU stall')) return;
+        console.log(`BROWSER: ${text}`);
+    });
     
     // 1. Launch Game
     await page.goto('/');
