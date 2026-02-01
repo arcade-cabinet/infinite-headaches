@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useRef, useCallback } from "react";
-import { useScene } from "react-babylonjs";
+import { useScene } from "reactylon";
 import {
   MeshBuilder,
   StandardMaterial,

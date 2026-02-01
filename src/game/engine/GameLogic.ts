@@ -65,7 +65,7 @@ export class GameLogic {
   private combo = 0;
   private currentMultiplier = 1;
   private level = 1;
-  private lives = livesConfig.starting;
+  private lives: number = livesConfig.starting;
   private maxLives = livesConfig.max;
   private bankedAnimals = 0;
   private inDangerState = false;

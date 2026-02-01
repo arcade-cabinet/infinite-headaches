@@ -13,7 +13,7 @@ export default defineConfig({
   plugins: [
     react({
       babel: {
-        plugins: ["styled-jsx/babel"],
+        plugins: ["styled-jsx/babel", "babel-plugin-reactylon"],
       },
     }),
     tailwindcss(),

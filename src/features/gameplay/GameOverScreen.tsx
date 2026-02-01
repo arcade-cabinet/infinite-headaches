@@ -6,10 +6,10 @@
 
 import { Timeline } from "animejs";
 import { useEffect, useMemo, useRef } from "react";
-import { GameButton } from "../components/GameButton";
-import { GameCard } from "../components/GameCard";
-import { FAIL_MESSAGES } from "../config";
-import { useResponsiveScale } from "../hooks/useResponsiveScale";
+import { GameButton } from "../../game/components/GameButton";
+import { GameCard } from "../../game/components/GameCard";
+import { FAIL_MESSAGES } from "../../game/config";
+import { useResponsiveScale } from "../../game/hooks/useResponsiveScale";
 
 interface GameOverScreenProps {
   score: number;

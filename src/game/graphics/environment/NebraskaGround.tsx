@@ -1,6 +1,8 @@
 import { useEffect } from "react";
-import { useScene } from "react-babylonjs";
-import { MeshBuilder, StandardMaterial, Color3, PBRMaterial } from "@babylonjs/core";
+import { useScene } from "reactylon";
+import { 
+  MeshBuilder, 
+  StandardMaterial,  Color3, PBRMaterial } from "@babylonjs/core";
 import { QualityLevel } from "../../../graphics";
 
 export const NebraskaGround = ({ quality }: { quality: QualityLevel }) => {

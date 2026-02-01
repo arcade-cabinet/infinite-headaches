@@ -3,10 +3,10 @@
  * This enables the graphics settings system to apply quality settings automatically.
  */
 
-import { useCallback, useEffect } from "react";
-import { useScene } from "react-babylonjs";
-import { Scene as BabylonScene } from "@babylonjs/core";
-import { graphicsManager } from "../../../graphics";
+import { useEffect, useCallback } from "react";
+import { useScene } from "reactylon";
+import { useGraphics } from "@/game/graphics";
+import { Engine, Scene as BabylonScene } from "@babylonjs/core";
 
 export const GraphicsIntegration = () => {
   const scene = useScene();

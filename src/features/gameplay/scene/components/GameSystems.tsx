@@ -3,9 +3,9 @@
  * Hooks into the Babylon render loop to run movement, wobble, and animation systems.
  */
 
-import { useEffect } from "react";
-import { useScene } from "react-babylonjs";
-import { MovementSystem } from "../../ecs/systems/MovementSystem";
+import { useEffect, useRef } from "react";
+import { useScene } from "reactylon";
+import { Vector3, Color3, StandardMaterial, Texture, MeshBuilder } from "@babylonjs/core";
 import { WobbleSystem } from "../../ecs/systems/WobbleSystem";
 import { AnimationSystem } from "../../ecs/systems/AnimationSystem";
 

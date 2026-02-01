@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { GameButton } from "../components/GameButton";
-import { GameCard } from "../components/GameCard";
-import { useResponsiveScale } from "../hooks/useResponsiveScale";
+import { GameButton } from "../../game/components/GameButton";
+import { GameCard } from "../../game/components/GameCard";
+import { useResponsiveScale } from "../../game/hooks/useResponsiveScale";
 
 // Mock character data (would come from ECS/Config)
 const CHARACTERS = [

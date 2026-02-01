@@ -71,6 +71,6 @@ export {
 } from "./progression/Upgrades";
 
 // Screens
-export { GameOverScreen } from "./screens/GameOverScreen";
-export { MainMenu } from "./screens/MainMenu";
-export { GameScreen3D } from "./screens/GameScreen3D";
+export { GameOverScreen } from "../features/gameplay/GameOverScreen";
+export { MainMenu } from "../features/menu/MainMenu";
+export { GameScreen3D } from "../features/core/GameScreen3D";

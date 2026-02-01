@@ -1,37 +1,36 @@
 /**
  * GameScreen3D - Pure Babylon.js game screen
- * No 2D canvas - all rendering happens in the 3D scene
+ * Manages Scene transitions (Splash -> Menu -> Game)
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { type Achievement, checkAchievements, loadStats, saveStats } from "../achievements";
-import { AchievementToastList } from "../components/AchievementToast";
-import { GameStyles } from "../components/GameStyles";
-import { MainMenuBackground } from "../components/MainMenuBackground";
-import { PauseButton } from "../components/PauseButton";
-import { PauseMenu } from "../components/PauseMenu";
-import { PerfectIndicator } from "../components/PerfectIndicator";
-import { CaptureBallButton } from "../components/CaptureBallButton";
-import { ScoreDisplay } from "../components/ScoreDisplay";
-import { hasCompletedTutorial, Tutorial } from "../components/Tutorial";
-import { useGameLogic } from "../hooks/useGameLogic";
-import { useHighScore } from "../hooks/useHighScore";
-import { useResponsiveScale } from "../hooks/useResponsiveScale";
-import { checkModeUnlocks, type GameModeType, saveUnlockedModes } from "../modes/GameMode";
-import { addCoins, calculateCoinsFromScore } from "../progression/Upgrades";
-import { GameOverScreen } from "./GameOverScreen";
-import { MainMenu } from "./MainMenu";
-import { GameScene3D } from "../scene/GameScene3D";
-import { LoadingScreen } from "../components/LoadingScreen";
-import { VideoSplash } from "../components/VideoSplash";
-import { audioManager } from "../audio";
+import { Engine } from "reactylon/web";
+import { type Achievement, checkAchievements, loadStats, saveStats } from "@/game/achievements";
+import { AchievementToastList } from "@/game/components/AchievementToast";
+import { GameStyles } from "@/game/components/GameStyles";
+import { MainMenuBackground } from "@/game/components/MainMenuBackground";
+import { CaptureBallButton } from "@/game/components/CaptureBallButton";
+import { ScoreDisplay } from "@/game/components/ScoreDisplay";
+import { hasCompletedTutorial, Tutorial } from "@/game/components/Tutorial";
+import { LoadingScreen } from "@/game/components/LoadingScreen";
+import { PerfectIndicator } from "@/game/components/PerfectIndicator";
+import { useGameLogic } from "@/game/hooks/useGameLogic";
+import { useHighScore } from "@/game/hooks/useHighScore";
+import { useResponsiveScale } from "@/game/hooks/useResponsiveScale";
+import { checkModeUnlocks, type GameModeType, saveUnlockedModes } from "@/game/modes/GameMode";
+import { addCoins, calculateCoinsFromScore } from "@/game/progression/Upgrades";
+import { GameOverScreen } from "@/features/gameplay/GameOverScreen";
+import { MainMenu } from "@/features/menu/MainMenu";
+import { GameScene } from "@/features/gameplay/scene/GameScene";
+import { SplashScene } from "@/features/splash/SplashScene";
+import { audioManager } from "@/game/audio";
+import { useGraphics } from "@/game/graphics";
 
 type ScreenState = "splash" | "menu" | "loading" | "playing" | "gameover";
 
 const SPLASH_SHOWN_KEY = "homestead_splash_shown_session";
 
 export function GameScreen3D() {
-  // Check if splash was already shown this session
   const getInitialScreen = (): ScreenState => {
     if (typeof window !== "undefined" && sessionStorage.getItem(SPLASH_SHOWN_KEY)) {
       return "menu";
@@ -49,21 +48,19 @@ export function GameScreen3D() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
   
-  // Loading State
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStatus, setLoadingStatus] = useState("Initializing...");
   
   const { highScore, updateHighScore } = useHighScore();
   const { spacing } = useResponsiveScale();
+  const { settings } = useGraphics();
 
-  // Start main menu music when entering menu
   useEffect(() => {
     if (screen === "menu") {
       audioManager.playTrack("mainMenu");
     }
   }, [screen]);
 
-  // Handle video splash completion
   const handleSplashComplete = useCallback(() => {
     if (typeof window !== "undefined") {
       sessionStorage.setItem(SPLASH_SHOWN_KEY, "true");
@@ -73,14 +70,12 @@ export function GameScreen3D() {
 
   const handleGameOver = useCallback(
     (score: number, bankedAnimals: number) => {
-      console.log("handleGameOver called", score, bankedAnimals);
       try {
         setFinalScore(score);
         setFinalBanked(bankedAnimals);
         const isNew = updateHighScore(score);
         setIsNewHighScore(isNew);
 
-        // Award coins (except in Zen mode)
         if (currentMode !== "zen") {
           const baseCoins = calculateCoinsFromScore(score);
           const coins = addCoins(baseCoins);
@@ -89,7 +84,6 @@ export function GameScreen3D() {
           setEarnedCoins(0);
         }
 
-        // Update stats and check achievements
         const stats = loadStats();
         stats.totalScore += score;
         stats.highScore = Math.max(stats.highScore, score);
@@ -97,7 +91,6 @@ export function GameScreen3D() {
         stats.totalBanked += bankedAnimals;
         saveStats(stats);
 
-        // Check for mode unlocks
         const newModes = checkModeUnlocks({
           highScore: stats.highScore,
           totalGames: stats.totalGames,
@@ -111,7 +104,6 @@ export function GameScreen3D() {
           setUnlockedAchievements((prev) => [...prev, ...newAchievements]);
         }
 
-        console.log("Setting screen to gameover");
         setScreen("gameover");
       } catch (e) {
         console.error("Error in handleGameOver:", e);
@@ -145,7 +137,6 @@ export function GameScreen3D() {
     setScreenDimensions,
   } = useGameLogic({ onGameOver: handleGameOver });
 
-  // Handle Loading Simulation
   useEffect(() => {
     if (screen === "loading") {
       setLoadingProgress(0);
@@ -163,8 +154,6 @@ export function GameScreen3D() {
       const interval = setInterval(() => {
         if (currentStage >= stages.length) {
           clearInterval(interval);
-          
-          // Transition to gameplay
           if (selectedCharacter) {
              setScreen("playing");
              setIsNewHighScore(false);
@@ -173,24 +162,20 @@ export function GameScreen3D() {
           }
           return;
         }
-
         const stage = stages[currentStage];
         setLoadingProgress(stage.progress);
         setLoadingStatus(stage.text);
         currentStage++;
-
-      }, 400); // Simulate 2s load time
+      }, 400);
 
       return () => clearInterval(interval);
     }
   }, [screen, selectedCharacter, startGame]);
 
-  // Update screen dimensions on resize
   useEffect(() => {
     const handleResize = () => {
       setScreenDimensions(window.innerWidth, window.innerHeight);
     };
-
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -200,13 +185,10 @@ export function GameScreen3D() {
     (mode: GameModeType, characterId: "farmer_john" | "farmer_mary") => {
       setSelectedCharacter(characterId);
       setCurrentMode(mode);
-
       if (!hasCompletedTutorial()) {
         setShowTutorial(true);
         return;
       }
-      
-      // Start Loading Sequence
       setScreen("loading");
     },
     []
@@ -214,7 +196,6 @@ export function GameScreen3D() {
 
   const handleTutorialComplete = useCallback(() => {
     setShowTutorial(false);
-    // After tutorial, go to loading
     setScreen("loading");
   }, []);
 
@@ -226,8 +207,6 @@ export function GameScreen3D() {
   const handleRestart = useCallback(() => {
     if (!selectedCharacter) return;
     resumeGame();
-    // Quick restart (skip full loading screen, or maybe show a fast one?)
-    // For now, instant restart
     setScreen("playing");
     setIsNewHighScore(false);
     startGame(selectedCharacter);
@@ -237,7 +216,6 @@ export function GameScreen3D() {
     setUnlockedAchievements((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
-  // Handle escape key for pause
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && screen === "playing") {
@@ -248,44 +226,49 @@ export function GameScreen3D() {
         }
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [screen, isPaused, pauseGame, resumeGame]);
 
-  // Input callbacks for Babylon scene
   const inputCallbacks = {
     onDragStart: handlePointerDown,
     onDrag: handlePointerMove,
     onDragEnd: handlePointerUp,
   };
 
-  // Only render 3D scene during gameplay for performance
-  // We ALSO render it during "loading" but hidden behind the overlay 
-  // to ensure assets are actually in memory when the overlay vanishes.
-  const showScene3D = screen === "playing" || screen === "loading";
+  const showGameScene = screen === "playing" || screen === "loading";
 
   return (
     <div className="fixed inset-0 overflow-hidden select-none touch-none no-zoom safe-area-inset">
       <GameStyles />
 
-      {/* Static background for menu/gameover/loading screens */}
+      {/* Background for Menu/GameOver */}
       {(screen === "menu" || screen === "gameover" || screen === "loading") && <MainMenuBackground />}
 
-      {/* 3D Game Scene - Pre-mount during loading */}
-      {showScene3D && (
+      {/* Splash Scene Engine */}
+      {screen === "splash" && (
+        <div className="absolute inset-0 z-50 bg-black">
+          <Engine antialias={true} adaptToDeviceRatio canvasId="splash-canvas">
+            <SplashScene onComplete={handleSplashComplete} />
+          </Engine>
+        </div>
+      )}
+
+      {/* Game Scene Engine */}
+      {showGameScene && (
         <div className="absolute inset-0" style={{ zIndex: 1 }}>
-          <GameScene3D
-            inputCallbacks={inputCallbacks}
-            inputEnabled={!isPaused && screen === "playing"}
-            showGameplayElements={true}
-          />
+          <Engine antialias={settings.antialiasing} adaptToDeviceRatio canvasId="game-canvas">
+            <GameScene
+              inputCallbacks={inputCallbacks}
+              inputEnabled={!isPaused && screen === "playing"}
+              showGameplayElements={true}
+            />
+          </Engine>
         </div>
       )}
 
       {/* UI Overlay */}
       <div className="absolute inset-0 pointer-events-none flex flex-col justify-center items-center text-center z-20 safe-area-inset">
-        {/* Score HUD */}
         {screen === "playing" && (
           <ScoreDisplay
             score={score}
@@ -301,22 +284,18 @@ export function GameScreen3D() {
           />
         )}
 
-        {/* Loading Screen */}
         {screen === "loading" && (
           <LoadingScreen progress={loadingProgress} status={loadingStatus} />
         )}
 
-        {/* Perfect Catch Indicator */}
         <PerfectIndicator show={showPerfect} animationKey={perfectKey} />
 
-        {/* Good Catch Indicator */}
         {showGood && (
           <div className="absolute left-1/2 top-[30%] -translate-x-1/2 game-font text-green-300 animate-pulse">
             NICE!
           </div>
         )}
 
-        {/* Menu Screens */}
         {screen === "menu" && <MainMenu onPlay={handlePlay} highScore={highScore} />}
 
         {screen === "gameover" && (
@@ -332,33 +311,16 @@ export function GameScreen3D() {
         )}
       </div>
 
-      {/* Top right controls */}
-      <div
-        className="absolute z-40 flex gap-2 items-center"
-        style={{
-          top: `calc(${spacing.sm} + env(safe-area-inset-top, 0px))`,
-          right: spacing.sm,
-        }}
-      >
-        {/* Pause button removed - tap anywhere to pause */}
-      </div>
-
-      {/* CaptureBall Bank Button */}
       {screen === "playing" && (
         <CaptureBallButton visible={canBank} stackCount={stackHeight} onClick={bankStack} />
       )}
 
-      {/* Tutorial Overlay */}
       {showTutorial && <Tutorial onComplete={handleTutorialComplete} />}
 
-      {/* Achievement Toasts */}
       <AchievementToastList
         achievements={unlockedAchievements}
         onDismiss={handleDismissAchievement}
       />
-
-      {/* Video Splash - plays on first load */}
-      {screen === "splash" && <VideoSplash onComplete={handleSplashComplete} />}
     </div>
   );
 }

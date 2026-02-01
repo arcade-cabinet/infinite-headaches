@@ -4,8 +4,8 @@
  */
 
 import { useEffect, useRef, useCallback } from "react";
-import { useScene } from "react-babylonjs";
-import { PointerEventTypes, Vector3 } from "@babylonjs/core";
+import { useScene } from "reactylon";
+import { Vector3, PointerEventTypes } from "@babylonjs/core";
 
 export interface InputCallbacks {
   onDragStart: (worldX: number, screenX: number) => void;

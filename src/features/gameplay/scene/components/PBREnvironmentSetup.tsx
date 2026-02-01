@@ -5,7 +5,8 @@
  */
 
 import { useEffect } from "react";
-import { useScene } from "react-babylonjs";
+import { useScene } from "reactylon";
+import { CubeTexture, Texture } from "@babylonjs/core";
 
 export const PBREnvironmentSetup = () => {
   const scene = useScene();

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useScene } from "react-babylonjs";
+import { useScene } from "reactylon";
 import { 
   Vector3, 
   DirectionalLight,

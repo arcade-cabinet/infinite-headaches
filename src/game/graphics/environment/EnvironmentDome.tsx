@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useScene } from "react-babylonjs";
+import { useScene } from "reactylon";
 import { PhotoDome, Vector3 } from "@babylonjs/core";
 import { QualityLevel } from "../../../graphics";
 

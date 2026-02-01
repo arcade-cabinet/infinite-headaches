@@ -1,12 +1,12 @@
 /**
- * GameScene3D - Pure Babylon.js 3D scene for Homestead Headaches
+ * GameScene - Pure Babylon.js 3D scene for Homestead Headaches
  *
  * Clean, cartoon 3D renderer. NO storm effects.
  */
 
 import { createReactAPI, useEntities } from "miniplex-react";
-import { useEffect, useState } from "react";
-import { useScene, Engine, Scene } from "react-babylonjs";
+import { useEffect } from "react";
+import { useScene, Scene } from "reactylon";
 import {
   Vector3,
   Color4,
@@ -14,9 +14,9 @@ import {
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
-import { world } from "../ecs/world";
-import { Entity } from "../ecs/components";
-import { useGraphics } from "../../graphics";
+import { world } from "../../../../game/ecs/world";
+import { Entity } from "../../../../game/ecs/components";
+import { useGraphics } from "@/game/graphics";
 import { NebraskaDiorama } from "./NebraskaDiorama";
 import { InputManager, type InputCallbacks } from "./InputManager";
 import {
@@ -48,8 +48,6 @@ interface GameSceneContentProps {
   quality: "low" | "medium" | "high";
   inputCallbacks: InputCallbacks;
   inputEnabled: boolean;
-  screenWidth: number;
-  screenHeight: number;
   showGameplayElements: boolean;
 }
 
@@ -58,8 +56,6 @@ const GameSceneContent = ({
   quality,
   inputCallbacks,
   inputEnabled,
-  screenWidth,
-  screenHeight,
   showGameplayElements,
 }: GameSceneContentProps) => {
   const modelEntities = entities.filter((e) => e.model && e.position);
@@ -99,48 +95,32 @@ const GameSceneContent = ({
   );
 };
 
-interface GameScene3DProps {
+export interface GameSceneProps {
   inputCallbacks: InputCallbacks;
   inputEnabled: boolean;
   showGameplayElements?: boolean;
 }
 
-export const GameScene3D = ({
+export const GameScene = ({
   inputCallbacks,
   inputEnabled,
   showGameplayElements = false,
-}: GameScene3DProps) => {
+}: GameSceneProps) => {
   const bucket = useEntities(world);
   const entities = bucket?.entities ?? [];
   const { settings } = useGraphics();
-  const [screenSize, setScreenSize] = useState({
-    width: typeof window !== "undefined" ? window.innerWidth : 1920,
-    height: typeof window !== "undefined" ? window.innerHeight : 1080,
-  });
-
-  useEffect(() => {
-    const handleResize = () => setScreenSize({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <Engine antialias={settings.antialiasing} adaptToDeviceRatio canvasId="game-canvas">
-        <Scene clearColor={new Color4(0.5, 0.8, 1.0, 1)}>
-          <GameSceneContent
-            entities={entities}
-            quality={settings.quality}
-            inputCallbacks={inputCallbacks}
-            inputEnabled={inputEnabled}
-            screenWidth={screenSize.width}
-            screenHeight={screenSize.height}
-            showGameplayElements={showGameplayElements}
-          />
-        </Scene>
-      </Engine>
-    </div>
+    <Scene onSceneReady={(scene) => { scene.clearColor = new Color4(0.5, 0.8, 1.0, 1); }}>
+      <GameSceneContent
+        entities={entities}
+        quality={settings.quality}
+        inputCallbacks={inputCallbacks}
+        inputEnabled={inputEnabled}
+        showGameplayElements={showGameplayElements}
+      />
+    </Scene>
   );
 };
 
-export default GameScene3D;
+export default GameScene;

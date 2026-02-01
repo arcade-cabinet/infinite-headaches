@@ -7,19 +7,19 @@
 
 import { animate, Timeline } from "animejs";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GameButton } from "../components/GameButton";
-import { GameCard } from "../components/GameCard";
-import { HelpModal } from "../components/HelpModal";
-import { ModeSelect } from "../components/ModeSelect";
-import { PeekingAnimal } from "../components/PeekingAnimal";
-import { SettingsModal } from "../components/SettingsModal";
-import { GameTransition } from "../components/GameTransition";
-import { UpgradeShop } from "../components/UpgradeShop";
+import { GameButton } from "../../game/components/GameButton";
+import { GameCard } from "../../game/components/GameCard";
+import { HelpModal } from "../../game/components/HelpModal";
+import { ModeSelect } from "../../game/components/ModeSelect";
+import { PeekingAnimal } from "../../game/components/PeekingAnimal";
+import { SettingsModal } from "../../game/components/SettingsModal";
+import { GameTransition } from "../../game/components/GameTransition";
+import { UpgradeShop } from "../../game/components/UpgradeShop";
 import { CharacterSelect } from "./CharacterSelect";
-import { GAME_INFO } from "../config";
-import { useResponsiveScale } from "../hooks/useResponsiveScale";
-import type { GameModeType } from "../modes/GameMode";
-import { getCoins } from "../progression/Upgrades";
+import { GAME_INFO } from "../../game/config";
+import { useResponsiveScale } from "../../game/hooks/useResponsiveScale";
+import type { GameModeType } from "../../game/modes/GameMode";
+import { getCoins } from "../../game/progression/Upgrades";
 
 interface MainMenuProps {
   onPlay: (mode: GameModeType, characterId: "farmer_john" | "farmer_mary") => void;

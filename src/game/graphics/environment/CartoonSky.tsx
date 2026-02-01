@@ -1,6 +1,13 @@
 import { useEffect } from "react";
-import { useScene } from "react-babylonjs";
-import { MeshBuilder, StandardMaterial, Color3, Mesh, PhotoDome } from "@babylonjs/core";
+import { useScene } from "reactylon";
+import {
+  MeshBuilder,
+  StandardMaterial,
+  Mesh,
+  Color3,
+  PhotoDome
+} from "@babylonjs/core";
+
 import { QualityLevel } from "../../../graphics";
 
 export const CartoonSky = ({ quality }: { quality: QualityLevel }) => {

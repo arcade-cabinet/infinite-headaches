@@ -23,9 +23,6 @@ importers:
       '@capacitor/app':
         specifier: ^8.0.0
         version: 8.0.0(@capacitor/core@8.0.2)
-      '@capacitor/cli':
-        specifier: ^8.0.2
-        version: 8.0.2
       '@capacitor/core':
         specifier: ^8.0.2
         version: 8.0.2
@@ -53,9 +50,6 @@ importers:
       '@capacitor/status-bar':
         specifier: ^8.0.0
         version: 8.0.0(@capacitor/core@8.0.2)
-      '@tailwindcss/vite':
-        specifier: ^4.1.18
-        version: 4.1.18(vite@6.4.1(@types/node@25.1.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0))
       animejs:
         specifier: ^4.3.5
         version: 4.3.5
@@ -77,12 +71,12 @@ importers:
       react:
         specifier: ^19.2.4
         version: 19.2.4
-      react-babylonjs:
-        specifier: 3.2.5-beta.2
-        version: 3.2.5-beta.2(@babylonjs/core@8.49.6)(@babylonjs/gui@8.49.6(@babylonjs/core@8.49.6))(react-dom@19.2.4(react@19.2.4))(react-reconciler@0.31.0(react@19.2.4))(react@19.2.4)
       react-dom:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
+      reactylon:
+        specifier: ^3.5.2
+        version: 3.5.2(@babylonjs/core@8.49.6)(@babylonjs/gui@8.49.6(@babylonjs/core@8.49.6))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react-reconciler@0.31.0(react@19.2.4))(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
       seedrandom:
         specifier: ^3.0.5
         version: 3.0.5
@@ -105,12 +99,18 @@ importers:
       '@biomejs/biome':
         specifier: 2.3.13
         version: 2.3.13
+      '@capacitor/cli':
+        specifier: ^8.0.2
+        version: 8.0.2
       '@google/genai':
         specifier: ^1.39.0
         version: 1.39.0
       '@playwright/test':
         specifier: ^1.58.1
         version: 1.58.1
+      '@tailwindcss/vite':
+        specifier: ^4.1.18
+        version: 4.1.18(vite@6.4.1(@types/node@25.1.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0))
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -147,6 +147,9 @@ importers:
       '@vitest/ui':
         specifier: ^4.0.18
         version: 4.0.18(vitest@4.0.18)
+      babel-plugin-reactylon:
+        specifier: ^1.3.1
+        version: 1.3.1(@babel/core@7.29.0)(@babylonjs/core@8.49.6)(@babylonjs/gui@8.49.6(@babylonjs/core@8.49.6))(reactylon@3.5.2(@babylonjs/core@8.49.6)(@babylonjs/gui@8.49.6(@babylonjs/core@8.49.6))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react-reconciler@0.31.0(react@19.2.4))(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4)))
       babylonjs:
         specifier: ^8.49.6
         version: 8.49.6
@@ -1255,6 +1258,11 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
+  '@types/react-reconciler@0.28.9':
+    resolution: {integrity: sha512-HHM3nxyUZ3zAylX8ZEyrDNd2XZOnQ0D5XfunJF5FLQnZbHHYq4UWvW1QfelQNXv1ICNkwYhfxjwfnqivYB6bFg==}
+    peerDependencies:
+      '@types/react': '*'
+
   '@types/react@19.2.10':
     resolution: {integrity: sha512-WPigyYuGhgZ/cTPRXB2EwUw+XvsRA3GqHlsP4qteqrnnjDrApbS7MxcGr/hke5iUoeB7E/gQtrs9I37zAJ0Vjw==}
 
@@ -1338,6 +1346,11 @@ packages:
   abbrev@3.0.1:
     resolution: {integrity: sha512-AO2ac6pjRB3SJmGJo+v5/aK6Omggp6fsLrs6wN9bd35ulu4cCwaAU9+7ZhXjeqHVkaHThLuzH0nZr0YpCDhygg==}
     engines: {node: ^18.17.0 || >=20.5.0}
+
+  acorn@8.15.0:
+    resolution: {integrity: sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
 
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
@@ -1434,6 +1447,14 @@ packages:
     peerDependenciesMeta:
       react-native-b4a:
         optional: true
+
+  babel-plugin-reactylon@1.3.1:
+    resolution: {integrity: sha512-i5OGu6uqROuiAOhHWzebuiGX7L0XQ5cDGPlDP5B1JwdLUEhaM0dFiB6lGAch2InSHIV+0HvZr7TRAVjkdId90A==}
+    peerDependencies:
+      '@babel/core': ^7.26.10
+      '@babylonjs/core': ^7.0.0 || ^8.0.0
+      '@babylonjs/gui': ^7.0.0 || ^8.0.0
+      reactylon: ^3.0.0
 
   babylonjs-gltf2interface@8.49.6:
     resolution: {integrity: sha512-7qxi48GxEgX9SIZf1Eze+25YCUUY9X6ZIuoozg0rHZyY9gQBso7HUIWLznsQHeUXey19QS/zirrP1spm1PW8Vw==}
@@ -2285,6 +2306,11 @@ packages:
     resolution: {integrity: sha512-HGYWWS/ehqTV3xN10i23tkPkpH46MLCIMFNCaaKNavAXTF1RkqxawEPtnjnGZ6XKSInBKkiOA5BKS+aZiY3AvA==}
     engines: {node: '>=8'}
 
+  its-fine@1.2.5:
+    resolution: {integrity: sha512-fXtDA0X0t0eBYAGLVM5YsgJGsJ5jEmqZEPrGbzdf5awjv0xE7nqv3TVnvtUF060Tkes15DbDAKW/I48vsb6SyA==}
+    peerDependencies:
+      react: '>=18.0'
+
   jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
 
@@ -2430,6 +2456,9 @@ packages:
 
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
+
+  lodash-es@4.17.23:
+    resolution: {integrity: sha512-kVI48u3PZr38HdYz98UmfPnXl2DXrpdctLrFLCd3kOx1xUkOmpFPx7gCWWM5MPkL/fD8zb+Ph0QzjGFs4+hHWg==}
 
   lodash@4.17.23:
     resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
@@ -2837,19 +2866,6 @@ packages:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
 
-  react-babylonjs@3.2.5-beta.2:
-    resolution: {integrity: sha512-loYNlDCVj9MK8ftd5Tmyzp/iZtmVM7jk314kCQOSDubnw63OvOiwlPeY8s8bptLLIHSnSLyYQB8Tos6A275o8A==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      '@babylonjs/core': 5.x || 6.x || 7.x || 8.x
-      '@babylonjs/gui': 5.x || 6.x || 7.x || 8.x
-      react: '>=17'
-      react-dom: '>=17'
-      react-reconciler: 0.29.2 || 0.31.0
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-
   react-dom@19.2.4:
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
     peerDependencies:
@@ -2871,6 +2887,22 @@ packages:
   react@19.2.4:
     resolution: {integrity: sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==}
     engines: {node: '>=0.10.0'}
+
+  reactylon@3.5.2:
+    resolution: {integrity: sha512-DDGedJsQ06YFdo029I7fGXjH4Tr97Ny32uqvZsmzuWLwKzogmVBnSkxXQjfe/XeD4szCL92nw5JPl6hC+f8t/g==}
+    engines: {node: ^22.11.0, npm: ^10.9.0}
+    peerDependencies:
+      '@babylonjs/core': ^7.0.0 || ^8.0.0
+      '@babylonjs/gui': ^7.0.0 || ^8.0.0
+      '@babylonjs/react-native': ^1.8.6
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
+      react-reconciler: 0.29.2 || 0.31.0
+    peerDependenciesMeta:
+      '@babylonjs/react-native':
+        optional: true
+      react-dom:
+        optional: true
 
   read-binary-file-arch@1.0.6:
     resolution: {integrity: sha512-BNg9EN3DD3GsDXX7Aa8O4p92sryjkmzYYgmgTAc6CA4uGLEDzFfxOxugu21akOxpcXHiEgsYkC6nPsQvLLLmEg==}
@@ -3119,6 +3151,11 @@ packages:
   supports-color@8.1.1:
     resolution: {integrity: sha512-MpUEN2OodtUzxvKQl72cUF7RQ5EiHsGvSsVG0ia9c5RbWGL2CI4C7EpPS8UTBIplnlzZiNuV56w+FuNxy3ty2Q==}
     engines: {node: '>=10'}
+
+  suspend-react@0.1.3:
+    resolution: {integrity: sha512-aqldKgX9aZqpoDp3e8/BZ8Dm7x1pJl+qI3ZKxDN0i/IQTWUwBx/ManmlVJ3wowqbno6c2bmiIfs+Um6LbsjJyQ==}
+    peerDependencies:
+      react: '>=17.0'
 
   tailwind-merge@3.4.0:
     resolution: {integrity: sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g==}
@@ -4450,6 +4487,10 @@ snapshots:
     dependencies:
       '@types/react': 19.2.10
 
+  '@types/react-reconciler@0.28.9(@types/react@19.2.10)':
+    dependencies:
+      '@types/react': 19.2.10
+
   '@types/react@19.2.10':
     dependencies:
       csstype: 3.2.3
@@ -4558,6 +4599,8 @@ snapshots:
 
   abbrev@3.0.1: {}
 
+  acorn@8.15.0: {}
+
   agent-base@7.1.4: {}
 
   ajv-keywords@3.5.2(ajv@6.12.6):
@@ -4662,6 +4705,14 @@ snapshots:
   at-least-node@1.0.0: {}
 
   b4a@1.7.3: {}
+
+  babel-plugin-reactylon@1.3.1(@babel/core@7.29.0)(@babylonjs/core@8.49.6)(@babylonjs/gui@8.49.6(@babylonjs/core@8.49.6))(reactylon@3.5.2(@babylonjs/core@8.49.6)(@babylonjs/gui@8.49.6(@babylonjs/core@8.49.6))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react-reconciler@0.31.0(react@19.2.4))(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))):
+    dependencies:
+      '@babel/core': 7.29.0
+      '@babel/helper-plugin-utils': 7.28.6
+      '@babylonjs/core': 8.49.6
+      '@babylonjs/gui': 8.49.6(@babylonjs/core@8.49.6)
+      reactylon: 3.5.2(@babylonjs/core@8.49.6)(@babylonjs/gui@8.49.6(@babylonjs/core@8.49.6))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react-reconciler@0.31.0(react@19.2.4))(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
 
   babylonjs-gltf2interface@8.49.6: {}
 
@@ -5647,6 +5698,13 @@ snapshots:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.1
 
+  its-fine@1.2.5(@types/react@19.2.10)(react@19.2.4):
+    dependencies:
+      '@types/react-reconciler': 0.28.9(@types/react@19.2.10)
+      react: 19.2.4
+    transitivePeerDependencies:
+      - '@types/react'
+
   jackspeak@3.4.3:
     dependencies:
       '@isaacs/cliui': 8.0.2
@@ -5767,6 +5825,8 @@ snapshots:
       lightningcss-win32-x64-msvc: 1.30.2
 
   lines-and-columns@1.2.4: {}
+
+  lodash-es@4.17.23: {}
 
   lodash@4.17.23: {}
 
@@ -6225,15 +6285,6 @@ snapshots:
 
   quick-lru@5.1.1: {}
 
-  react-babylonjs@3.2.5-beta.2(@babylonjs/core@8.49.6)(@babylonjs/gui@8.49.6(@babylonjs/core@8.49.6))(react-dom@19.2.4(react@19.2.4))(react-reconciler@0.31.0(react@19.2.4))(react@19.2.4):
-    dependencies:
-      '@babylonjs/core': 8.49.6
-      '@babylonjs/gui': 8.49.6(@babylonjs/core@8.49.6)
-      react: 19.2.4
-      react-reconciler: 0.31.0(react@19.2.4)
-    optionalDependencies:
-      react-dom: 19.2.4(react@19.2.4)
-
   react-dom@19.2.4(react@19.2.4):
     dependencies:
       react: 19.2.4
@@ -6249,6 +6300,24 @@ snapshots:
   react-refresh@0.17.0: {}
 
   react@19.2.4: {}
+
+  reactylon@3.5.2(@babylonjs/core@8.49.6)(@babylonjs/gui@8.49.6(@babylonjs/core@8.49.6))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react-reconciler@0.31.0(react@19.2.4))(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4)):
+    dependencies:
+      '@babylonjs/core': 8.49.6
+      '@babylonjs/gui': 8.49.6(@babylonjs/core@8.49.6)
+      acorn: 8.15.0
+      its-fine: 1.2.5(@types/react@19.2.10)(react@19.2.4)
+      lodash-es: 4.17.23
+      react: 19.2.4
+      react-reconciler: 0.31.0(react@19.2.4)
+      suspend-react: 0.1.3(react@19.2.4)
+      zustand: 5.0.10(@types/react@19.2.10)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
+    optionalDependencies:
+      react-dom: 19.2.4(react@19.2.4)
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+      - use-sync-external-store
 
   read-binary-file-arch@1.0.6:
     dependencies:
@@ -6515,6 +6584,10 @@ snapshots:
   supports-color@8.1.1:
     dependencies:
       has-flag: 4.0.0
+
+  suspend-react@0.1.3(react@19.2.4):
+    dependencies:
+      react: 19.2.4
 
   tailwind-merge@3.4.0: {}
 

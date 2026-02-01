@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { useScene } from "react-babylonjs";
-import { DefaultRenderingPipeline, DepthOfFieldEffectBlurLevel } from "@babylonjs/core";
+import { useScene } from "reactylon";
+import { 
+  DefaultRenderingPipeline,  DepthOfFieldEffectBlurLevel } from "@babylonjs/core";
 import { QualityLevel } from "../../../graphics";
 
 export const PostProcessEffects = ({ quality }: { quality: QualityLevel }) => {
