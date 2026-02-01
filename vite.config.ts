@@ -37,16 +37,7 @@ export default defineConfig({
               // React ecosystem
               react: ["react", "react-dom"],
               // UI libraries
-              ui: [
-                "@radix-ui/react-dialog",
-                "@radix-ui/react-dropdown-menu",
-                "@radix-ui/react-slider",
-                "@radix-ui/react-switch",
-                "@radix-ui/react-tabs",
-                "@radix-ui/react-tooltip",
-                "framer-motion",
-                "lucide-react",
-              ],
+              ui: ["framer-motion", "lucide-react", "animejs"],
               // Game engine (ECS + YUKA)
               engine: ["miniplex", "miniplex-react", "yuka"],
             },
