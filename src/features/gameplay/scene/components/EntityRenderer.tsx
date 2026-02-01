@@ -1,5 +1,5 @@
 /**
- * EntityRenderer - Renders a single ECS entity as a 3D model with animations.
+ * EntityRenderer - Renders a single ECS entity as a 3D model with animations and Physics.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -13,7 +13,10 @@ import {
   PBRMaterial,
   StandardMaterial,
   Color3,
-  Mesh
+  Mesh,
+  PhysicsAggregate,
+  PhysicsShapeType,
+  PhysicsMotionType
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
@@ -33,9 +36,10 @@ export const EntityRenderer = ({ entity }: EntityRendererProps) => {
   const meshRef = useRef<AbstractMesh | null>(null);
   const loadedModelRef = useRef<ISceneLoaderAsyncResult | null>(null);
   const previousModelRef = useRef<string | null>(null);
+  const aggregateRef = useRef<PhysicsAggregate | null>(null);
+  const lastMotionType = useRef<PhysicsMotionType>(PhysicsMotionType.DYNAMIC);
 
   const position = entity.position || Vector3.Zero();
-  const velocity = entity.velocity || Vector3.Zero();
   const scale = entity.scale || new Vector3(1, 1, 1);
   const rotation = entity.modelRotation || Vector3.Zero(); 
 
@@ -43,6 +47,10 @@ export const EntityRenderer = ({ entity }: EntityRendererProps) => {
     if (!scene || !entity.model || !entity.id) return;
 
     if (loadedModelRef.current) {
+      if (aggregateRef.current) {
+        aggregateRef.current.dispose();
+        aggregateRef.current = null;
+      }
       unregisterEntityAnimations(entity.id);
       for (const mesh of loadedModelRef.current.meshes) {
         mesh.dispose();
@@ -79,6 +87,7 @@ export const EntityRenderer = ({ entity }: EntityRendererProps) => {
         rootMesh.rotation = rotation.clone();
       }
 
+      // ... Material / Shadow logic (kept same) ...
       let skinTexture: Texture | null = null;
       if (entity.skinTexture) {
         try {
@@ -89,16 +98,13 @@ export const EntityRenderer = ({ entity }: EntityRendererProps) => {
       }
 
       const shadowGenerator = (window as any).MAIN_SHADOW_GENERATOR;
-      
       result.meshes.forEach((mesh) => {
         if (mesh instanceof Mesh) {
           mesh.useVertexColors = !skinTexture;
-          
           if (shadowGenerator && mesh.name !== "__root__") {
             shadowGenerator.addShadowCaster(mesh, true);
           }
         }
-
         if (mesh.material) {
           if (skinTexture) {
              if (mesh.material instanceof PBRMaterial) {
@@ -109,25 +115,22 @@ export const EntityRenderer = ({ entity }: EntityRendererProps) => {
                 mesh.material.diffuseColor = Color3.White();
              }
           }
-
           if (mesh.material instanceof PBRMaterial) {
             mesh.material.metallicF0Factor = 0;
             mesh.material.metallic = 0;
             mesh.material.roughness = 0.8;
-            
             if (scene.environmentTexture) {
               mesh.material.reflectionTexture = scene.environmentTexture;
               (mesh.material as any).reflectionIntensity = 0.5; 
             }
-
             mesh.material.albedoColor = Color3.White();
-
           } else if (mesh.material instanceof StandardMaterial) {
             mesh.material.diffuseColor = Color3.White();
           }
         }
       });
 
+      // Animation Registration (kept same)
       if (result.animationGroups.length > 0 && entity.id) {
         const availableAnimations = registerEntityAnimations(
           entity.id,
@@ -147,6 +150,24 @@ export const EntityRenderer = ({ entity }: EntityRendererProps) => {
           });
         }
       }
+
+      // --- PHYSICS INTEGRATION ---
+      if (scene.getPhysicsEngine()) {
+         const isKinematic = entity.tag?.type === 'player' || !!entity.stacked || !!entity.banking;
+         const motionType = isKinematic ? PhysicsMotionType.KINEMATIC : PhysicsMotionType.DYNAMIC;
+         lastMotionType.current = motionType;
+
+         const agg = new PhysicsAggregate(
+            rootMesh,
+            PhysicsShapeType.BOX, // Box is good for stacking
+            { mass: 1, restitution: 0.1, friction: 0.8 },
+            scene
+         );
+         agg.body.setMotionType(motionType);
+         agg.body.setMassProperties({ inertia: Vector3.Zero() }); // Lock rotation
+         aggregateRef.current = agg;
+      }
+
     } catch (error) {
       console.error(`Failed to load model ${entity.model}:`, error);
     }
@@ -162,31 +183,53 @@ export const EntityRenderer = ({ entity }: EntityRendererProps) => {
     if (!scene) return;
 
     const observer = scene.onBeforeRenderObservable.add(() => {
-      if (meshRef.current && entity.position) {
-        meshRef.current.position.copyFrom(entity.position);
-        
-        if (entity.scale) {
-          meshRef.current.scaling.copyFrom(entity.scale);
-        }
+      if (!meshRef.current || !entity.position) return;
 
-        if (entity.tag?.type === "player" && entity.velocity) {
-          if (Math.abs(entity.velocity.x) > 0.1) {
-            const targetRotation = entity.velocity.x > 0 ? Math.PI / 2 : -Math.PI / 2;
-            meshRef.current.rotation.y = Vector3.Lerp(
-                new Vector3(0, meshRef.current.rotation.y, 0),
-                new Vector3(0, targetRotation, 0),
-                0.2
-            ).y;
-          } else {
-             meshRef.current.rotation.y = Vector3.Lerp(
-                new Vector3(0, meshRef.current.rotation.y, 0),
-                new Vector3(0, Math.PI, 0),
-                0.1
-            ).y;
+      const isKinematic = entity.tag?.type === 'player' || !!entity.stacked || !!entity.banking;
+      const desiredType = isKinematic ? PhysicsMotionType.KINEMATIC : PhysicsMotionType.DYNAMIC;
+
+      // Update Motion Type if changed
+      if (aggregateRef.current && lastMotionType.current !== desiredType) {
+          aggregateRef.current.body.setMotionType(desiredType);
+          lastMotionType.current = desiredType;
+          // If switching to Kinematic, reset velocity
+          if (desiredType === PhysicsMotionType.KINEMATIC) {
+              aggregateRef.current.body.setLinearVelocity(Vector3.Zero());
+              aggregateRef.current.body.setAngularVelocity(Vector3.Zero());
           }
-        } else if (entity.modelRotation) {
-           meshRef.current.rotation.copyFrom(entity.modelRotation);
-        }
+      }
+
+      // Sync Logic
+      if (desiredType === PhysicsMotionType.KINEMATIC) {
+          // ECS -> Mesh (Physics follows)
+          meshRef.current.position.copyFrom(entity.position);
+          
+          if (entity.tag?.type === "player" && entity.velocity) {
+             // Rotate player based on velocity (Visual only)
+             if (Math.abs(entity.velocity.x) > 0.1) {
+                const targetRotation = entity.velocity.x > 0 ? Math.PI / 2 : -Math.PI / 2;
+                meshRef.current.rotation.y = Vector3.Lerp(
+                    new Vector3(0, meshRef.current.rotation.y, 0),
+                    new Vector3(0, targetRotation, 0),
+                    0.2
+                ).y;
+             } else {
+                 meshRef.current.rotation.y = Vector3.Lerp(
+                    new Vector3(0, meshRef.current.rotation.y, 0),
+                    new Vector3(0, Math.PI, 0),
+                    0.1
+                ).y;
+             }
+          } else if (entity.modelRotation) {
+             meshRef.current.rotation.copyFrom(entity.modelRotation);
+          }
+      } else {
+          // DYNAMIC: Physics drives Mesh -> Sync Mesh to ECS
+          // We must update entity.position so game logic (collisions) works
+          entity.position.copyFrom(meshRef.current.position);
+          if (entity.rotation) {
+             entity.rotation.copyFrom(meshRef.current.rotationQuaternion?.toEulerAngles() || meshRef.current.rotation);
+          }
       }
     });
 
@@ -197,10 +240,12 @@ export const EntityRenderer = ({ entity }: EntityRendererProps) => {
 
   useEffect(() => {
     return () => {
+      if (aggregateRef.current) {
+        aggregateRef.current.dispose();
+      }
       if (entity.id) {
         unregisterEntityAnimations(entity.id);
       }
-
       if (loadedModelRef.current) {
         for (const mesh of loadedModelRef.current.meshes) {
           mesh.dispose();

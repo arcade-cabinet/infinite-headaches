@@ -21,12 +21,11 @@ test('Full Game Flow: Menu -> Start -> Gameplay', async ({ page }) => {
   const { width, height } = page.viewportSize() || { width: 1280, height: 720 };
   await page.mouse.click(width / 2, height / 2);
 
-  // 3. Verify Menu
-  // Use regex because of potential line breaks on mobile/different screen sizes
-  await expect(page.getByText(/HOMESTEAD\s+HEADACHES/i)).toBeVisible({ timeout: 20000 });
+  // 3. Verify Menu (Wait for API)
+  await page.waitForFunction(() => (window as any).GAME_MENU, undefined, { timeout: 20000 });
 
   // 4. Start New Game
-  await page.getByText('NEW GAME').click();
+  await page.evaluate(() => (window as any).GAME_MENU.clickPlay());
 
   // 5. Mode Select
   await expect(page.getByText(/SELECT MODE/i)).toBeVisible();

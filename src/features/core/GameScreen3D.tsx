@@ -1,6 +1,6 @@
 /**
  * GameScreen3D - Pure Babylon.js game screen
- * Manages Scene transitions (Splash -> Menu -> Game)
+ * Manages Scene transitions and 3D Menu integration
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -8,21 +8,26 @@ import { Engine } from "reactylon/web";
 import { type Achievement, checkAchievements, loadStats, saveStats } from "@/game/achievements";
 import { AchievementToastList } from "@/game/components/AchievementToast";
 import { GameStyles } from "@/game/components/GameStyles";
-import { MainMenuBackground } from "@/game/components/MainMenuBackground";
 import { CaptureBallButton } from "@/game/components/CaptureBallButton";
 import { ScoreDisplay } from "@/game/components/ScoreDisplay";
 import { hasCompletedTutorial, Tutorial } from "@/game/components/Tutorial";
 import { LoadingScreen } from "@/game/components/LoadingScreen";
 import { PerfectIndicator } from "@/game/components/PerfectIndicator";
+import { ModeSelect } from "@/game/components/ModeSelect";
+import { SettingsModal } from "@/game/components/SettingsModal";
+import { UpgradeShop } from "@/game/components/UpgradeShop";
+import { HelpModal } from "@/game/components/HelpModal";
+import { CharacterSelect } from "@/features/menu/CharacterSelect";
+
 import { useGameLogic } from "@/game/hooks/useGameLogic";
 import { useHighScore } from "@/game/hooks/useHighScore";
 import { useResponsiveScale } from "@/game/hooks/useResponsiveScale";
 import { checkModeUnlocks, type GameModeType, saveUnlockedModes } from "@/game/modes/GameMode";
 import { addCoins, calculateCoinsFromScore } from "@/game/progression/Upgrades";
 import { GameOverScreen } from "@/features/gameplay/GameOverScreen";
-import { MainMenu } from "@/features/menu/MainMenu";
 import { GameScene } from "@/features/gameplay/scene/GameScene";
 import { SplashScene } from "@/features/splash/SplashScene";
+import { MainMenu3D } from "@/features/menu/MainMenu3D";
 import { audioManager } from "@/game/audio";
 import { useGraphics } from "@/graphics";
 
@@ -48,6 +53,13 @@ export function GameScreen3D() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
   
+  // Menu Modals
+  const [showShop, setShowShop] = useState(false);
+  const [showModes, setShowModes] = useState(false);
+  const [showCharacterSelect, setShowCharacterSelect] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStatus, setLoadingStatus] = useState("Initializing...");
   
@@ -181,18 +193,28 @@ export function GameScreen3D() {
     return () => window.removeEventListener("resize", handleResize);
   }, [setScreenDimensions]);
 
-  const handlePlay = useCallback(
-    (mode: GameModeType, characterId: "farmer_john" | "farmer_mary") => {
-      setSelectedCharacter(characterId);
-      setCurrentMode(mode);
-      if (!hasCompletedTutorial()) {
+  // Menu Callbacks
+  const handleNewGameClick = useCallback(() => setShowModes(true), []);
+  const handleUpgradesClick = useCallback(() => setShowShop(true), []);
+  const handleSettingsClick = useCallback(() => setShowSettings(true), []);
+  const handleHelpClick = useCallback(() => setShowHelp(true), []);
+
+  const handleSelectMode = useCallback((mode: GameModeType) => {
+    setCurrentMode(mode);
+    setShowModes(false);
+    setShowCharacterSelect(true);
+  }, []);
+
+  const handleSelectCharacter = useCallback((charId: string) => {
+    setSelectedCharacter(charId as "farmer_john" | "farmer_mary");
+    setShowCharacterSelect(false);
+    
+    if (!hasCompletedTutorial()) {
         setShowTutorial(true);
         return;
-      }
-      setScreen("loading");
-    },
-    []
-  );
+    }
+    setScreen("loading");
+  }, []);
 
   const handleTutorialComplete = useCallback(() => {
     setShowTutorial(false);
@@ -236,14 +258,12 @@ export function GameScreen3D() {
     onDragEnd: handlePointerUp,
   };
 
-  const showGameScene = screen === "playing" || screen === "loading";
+  // Render GameScene for Menu, Loading, Playing (keeps context alive)
+  const showGameScene = screen === "menu" || screen === "loading" || screen === "playing" || screen === "gameover";
 
   return (
     <div className="fixed inset-0 overflow-hidden select-none touch-none no-zoom safe-area-inset">
       <GameStyles />
-
-      {/* Background for Menu/GameOver */}
-      {(screen === "menu" || screen === "gameover" || screen === "loading") && <MainMenuBackground />}
 
       {/* Splash Scene Engine */}
       {screen === "splash" && (
@@ -257,7 +277,7 @@ export function GameScreen3D() {
         </div>
       )}
 
-      {/* Game Scene Engine */}
+      {/* Game Scene Engine (Persistent) */}
       {showGameScene && (
         <div className="absolute inset-0" style={{ zIndex: 1 }}>
           <Engine 
@@ -267,8 +287,17 @@ export function GameScreen3D() {
             <GameScene
               inputCallbacks={inputCallbacks}
               inputEnabled={!isPaused && screen === "playing"}
-              showGameplayElements={true}
-            />
+              showGameplayElements={screen === "playing"}
+            >
+                {screen === "menu" && (
+                    <MainMenu3D 
+                        onPlay={handleNewGameClick}
+                        onUpgrades={handleUpgradesClick}
+                        onSettings={handleSettingsClick}
+                        highScore={highScore}
+                    />
+                )}
+            </GameScene>
           </Engine>
         </div>
       )}
@@ -302,8 +331,8 @@ export function GameScreen3D() {
           </div>
         )}
 
-        {screen === "menu" && <MainMenu onPlay={handlePlay} highScore={highScore} />}
-
+        {/* Note: MainMenu (2D) removed, replaced by MainMenu3D inside Scene */}
+        
         {screen === "gameover" && (
           <GameOverScreen
             score={finalScore}
@@ -315,6 +344,26 @@ export function GameScreen3D() {
             onMainMenu={handleMainMenu}
           />
         )}
+      </div>
+      
+      {/* Modals (Pointer Events Auto) */}
+      <div className="absolute inset-0 z-30 pointer-events-none flex justify-center items-center">
+          {showShop && <UpgradeShop onClose={() => setShowShop(false)} />}
+          
+          {showModes && (
+            <ModeSelect onSelectMode={handleSelectMode} onClose={() => setShowModes(false)} />
+          )}
+
+          {showCharacterSelect && (
+            <CharacterSelect
+              onSelect={handleSelectCharacter}
+              onBack={() => setShowCharacterSelect(false)}
+            />
+          )}
+
+          {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+
+          {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       </div>
 
       {screen === "playing" && (

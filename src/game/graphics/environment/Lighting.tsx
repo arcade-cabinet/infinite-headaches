@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useScene } from "reactylon";
 import { 
   Vector3, 
@@ -10,6 +10,7 @@ import { QualityLevel } from "../../../graphics";
 
 export const Lighting = ({ quality }: { quality: QualityLevel }) => {
   const scene = useScene();
+  const [light, setLight] = useState<DirectionalLight | null>(null);
   const shadowRef = useRef<ShadowGenerator>(null);
 
   useEffect(() => {
@@ -44,10 +45,7 @@ export const Lighting = ({ quality }: { quality: QualityLevel }) => {
         (window as any).MAIN_SHADOW_GENERATOR = shadowRef.current;
     }
     return () => { delete (window as any).MAIN_SHADOW_GENERATOR; }
-  }, [shadowRef.current]); // React to ref assignment?
-  // Refs don't trigger re-render. We need a callback ref or simple effect if component mounts once.
-  // shadowRef.current will be set when <shadowGenerator> mounts.
-  // Actually, better to use a callback ref or just assume it mounts.
+  }, [shadowRef.current, light]); // Re-run when shadow generator is created
   
   return (
     <>
@@ -56,17 +54,18 @@ export const Lighting = ({ quality }: { quality: QualityLevel }) => {
         direction={new Vector3(-1, -2, -1)}
         position={new Vector3(20, 40, 20)}
         intensity={1.5}
-      >
-        {quality !== "low" && (
-            <shadowGenerator
-                ref={shadowRef}
-                mapSize={1024}
-                useBlurExponentialShadowMap={true}
-                blurKernel={32}
-                transparencyShadow={true}
-            />
-        )}
-      </directionalLight>
+        ref={setLight}
+      />
+      {light && quality !== "low" && (
+        <shadowGenerator
+            light={light}
+            mapSize={1024}
+            useBlurExponentialShadowMap={true}
+            blurKernel={32}
+            transparencyShadow={true}
+            ref={shadowRef}
+        />
+      )}
     </>
   );
 };

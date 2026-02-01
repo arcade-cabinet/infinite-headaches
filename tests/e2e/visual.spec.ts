@@ -16,19 +16,21 @@ test.describe('Visual Regression & Gameplay Logic', () => {
 
     // 2. Skip Splash
     // Wait for 3D Splash Canvas
-    const canvas = page.locator('canvas');
+    const canvas = page.locator('canvas#splash-canvas');
     await expect(canvas).toBeVisible({ timeout: 15000 });
-    const canvasId = await canvas.getAttribute('id');
-    console.log(`Found canvas with ID: ${canvasId}`);
     
     await page.waitForTimeout(1000); 
     
     const { width, height } = page.viewportSize() || { width: 1280, height: 720 };
     await page.mouse.click(width / 2, height / 2);
 
-    // 3. Start Game
-    await expect(page.getByText(/HOMESTEAD\s+HEADACHES/i)).toBeVisible({ timeout: 20000 });
-    await page.getByText('NEW GAME').click();
+    // 3. Start Game (3D Menu)
+    // Wait for GAME_MENU to be exposed
+    await page.waitForFunction(() => (window as any).GAME_MENU, undefined, { timeout: 20000 });
+    
+    // Click New Game via exposed API (since it's 3D GUI)
+    await page.evaluate(() => (window as any).GAME_MENU.clickPlay());
+
     await page.getByText('Endless', { exact: true }).click();
     await page.getByText('SELECT').click();
 

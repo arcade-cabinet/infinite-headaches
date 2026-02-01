@@ -92,13 +92,16 @@ export interface GameSceneProps {
   inputCallbacks: InputCallbacks;
   inputEnabled: boolean;
   showGameplayElements?: boolean;
+  children?: React.ReactNode;
 }
 
 export const GameScene = ({
   inputCallbacks,
   inputEnabled,
   showGameplayElements = false,
-}: GameSceneProps) => {
+  children,
+  ...props // Capture _context and other props injected by Engine
+}: GameSceneProps & { [key: string]: any }) => {
   const bucket = useEntities(world);
   const entities = bucket?.entities ?? [];
   const { settings } = useGraphics();
@@ -115,11 +118,13 @@ export const GameScene = ({
     })();
   }, []);
 
-  if (!havokPlugin) return null; // Or visual loading placeholder
+  if (!havokPlugin) return null;
 
   return (
     <Scene 
+        {...props} // Pass _context to Scene
         onSceneReady={(scene) => { scene.clearColor = new Color4(0.5, 0.8, 1.0, 1); }}
+        isGui3DManager={true}
         physicsOptions={{
             plugin: havokPlugin,
             gravity: new Vector3(0, -9.81, 0)
@@ -132,6 +137,7 @@ export const GameScene = ({
         inputEnabled={inputEnabled}
         showGameplayElements={showGameplayElements}
       />
+      {children}
     </Scene>
   );
 };

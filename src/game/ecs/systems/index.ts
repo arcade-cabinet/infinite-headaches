@@ -158,7 +158,8 @@ export function runAllSystems(
   callbacks?: AllSystemsCallbacks
 ): void {
   // 1. Movement (applies velocity to position)
-  _MovementSystem(deltaTime / 1000); // Convert to seconds
+  // Disabled for Havok Physics integration - Physics engine handles movement
+  // _MovementSystem(deltaTime / 1000); // Convert to seconds
 
   // 2. Wobble physics
   _WobbleSystem(deltaTime / 1000);

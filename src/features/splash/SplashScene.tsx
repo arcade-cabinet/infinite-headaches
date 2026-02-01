@@ -106,9 +106,9 @@ const SplashContent = ({ onComplete }: { onComplete: () => void }) => {
   return <freeCamera name="splashCam" position={Vector3.Zero()} />;
 };
 
-export const SplashScene = ({ onComplete }: SplashSceneProps) => {
+export const SplashScene = ({ onComplete, ...props }: SplashSceneProps & { [key: string]: any }) => {
   return (
-    <Scene onSceneReady={(scene) => { scene.clearColor = new Color4(0, 0, 0, 1); }}>
+    <Scene {...props} onSceneReady={(scene) => { scene.clearColor = new Color4(0, 0, 0, 1); }}>
       <SplashContent onComplete={onComplete} />
     </Scene>
   );
