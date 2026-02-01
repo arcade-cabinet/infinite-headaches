@@ -111,6 +111,11 @@ async function generateVideo(
         const apiKey = process.env.GEMINI_API_KEY;
         const videoUrl = `${videoUri}&key=${apiKey}`;
         const response = await fetch(videoUrl);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to download video: ${response.status} ${response.statusText}`);
+        }
+
         const videoBuffer = Buffer.from(await response.arrayBuffer());
 
         // Save to file
@@ -145,7 +150,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`API Key: ${apiKey.slice(0, 8)}...${apiKey.slice(-4)}`);
+  console.log(`API Key: Provided`);
 
   // Parse args
   const args = process.argv.slice(2);
@@ -192,4 +197,7 @@ async function main() {
   process.exit(allSuccess ? 0 : 1);
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});

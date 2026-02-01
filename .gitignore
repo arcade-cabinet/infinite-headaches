@@ -31,4 +31,22 @@ FarmAnimals_v1.1/
 
 # Gradle
 
+
+
 **/.gradle/
+
+
+
+
+
+
+
+# Electron web build
+
+
+
+electron/app/
+
+
+
+

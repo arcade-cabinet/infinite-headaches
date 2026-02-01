@@ -102,6 +102,8 @@ appId: web
       console.log('Bank correctly hidden:', output.bankCorrectlyHidden);
     }
 
+- assertTrue: ${output.bankCorrectlyHidden == true}
+
 - takeScreenshot: bank-01-initial-no-bank-button
 
 # ============================================================
