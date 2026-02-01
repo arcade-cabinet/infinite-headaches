@@ -273,6 +273,7 @@ interface GameSceneContentProps {
   inputEnabled: boolean;
   screenWidth: number;
   screenHeight: number;
+  showGameplayElements: boolean;
 }
 
 const GameSceneContent = ({
@@ -283,6 +284,7 @@ const GameSceneContent = ({
   inputEnabled,
   screenWidth,
   screenHeight,
+  showGameplayElements,
 }: GameSceneContentProps) => {
   const renderSettings = useRenderSettings();
 
@@ -310,13 +312,15 @@ const GameSceneContent = ({
         particleCount={tornadoParticles}
       />
 
-      {/* Game Zones (floor line, bank area) */}
-      <GameZones
-        floorY={-2}
-        bankZoneX={9}
-        screenWidth={screenWidth}
-        screenHeight={screenHeight}
-      />
+      {/* Game Zones (floor line, bank area) - only during gameplay */}
+      {showGameplayElements && (
+        <GameZones
+          floorY={-2}
+          bankZoneX={9}
+          screenWidth={screenWidth}
+          screenHeight={screenHeight}
+        />
+      )}
 
       {/* ECS Systems */}
       <GameSystems />
@@ -364,12 +368,15 @@ interface GameScene3DProps {
   inputCallbacks: InputCallbacks;
   inputEnabled: boolean;
   stormIntensity?: number;
+  /** Show gameplay elements like bank zone, floor line (false for menu) */
+  showGameplayElements?: boolean;
 }
 
 export const GameScene3D = ({
   inputCallbacks,
   inputEnabled,
   stormIntensity = 0.4,
+  showGameplayElements = false,
 }: GameScene3DProps) => {
   const bucket = useEntities(world);
   const entities = bucket?.entities ?? [];
@@ -409,6 +416,7 @@ export const GameScene3D = ({
             inputEnabled={inputEnabled}
             screenWidth={screenSize.width}
             screenHeight={screenSize.height}
+            showGameplayElements={showGameplayElements}
           />
         </Scene>
       </Engine>

@@ -267,6 +267,7 @@ export function GameScreen3D() {
           inputCallbacks={inputCallbacks}
           inputEnabled={screen === "playing" && !isPaused}
           stormIntensity={stormIntensity}
+          showGameplayElements={screen === "playing"}
         />
       </div>
 
