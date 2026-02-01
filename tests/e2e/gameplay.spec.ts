@@ -15,7 +15,9 @@ test('Full Game Flow: Menu -> Start -> Gameplay', async ({ page }) => {
   });
 
   // 2. Skip Splash Screen (Wait for listener to be active)
-  await page.waitForTimeout(2000);
+  await expect(page.locator('canvas#splash-canvas')).toBeVisible({ timeout: 15000 });
+  await page.waitForTimeout(1000);
+  
   const { width, height } = page.viewportSize() || { width: 1280, height: 720 };
   await page.mouse.click(width / 2, height / 2);
 

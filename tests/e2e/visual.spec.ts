@@ -15,7 +15,10 @@ test.describe('Visual Regression & Gameplay Logic', () => {
     });
 
     // 2. Skip Splash
-    await page.waitForTimeout(2000);
+    // Wait for 3D Splash Canvas
+    await expect(page.locator('canvas#splash-canvas')).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(1000); 
+    
     const { width, height } = page.viewportSize() || { width: 1280, height: 720 };
     await page.mouse.click(width / 2, height / 2);
 

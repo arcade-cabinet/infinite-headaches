@@ -13,7 +13,10 @@ export default defineConfig({
   plugins: [
     react({
       babel: {
-        plugins: ["styled-jsx/babel", "babel-plugin-reactylon"],
+        plugins: [
+          "styled-jsx/babel", 
+          // ["babel-plugin-reactylon", { sideEffectPaths: [] }] // Disabled due to "sideEffectPaths is not iterable" error
+        ],
       },
     }),
     tailwindcss(),
