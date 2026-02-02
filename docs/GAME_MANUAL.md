@@ -26,13 +26,13 @@
 
 ### Base Animals
 
-| Animal | Weight | Description | Modifiers |
+| Animal | Weight | Scale | Description |
 | :--- | :--- | :--- | :--- |
-| **Cow** | Heavy | The backbone of any stack. Sturdy and reliable. | +20% weight, +10% stability |
-| **Pig** | Normal | Round and bouncy. | Standard stats |
-| **Chicken** | Light | Small and fluttery. | -30% weight, -10% fall speed |
-| **Duck** | Light | The classic farm friend. | -20% weight |
-| **Sheep** | Normal | Fluffy and stable. | +20% stability |
+| **Cow** | 2.0 (Heavy) | 1.15 | The backbone of any stack. Sturdy and reliable. |
+| **Pig** | 1.2 (Medium) | 0.85 | Round and bouncy. |
+| **Chicken** | 0.3 (Light) | 0.5 | Small and fluttery. |
+| **Duck** | 0.5 (Light) | 0.55 | The classic farm friend. |
+| **Sheep** | 1.5 (Medium) | 1.0 | Fluffy and stable. |
 
 ### Special Variants
 
@@ -62,19 +62,23 @@ Your stack is physics-based!
 - **Danger:** If the stack leans too far (turns red), it will topple!
 
 ### The Storm (AI Director)
-The game is watched by an AI Director that adjusts difficulty based on your skill:
-- **Mercy:** If you're struggling, it might slow down or give you a power-up.
-- **Challenge:** If you're playing perfectly, expect wind gusts and faster drops!
+The game is watched by a **DropController** AI that adapts to your skill:
+- **Yahtzee Combos:** Animals are chosen to help you build scoring combos — pairs, three-of-a-kind, full house, straights, and more!
+- **Tornado Indicator:** Watch the twisted funnel tornado at the top of the board — it shows where the next animal will drop. It speeds up and grows when a drop is imminent!
+- **Mercy:** If you're struggling, the AI compensates with helpful animal types and power-ups.
+- **Challenge:** If you're playing perfectly, expect trickier patterns and faster drops!
 
 ---
 
 ## Power-Ups
 
 Catch these falling items to help your farm:
-- **Rare Candy (Pink):** Merges your stack into one "Mega Animal" (more stable!).
-- **Potion (Purple):** Heals 1 Heart.
-- **Great Ball (Blue):** Magnetizes your stack, pulling animals toward it.
-- **X Attack (Orange):** Double points for a short time.
+- **Golden Egg (Gold):** Merges your stack into one "Mega Animal" (more stable!).
+- **Milk Bottle (White):** Restores 1 Heart.
+- **Vitamin (Green):** Increases max hearts by 1.
+- **Lasso (Brown):** Magnetic pull for 5 seconds — animals are drawn toward you!
+- **Coffee (Brown):** Double points for 8 seconds!
+- **Grandma's Pie (Orange):** Full hearts + 3 seconds of invincibility!
 
 ---
 
@@ -82,4 +86,4 @@ Catch these falling items to help your farm:
 - **Catch:** Base points based on height.
 - **Perfect Catch:** Center alignment = 2.5x Points + "Perfect" Sparkles.
 - **Bank:** Secure points + Earn "Bank Bonus".
-- **Lives:** You have 3 Hearts. Dropping an animal or toppling loses a heart.
+- **Lives:** You have 3 Hearts (max 5, can extend to 8). Dropping an animal or toppling loses a heart.

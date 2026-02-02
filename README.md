@@ -36,31 +36,35 @@ Drag your farmer to catch falling farm animals and build the tallest stack possi
 - **Heavy Cow** - Worth more points but destabilizes the stack
 
 ### Power-Ups
-- **Rare Candy** - Merge your entire stack into one mega animal
-- **Potion** - Restore hearts
-- **Great Ball** - Magnetic pull attracts animals toward you
-- **X Attack** - Double points for 8 seconds
-- **Full Restore** - Full heal + temporary invincibility
+- **Golden Egg** - Merge your entire stack into one mega animal
+- **Milk Bottle** - Restore one heart
+- **Vitamin** - Increase max hearts by 1
+- **Lasso** - Magnetic pull attracts animals toward you for 5 seconds
+- **Coffee** - Double points for 8 seconds
+- **Grandma's Pie** - Full heal + 3 seconds of invincibility
 
 ### Intelligent AI Director
-The game features a YUKA-powered AI that adapts to your skill:
+The game features a **DropController** AI that adapts to your skill:
+- **Yahtzee-Aware Drops**: Animals are chosen to help you build combos (pairs, three-of-a-kind, full house, straights, and more)
+- **Fairness Remediation**: After disruptive drops, the AI compensates with helpful types or power-ups
+- **Tornado Indicator**: A procedural twisted funnel tornado patrols the top of the board, showing where the next drop will come from
 - Struggling? The game shows mercy with easier spawns
 - Doing well? Expect more challenging animal patterns
 - Logarithmic difficulty scaling feels fair at all skill levels
 
 ### Nebraska Homestead Theme
 - Barn red, wheat gold, and prairie sky color palette
-- Procedural tornado visual effect that grows with danger
+- Procedural twisted funnel tornado (CreateRibbon mesh + spiral bands + storm debris particles)
 - Dynamic storm atmosphere lighting
 
 ## Tech Stack
 
 - **React 19** + **TypeScript** - Modern UI framework
-- **Babylon.js** via **react-babylonjs** - 3D rendering engine
+- **Babylon.js** via **reactylon** - 3D rendering engine
 - **Miniplex** - Entity Component System (ECS) for game state
 - **Zustand** - UI state management (settings, seeds)
 - **Web Audio API** - Native audio (Kenney assets)
-- **YUKA** - Goal-driven AI for game direction
+- **Custom AI** - DropController with Yahtzee-aware type distribution and adaptive difficulty
 - **Capacitor 8** - Cross-platform native builds
 - **Vite 6** - Lightning-fast builds
 - **Tailwind CSS 4** - Utility-first styling
@@ -92,7 +96,7 @@ pnpm lint:fix
 
 # Run tests
 pnpm test           # Watch mode
-pnpm test:run       # Single run
+pnpm test:run       # Single run (1077 tests, 26 files)
 pnpm test:ui        # Vitest UI
 
 # E2E tests
@@ -139,7 +143,7 @@ public/assets/audio/
 /
 ├── src/
 │   ├── game/                    # Game logic
-│   │   ├── ai/                  # YUKA-powered AI (GameDirector, WobbleGovernor)
+│   │   ├── ai/                  # AI systems (DropController, WobbleGovernor)
 │   │   ├── animals/             # Animal definitions by type
 │   │   │   ├── cow/             # Cow config, components, variants
 │   │   │   ├── chicken/         # Chicken config, components, variants

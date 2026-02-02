@@ -33,9 +33,11 @@ We commit fully to the 3D pipeline.
 - **Asset Flow:** `.fbx` (Source) -> Blender Script (Vertex Color Preservation) -> `.glb` (Runtime).
 - **Transparency:** The 3D scene runs on a transparent background, layered over a separate dynamic background canvas (for sky/tornado effects).
 
-### 3. Reactive & Goal-Driven AI
-- **YUKA AI:** Continues to drive the "Game Director" and "Wobble Governor."
-- **Context:** The AI manages the "Stress Level" of the tornado, adjusting spawn rates and wind forces based on player performance.
+### 3. Adaptive AI Director
+- **DropController:** A unified AI director that manages spawn timing, animal type selection, difficulty, and the tornado drop indicator.
+- **Yahtzee-Aware Drops:** Animals are chosen based on current stack composition, helping players build combos (pairs, three-of-a-kind, full house, straights, flushes) with fairness remediation after disruptive drops.
+- **WobbleGovernor:** Independently manages wobble difficulty scaling based on player skill.
+- **Context:** The AI manages difficulty through 5 competing strategies (build_pressure, release_tension, challenge, mercy, reward), adjusting spawn rates and patterns based on a player model tracking skill, frustration, engagement, and fatigue.
 
 ## Roadmap
 
@@ -75,4 +77,23 @@ We commit fully to the 3D pipeline.
 ### Phase 5: Testing & Quality
 - [x] Maestro E2E test flows for character selection and graphics quality.
 - [x] Multi-LOD graphics testing (high/medium/low).
-- [ ] Full gameplay E2E test coverage.
+- [x] 1077 unit tests across 26 files (AnimationSystem, SpawningSystem, WobbleGovernor, archetypes, components, abilities, responsive scale, DropController, types).
+- [x] DevAPI + PlayerGovernor for automated gameplay observation.
+- [x] Chrome MCP visual verification workflow.
+- [ ] Full gameplay E2E test coverage (Maestro flows for all mechanics).
+
+### Phase 6: AI Director & Drop System (Complete)
+- [x] DropController: Unified AI replacing YUKA-based GameDirector.
+- [x] Yahtzee-aware animal type distribution with fairness remediation.
+- [x] DropIndicatorTornado: Procedural twisted funnel tornado showing next drop position.
+- [x] 5 competing strategies with player model (skill, frustration, engagement, fatigue).
+- [x] Comprehensive unit tests (940 tests across 22 files).
+
+### Phase 7: Playability Fixes & Dev Tooling (Complete)
+- [x] Animal scale rebalance: cow 1.15, pig 0.85, chicken 0.5, duck 0.55, sheep 1.0 (farmer 2.5).
+- [x] Tornado ribbon rewrite: Procedural `CreateRibbon` twisted funnel + 3 spiral bands replacing geometric cone.
+- [x] Entity lifecycle cleanup: Banking/scattering entities auto-removed after animation duration.
+- [x] PlayerGovernor: Yuka-powered AI auto-player with FSM (IDLE/PURSUING/BANKING).
+- [x] DevAPI: `window.__DEV_API__` singleton for runtime debugging and auto-play.
+- [x] Chrome MCP visual verification: Full gameplay verified with AI auto-play.
+- [x] 1077 tests across 26 files.
