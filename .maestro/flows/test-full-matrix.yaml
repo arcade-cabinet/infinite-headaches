@@ -1,0 +1,376 @@
+# Full Matrix Test - All Graphics Quality x All Characters
+# Comprehensive test running through all combinations
+#
+# Test matrix:
+# - Graphics: Low, Medium, High
+# - Characters: Farmer John, Farmer Mary
+#
+# Total: 6 combinations tested
+
+appId: web
+---
+# Open the app
+- openLink: https://homestead-headaches.netlify.app
+
+# Wait for the app to fully load
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 15000
+
+# Verify main menu loaded
+- assertVisible: "HOMESTEAD"
+
+# ============================================================
+# QUALITY: LOW
+# ============================================================
+
+# ========== Set Low Quality ==========
+- tapOn: "SETTINGS"
+- extendedWaitUntil:
+    visible: "Quality Preset"
+    timeout: 3000
+
+- tapOn: "Low"
+- waitForAnimationToEnd
+- tapOn: "DONE"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 3000
+
+# ---------- LOW QUALITY + FARMER JOHN ----------
+- tapOn: "PLAY"
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+# Farmer John is default
+- assertVisible: "Farmer John"
+- tapOn: "SELECT"
+
+# Handle tutorial if present
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.evaluate("//*[contains(text(), 'Got it')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn != null}
+    commands:
+      - tapOn: "Got it"
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+# Enable AutoPlayer
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+
+# Play for ~20 seconds
+- repeat:
+    times: 20
+    commands:
+      - waitForAnimationToEnd
+
+- takeScreenshot: matrix-low-john
+
+# Disable AutoPlayer
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+# Verify no crash
+- assertVisible: "STACK|LV|GAME OVER"
+
+# Return to menu
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 15000
+
+# ---------- LOW QUALITY + FARMER MARY ----------
+- tapOn: "PLAY"
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+# Navigate to Farmer Mary
+- tapOn:
+    text: ">"
+    index: 0
+
+- extendedWaitUntil:
+    visible: "Farmer Mary"
+    timeout: 3000
+
+- tapOn: "SELECT"
+
+# Handle tutorial
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.evaluate("//*[contains(text(), 'Got it')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn != null}
+    commands:
+      - tapOn: "Got it"
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+
+- repeat:
+    times: 20
+    commands:
+      - waitForAnimationToEnd
+
+- takeScreenshot: matrix-low-mary
+
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+- assertVisible: "STACK|LV|GAME OVER"
+
+# Return to menu
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 15000
+
+# ============================================================
+# QUALITY: MEDIUM
+# ============================================================
+
+# ========== Set Medium Quality ==========
+- tapOn: "SETTINGS"
+- extendedWaitUntil:
+    visible: "Quality Preset"
+    timeout: 3000
+
+- tapOn: "Medium"
+- waitForAnimationToEnd
+- tapOn: "DONE"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 3000
+
+# ---------- MEDIUM QUALITY + FARMER JOHN ----------
+- tapOn: "PLAY"
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- assertVisible: "Farmer John"
+- tapOn: "SELECT"
+
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.evaluate("//*[contains(text(), 'Got it')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn != null}
+    commands:
+      - tapOn: "Got it"
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+
+- repeat:
+    times: 20
+    commands:
+      - waitForAnimationToEnd
+
+- takeScreenshot: matrix-medium-john
+
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+- assertVisible: "STACK|LV|GAME OVER"
+
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 15000
+
+# ---------- MEDIUM QUALITY + FARMER MARY ----------
+- tapOn: "PLAY"
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- tapOn:
+    text: ">"
+    index: 0
+
+- extendedWaitUntil:
+    visible: "Farmer Mary"
+    timeout: 3000
+
+- tapOn: "SELECT"
+
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.evaluate("//*[contains(text(), 'Got it')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn != null}
+    commands:
+      - tapOn: "Got it"
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+
+- repeat:
+    times: 20
+    commands:
+      - waitForAnimationToEnd
+
+- takeScreenshot: matrix-medium-mary
+
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+- assertVisible: "STACK|LV|GAME OVER"
+
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 15000
+
+# ============================================================
+# QUALITY: HIGH
+# ============================================================
+
+# ========== Set High Quality ==========
+- tapOn: "SETTINGS"
+- extendedWaitUntil:
+    visible: "Quality Preset"
+    timeout: 3000
+
+- tapOn: "High"
+- waitForAnimationToEnd
+- tapOn: "DONE"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 3000
+
+# ---------- HIGH QUALITY + FARMER JOHN ----------
+- tapOn: "PLAY"
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- assertVisible: "Farmer John"
+- tapOn: "SELECT"
+
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.evaluate("//*[contains(text(), 'Got it')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn != null}
+    commands:
+      - tapOn: "Got it"
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+
+- repeat:
+    times: 20
+    commands:
+      - waitForAnimationToEnd
+
+- takeScreenshot: matrix-high-john
+
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+- assertVisible: "STACK|LV|GAME OVER"
+
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 15000
+
+# ---------- HIGH QUALITY + FARMER MARY ----------
+- tapOn: "PLAY"
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- tapOn:
+    text: ">"
+    index: 0
+
+- extendedWaitUntil:
+    visible: "Farmer Mary"
+    timeout: 3000
+
+- tapOn: "SELECT"
+
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.evaluate("//*[contains(text(), 'Got it')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn != null}
+    commands:
+      - tapOn: "Got it"
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+
+- repeat:
+    times: 20
+    commands:
+      - waitForAnimationToEnd
+
+- takeScreenshot: matrix-high-mary
+
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+- assertVisible: "STACK|LV|GAME OVER"
+
+# ============================================================
+# TEST COMPLETE
+# ============================================================
+
+- takeScreenshot: matrix-test-complete
+
+# Final verification - return to menu
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 15000
+
+- assertVisible: "HOMESTEAD"

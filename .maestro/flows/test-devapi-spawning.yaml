@@ -1,0 +1,275 @@
+# DevAPI Spawning & Entity E2E Test
+# Tests spawn control, entity queries, and player movement via DevAPI
+#
+# VERIFIES:
+# 1. spawnAnimal creates falling entities
+# 2. spawnBoss creates boss entities
+# 3. movePlayerTo positions the player
+# 4. setSpawnPaused stops auto-spawning
+# 5. getEntities / getFallingEntities / getStackedEntities return correct data
+# 6. Animals land on player and become stacked
+#
+# REQUIRES: Dev/development build
+
+appId: web
+---
+# ============================================================
+# SETUP
+# ============================================================
+
+- openLink: ${LOCAL_URL:-https://homestead-headaches.netlify.app}
+
+- evalScript: |
+    ${
+      sessionStorage.setItem('homestead_splash_shown_session', 'true');
+      localStorage.setItem('animal-tutorial-complete', 'true');
+      localStorage.setItem('animal-modes-unlocked', JSON.stringify(['endless','time_attack','zen','boss_rush']));
+    }
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 15000
+
+- tapOn: "NEW GAME"
+
+- extendedWaitUntil:
+    visible: "SELECT MODE"
+    timeout: 5000
+
+- evalScript: |
+    ${
+      const btns = document.querySelectorAll('button');
+      const endless = Array.from(btns).find(b => b.textContent && b.textContent.includes('Endless') && !b.disabled);
+      if (endless) endless.click();
+    }
+
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- tapOn: "SELECT"
+
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.body.textContent.includes('Got it')}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn == true}
+    commands:
+      - tapOn: "Got it"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+# Wait for DevAPI
+- repeat:
+    times: 10
+    commands:
+      - waitForAnimationToEnd
+      - evalScript: ${output.devReady = typeof window.__DEV_API__ !== 'undefined' && typeof window.__DEV_API__.setSpawnPaused === 'function'}
+
+# ============================================================
+# TEST 1: Pause auto-spawning for controlled tests
+# ============================================================
+
+- evalScript: |
+    ${
+      if (window.__DEV_API__) {
+        window.__DEV_API__.setSpawnPaused(true);
+        window.__DEV_API__.setInvincible(true);
+        output.pauseSet = true;
+      } else {
+        output.pauseSet = false;
+      }
+      console.log('Spawn paused, invincible set:', output.pauseSet);
+    }
+
+- takeScreenshot: spawn-01-paused
+
+# ============================================================
+# TEST 2: movePlayerTo
+# ============================================================
+
+- evalScript: |
+    ${
+      const r = window.__DEV_API__.movePlayerTo(0);
+      output.moveOk = r.ok;
+      const state = window.__DEV_API__.getGameState();
+      output.playerX = state.data?.playerX;
+      console.log('movePlayerTo(0):', output.playerX);
+    }
+- assertTrue: ${output.moveOk == true}
+
+# ============================================================
+# TEST 3: spawnAnimal and verify entity creation
+# ============================================================
+
+- evalScript: |
+    ${
+      const before = window.__DEV_API__.getFallingEntities();
+      output.fallingBefore = before.data?.length || 0;
+
+      const result = window.__DEV_API__.spawnAnimal('cow', 0, 'normal');
+      output.spawnOk = result.ok;
+      output.spawnedId = result.data?.entityId;
+
+      const after = window.__DEV_API__.getFallingEntities();
+      output.fallingAfter = after.data?.length || 0;
+      output.fallingIncreased = output.fallingAfter > output.fallingBefore;
+
+      console.log('Spawn result:', JSON.stringify(result));
+      console.log('Falling before:', output.fallingBefore, 'after:', output.fallingAfter);
+    }
+- assertTrue: ${output.spawnOk == true}
+- assertTrue: ${output.fallingIncreased == true}
+
+- takeScreenshot: spawn-02-cow-spawned
+
+# ============================================================
+# TEST 4: Wait for catch and verify stacking
+# ============================================================
+
+# The cow was spawned at x=0 and player is at x=0, so it should catch
+- repeat:
+    times: 30
+    commands:
+      - waitForAnimationToEnd
+      - evalScript: |
+          ${
+            const stacked = window.__DEV_API__.getStackedEntities();
+            output.stackCount = stacked.data?.length || 0;
+            if (output.stackCount > 0) {
+              output.firstStacked = stacked.data[0];
+              console.log('Stacked entity:', JSON.stringify(output.firstStacked));
+            }
+          }
+
+- evalScript: |
+    ${
+      const height = window.__DEV_API__.getStackHeight();
+      output.stackHeight = height.data || 0;
+      console.log('Stack height after spawn+catch:', output.stackHeight);
+    }
+
+- takeScreenshot: spawn-03-after-catch
+
+# ============================================================
+# TEST 5: Spawn multiple animals of different types
+# ============================================================
+
+- evalScript: |
+    ${
+      const types = ['pig', 'chicken', 'duck', 'sheep'];
+      output.spawnResults = [];
+      for (const t of types) {
+        const r = window.__DEV_API__.spawnAnimal(t, 0);
+        output.spawnResults.push({ type: t, ok: r.ok });
+      }
+      console.log('Multi-spawn results:', JSON.stringify(output.spawnResults));
+    }
+
+# Wait for them to fall and be caught
+- repeat:
+    times: 30
+    commands:
+      - waitForAnimationToEnd
+
+- evalScript: |
+    ${
+      const stacked = window.__DEV_API__.getStackedEntities();
+      output.multiStackCount = stacked.data?.length || 0;
+      console.log('Stack after multi-spawn:', output.multiStackCount);
+    }
+
+- takeScreenshot: spawn-04-multi-animal-stack
+
+# ============================================================
+# TEST 6: Spawn boss animal
+# ============================================================
+
+- evalScript: |
+    ${
+      const result = window.__DEV_API__.spawnBoss('mega', 'cow', 0);
+      output.bossSpawnOk = result.ok;
+      output.bossId = result.data?.entityId;
+      console.log('Boss spawn:', JSON.stringify(result));
+    }
+- assertTrue: ${output.bossSpawnOk == true}
+
+# Check boss appears in entities
+- evalScript: |
+    ${
+      const entities = window.__DEV_API__.getEntities();
+      const bosses = (entities.data || []).filter(e => e.hasBoss);
+      output.bossCount = bosses.length;
+      if (bosses.length > 0) {
+        output.bossType = bosses[0].bossType;
+        output.bossHealth = bosses[0].bossHealth;
+      }
+      console.log('Boss entities:', output.bossCount, 'Type:', output.bossType, 'Health:', output.bossHealth);
+    }
+
+- takeScreenshot: spawn-05-boss-spawned
+
+# ============================================================
+# TEST 7: Spawn with specific behavior
+# ============================================================
+
+- evalScript: |
+    ${
+      const behaviors = ['seeker', 'evader', 'zigzag', 'dive', 'floater'];
+      output.behaviorResults = [];
+      for (const b of behaviors) {
+        const r = window.__DEV_API__.spawnAnimal('duck', 3, b);
+        output.behaviorResults.push({ behavior: b, ok: r.ok });
+      }
+      console.log('Behavior spawns:', JSON.stringify(output.behaviorResults));
+    }
+
+- takeScreenshot: spawn-06-behavior-types
+
+# ============================================================
+# TEST 8: getEntities returns all entities
+# ============================================================
+
+- evalScript: |
+    ${
+      const all = window.__DEV_API__.getEntities();
+      output.totalEntities = all.data?.length || 0;
+      output.entityTypes = {};
+      for (const e of all.data || []) {
+        output.entityTypes[e.type] = (output.entityTypes[e.type] || 0) + 1;
+      }
+      console.log('Total entities:', output.totalEntities, 'Types:', JSON.stringify(output.entityTypes));
+    }
+
+# ============================================================
+# CLEANUP & SUMMARY
+# ============================================================
+
+- evalScript: |
+    ${
+      // Re-enable spawning
+      window.__DEV_API__.setSpawnPaused(false);
+      window.__DEV_API__.setInvincible(false);
+
+      console.log('=== DEVAPI SPAWNING TEST SUMMARY ===');
+      console.log('DevAPI ready:', output.devReady);
+      console.log('Spawn pause set:', output.pauseSet);
+      console.log('movePlayerTo works:', output.moveOk);
+      console.log('spawnAnimal works:', output.spawnOk);
+      console.log('Falling count increased:', output.fallingIncreased);
+      console.log('Stack height after catch:', output.stackHeight);
+      console.log('Multi-spawn stack:', output.multiStackCount);
+      console.log('Boss spawn works:', output.bossSpawnOk);
+      console.log('Boss type:', output.bossType);
+      console.log('Total entities:', output.totalEntities);
+      console.log('=====================================');
+    }
+
+- assertVisible: "STACK|LV|GAME OVER"

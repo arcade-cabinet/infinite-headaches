@@ -1,0 +1,193 @@
+/* This is Tailwind 4 CSS file */
+/* Extending Tailwind configuration */
+/* Use shadcn/ui format to extend the configuration */
+/* Add only the styles that your component needs */
+
+/* Nebraska Homestead Theme - Fonts */
+/* Fredoka for headings (playful, rounded) */
+/* Nunito for body text (friendly, readable) */
+
+/* Base imports */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Custom dark variant for targeting dark mode elements */
+@custom-variant dark (&:is(.dark *));
+
+/* CSS variables and theme definitions */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Nebraska Homestead Farm Palette */
+  --color-farm-barn: #b91c1c;
+  --color-farm-barn-light: #f87171;
+  --color-farm-barn-dark: #7f1d1d;
+  --color-farm-wheat: #eab308;
+  --color-farm-wheat-light: #fef9c3;
+  --color-farm-wheat-dark: #a16207;
+  --color-farm-sky: #0ea5e9;
+  --color-farm-pasture: #22c55e;
+  --color-farm-soil: #8b7355;
+  --color-farm-soil-dark: #4a3c30;
+  --color-farm-soil-darkest: #382e25;
+  --color-farm-wood: #a08b64;
+  --color-farm-wood-dark: #554730;
+  --color-farm-wood-border: #6b5a3a;
+  --color-farm-storm: #64748b;
+  --color-farm-storm-dark: #334155;
+  --color-farm-storm-darkest: #1e293b;
+}
+
+/* Light theme variables - Nebraska Homestead */
+:root {
+  --radius: 0.625rem;
+  /* Nebraska Homestead Colors */
+  --barn-red: #b91c1c;
+  --barn-red-dark: #7f1d1d;
+  --barn-red-light: #f87171;
+  --wheat: #eab308;
+  --wheat-light: #fef9c3;
+  --wheat-dark: #a16207;
+  --sky: #0ea5e9;
+  --soil-dark: #382e25;
+  --soil: #4a3c30;
+  --wood: #554730;
+  --wood-light: #6b5a3a;
+  --pasture: #22c55e;
+
+  --background: #382e25;
+  --foreground: #fef9c3;
+  --card: #554730;
+  --card-foreground: #fef9c3;
+  --popover: #554730;
+  --popover-foreground: #fef9c3;
+  --primary: #b91c1c;
+  --primary-foreground: #fef9c3;
+  --secondary: #eab308;
+  --secondary-foreground: #382e25;
+  --muted: #4a3c30;
+  --muted-foreground: #d4c4ac;
+  --accent: #0ea5e9;
+  --accent-foreground: #fef9c3;
+  --destructive: #dc2626;
+  --border: #6b5a3a;
+  --input: #6b5a3a;
+  --ring: #eab308;
+  --chart-1: #b91c1c;
+  --chart-2: #eab308;
+  --chart-3: #0ea5e9;
+  --chart-4: #22c55e;
+  --chart-5: #a08b64;
+  --sidebar: #4a3c30;
+  --sidebar-foreground: #fef9c3;
+  --sidebar-primary: #b91c1c;
+  --sidebar-primary-foreground: #fef9c3;
+  --sidebar-accent: #554730;
+  --sidebar-accent-foreground: #fef9c3;
+  --sidebar-border: #6b5a3a;
+  --sidebar-ring: #eab308;
+}
+
+/* Dark theme variables - Nebraska Homestead (same as light, dark by default) */
+.dark {
+  --background: #382e25;
+  --foreground: #fef9c3;
+  --card: #554730;
+  --card-foreground: #fef9c3;
+  --popover: #554730;
+  --popover-foreground: #fef9c3;
+  --primary: #b91c1c;
+  --primary-foreground: #fef9c3;
+  --secondary: #eab308;
+  --secondary-foreground: #382e25;
+  --muted: #4a3c30;
+  --muted-foreground: #d4c4ac;
+  --accent: #0ea5e9;
+  --accent-foreground: #fef9c3;
+  --destructive: #dc2626;
+  --border: #6b5a3a;
+  --input: #6b5a3a;
+  --ring: #eab308;
+  --chart-1: #b91c1c;
+  --chart-2: #eab308;
+  --chart-3: #0ea5e9;
+  --chart-4: #22c55e;
+  --chart-5: #a08b64;
+  --sidebar: #4a3c30;
+  --sidebar-foreground: #fef9c3;
+  --sidebar-primary: #b91c1c;
+  --sidebar-primary-foreground: #fef9c3;
+  --sidebar-accent: #554730;
+  --sidebar-accent-foreground: #fef9c3;
+  --sidebar-border: #6b5a3a;
+  --sidebar-ring: #eab308;
+}
+
+/* Tailwind base styles */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    user-select: none;
+    touch-action: none;
+    background-color: var(--background);
+  }
+  #root {
+    width: 100%;
+    height: 100%;
+  }
+  canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    outline: none;
+    touch-action: none;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Nunito', system-ui, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6, .game-font {
+    font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+  }
+}

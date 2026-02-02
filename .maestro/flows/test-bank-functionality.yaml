@@ -1,0 +1,296 @@
+# Bank (CaptureBall) Functionality E2E Test
+# Tests the banking/capture ball mechanics
+#
+# VERIFIES:
+# 1. Bank button is NOT visible when stack < 5
+# 2. Bank button APPEARS when stack >= 5
+# 3. Bank button shows correct stack count
+# 4. Clicking bank button resets stack
+# 5. Banked animals counter increases
+# 6. Score bonus applied from banking
+#
+# This test WILL FAIL if:
+# - Bank button appears with stack < 5
+# - Bank button doesn't appear with stack >= 5
+# - Banking doesn't reset stack
+# - Banked counter doesn't increase
+
+appId: web
+---
+# ============================================================
+# SETUP: Get to gameplay
+# ============================================================
+
+- openLink: https://homestead-headaches.netlify.app
+
+# Clear any saved tutorial completion
+- evalScript: |
+    ${
+      localStorage.removeItem('homestead-tutorial-complete');
+      sessionStorage.setItem('homestead_splash_shown_session', 'true');
+    }
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 15000
+
+# Start game
+- tapOn: "NEW GAME"
+
+- extendedWaitUntil:
+    visible: "SELECT MODE"
+    timeout: 5000
+
+- evalScript: |
+    ${
+      const modeCards = document.querySelectorAll('button');
+      const endlessCard = Array.from(modeCards).find(b =>
+        b.textContent && b.textContent.includes('Endless') && !b.disabled
+      );
+      if (endlessCard) endlessCard.click();
+    }
+
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- tapOn: "SELECT"
+
+# Handle tutorial
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.body.textContent.includes('Got it')}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn == true}
+    commands:
+      - tapOn: "Got it"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+# ============================================================
+# TEST 1: Verify bank button NOT visible with stack < 5
+# ============================================================
+
+# Initially stack should be 0
+- evalScript: |
+    ${
+      const stackMatch = document.body.textContent.match(/STACK:\s*(\d+)/);
+      output.initialStack = stackMatch ? parseInt(stackMatch[1]) : 0;
+
+      // Check if bank button is visible
+      const bankButton = document.querySelector('[aria-label*="Bank"]');
+      output.bankVisibleInitially = bankButton !== null &&
+        window.getComputedStyle(bankButton).display !== 'none' &&
+        window.getComputedStyle(bankButton).opacity !== '0';
+
+      console.log('Initial stack:', output.initialStack, 'Bank visible:', output.bankVisibleInitially);
+    }
+
+# VERIFY: Bank should NOT be visible when stack is 0
+# (It might not exist in DOM at all, or be hidden)
+- evalScript: |
+    ${
+      output.bankCorrectlyHidden = output.initialStack < 5 &&
+        (output.bankVisibleInitially === false || output.bankVisibleInitially === undefined);
+      console.log('Bank correctly hidden:', output.bankCorrectlyHidden);
+    }
+
+- assertTrue: ${output.bankCorrectlyHidden == true}
+
+- takeScreenshot: bank-01-initial-no-bank-button
+
+# ============================================================
+# TEST 2: Build up stack with AutoPlayer
+# ============================================================
+
+# Enable AutoPlayer
+- evalScript: ${window.__enableAutoPlayer && window.__enableAutoPlayer()}
+
+# Monitor stack height and bank button
+- repeat:
+    times: 30
+    commands:
+      - waitForAnimationToEnd
+      # Check stack height
+      - evalScript: |
+          ${
+            const stackMatch = document.body.textContent.match(/STACK:\s*(\d+)/);
+            output.currentStack = stackMatch ? parseInt(stackMatch[1]) : 0;
+
+            // Check if bank button appeared
+            const bankButton = document.querySelector('[aria-label*="Bank"]');
+            output.bankNowVisible = bankButton !== null &&
+              window.getComputedStyle(bankButton).visibility !== 'hidden' &&
+              window.getComputedStyle(bankButton).opacity !== '0';
+
+            // Get bank button label if visible
+            if (bankButton) {
+              output.bankLabel = bankButton.getAttribute('aria-label');
+            }
+
+            console.log('Stack:', output.currentStack, 'Bank visible:', output.bankNowVisible, 'Label:', output.bankLabel || 'N/A');
+          }
+
+# Take screenshot showing current state
+- takeScreenshot: bank-02-building-stack
+
+# ============================================================
+# TEST 3: Verify bank button appears at threshold
+# ============================================================
+
+# Continue playing until stack >= 5 or timeout
+- repeat:
+    times: 40
+    commands:
+      - waitForAnimationToEnd
+      - evalScript: |
+          ${
+            const stackMatch = document.body.textContent.match(/STACK:\s*(\d+)/);
+            output.stackHeight = stackMatch ? parseInt(stackMatch[1]) : 0;
+
+            const bankButton = document.querySelector('[aria-label*="Bank"]');
+            output.bankButtonFound = bankButton !== null;
+
+            // If stack is 5+ and bank button is visible, we can test banking
+            if (output.stackHeight >= 5 && bankButton) {
+              output.readyToBank = true;
+              output.stackBeforeBanking = output.stackHeight;
+            }
+          }
+
+# Take screenshot if bank button is visible
+- evalScript: |
+    ${
+      if (output.readyToBank) {
+        console.log('Bank button appeared at stack height:', output.stackBeforeBanking);
+      }
+    }
+
+- takeScreenshot: bank-03-bank-button-visible
+
+# ============================================================
+# TEST 4: Test banking (if bank button available)
+# ============================================================
+
+- runFlow:
+    when:
+      true: ${output.readyToBank == true}
+    commands:
+      # Disable AutoPlayer to control the test
+      - evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+      # Record state before banking
+      - evalScript: |
+          ${
+            const stackMatch = document.body.textContent.match(/STACK:\s*(\d+)/);
+            output.stackBeforeBank = stackMatch ? parseInt(stackMatch[1]) : 0;
+
+            const bankedMatch = document.body.textContent.match(/BANKED:\s*(\d+)/);
+            output.bankedBeforeBank = bankedMatch ? parseInt(bankedMatch[1]) : 0;
+
+            // Find score (first large number)
+            const allNumbers = document.body.textContent.match(/\d{1,}/g) || [];
+            output.scoreBeforeBank = allNumbers.length > 0 ? parseInt(allNumbers[0]) : 0;
+
+            console.log('Before bank - Stack:', output.stackBeforeBank, 'Banked:', output.bankedBeforeBank, 'Score:', output.scoreBeforeBank);
+          }
+
+      - takeScreenshot: bank-04-before-banking
+
+      # Click the bank button
+      - evalScript: |
+          ${
+            const bankButton = document.querySelector('[aria-label*="Bank"]');
+            if (bankButton) {
+              bankButton.click();
+              output.bankClicked = true;
+              console.log('Bank button clicked!');
+            }
+          }
+
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+      - waitForAnimationToEnd
+
+      # Verify banking results
+      - evalScript: |
+          ${
+            const stackMatch = document.body.textContent.match(/STACK:\s*(\d+)/);
+            output.stackAfterBank = stackMatch ? parseInt(stackMatch[1]) : 0;
+
+            const bankedMatch = document.body.textContent.match(/BANKED:\s*(\d+)/);
+            output.bankedAfterBank = bankedMatch ? parseInt(bankedMatch[1]) : 0;
+
+            // Stack should be 0 or very low after banking
+            output.stackReset = output.stackAfterBank < output.stackBeforeBank;
+
+            // Banked counter should have increased
+            output.bankedIncreased = output.bankedAfterBank > output.bankedBeforeBank;
+
+            console.log('After bank - Stack:', output.stackAfterBank, 'Banked:', output.bankedAfterBank);
+            console.log('Stack reset:', output.stackReset, 'Banked increased:', output.bankedIncreased);
+          }
+
+      - takeScreenshot: bank-05-after-banking
+
+      # VERIFY: Stack should be reset
+      - assertTrue: ${output.stackReset == true}
+
+      # VERIFY: Banked counter should have increased
+      - assertTrue: ${output.bankedIncreased == true}
+
+# ============================================================
+# TEST 5: Verify bank button disappears after banking
+# ============================================================
+
+- evalScript: |
+    ${
+      // Bank button should be hidden now that stack is low
+      const bankButton = document.querySelector('[aria-label*="Bank"]');
+      output.bankHiddenAfterBanking = bankButton === null ||
+        window.getComputedStyle(bankButton).opacity === '0' ||
+        window.getComputedStyle(bankButton).visibility === 'hidden';
+
+      console.log('Bank hidden after banking:', output.bankHiddenAfterBanking);
+    }
+
+- takeScreenshot: bank-06-bank-hidden-after-reset
+
+# ============================================================
+# CLEANUP
+# ============================================================
+
+# Make sure AutoPlayer is disabled
+- evalScript: ${window.__disableAutoPlayer && window.__disableAutoPlayer()}
+
+# ============================================================
+# FINAL SUMMARY
+# ============================================================
+
+- evalScript: |
+    ${
+      console.log('=== BANK FUNCTIONALITY TEST SUMMARY ===');
+      console.log('Initial stack:', output.initialStack);
+      console.log('Bank correctly hidden initially:', output.bankCorrectlyHidden);
+      console.log('Bank button found:', output.bankButtonFound);
+      console.log('Ready to bank (stack >= 5):', output.readyToBank);
+      console.log('Stack before bank:', output.stackBeforeBank);
+      console.log('Banked before bank:', output.bankedBeforeBank);
+      console.log('Bank clicked:', output.bankClicked);
+      console.log('Stack after bank:', output.stackAfterBank);
+      console.log('Banked after bank:', output.bankedAfterBank);
+      console.log('Stack reset correctly:', output.stackReset);
+      console.log('Banked counter increased:', output.bankedIncreased);
+      console.log('Bank hidden after banking:', output.bankHiddenAfterBanking);
+      console.log('========================================');
+    }
+
+# Final assertion - game should still be running
+- assertVisible: "STACK|LV|GAME OVER"

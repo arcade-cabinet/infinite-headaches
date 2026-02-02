@@ -1,69 +1,97 @@
-import { defineConfig, loadEnv } from "vite";
-import { vitePlugins } from "./vite/plugin";
-import { resolve } from "path";
+import path from "node:path";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+import type { Plugin } from "vite";
+import { viteSingleFile } from "vite-plugin-singlefile";
 
-function pathResolve(dir: string) {
-  return resolve(__dirname, ".", dir);
+/**
+ * Vite plugin to prevent SPA fallback for BabylonJS shader file requests.
+ * BabylonJS dynamically loads shader source via HTTP when a shader isn't
+ * pre-registered in Effect.ShadersStore. Vite's SPA fallback serves index.html
+ * for any unresolved URL, which BabylonJS then tries to compile as GLSL,
+ * causing "SHADER ERROR: '<' : syntax error" from the DOCTYPE tag.
+ */
+function babylonShaderGuardPlugin(): Plugin {
+  return {
+    name: "babylon-shader-guard",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url;
+        if (
+          url &&
+          (url.endsWith(".fragment") ||
+            url.endsWith(".vertex") ||
+            url.endsWith(".fx") ||
+            url.endsWith(".fragment.fx") ||
+            url.endsWith(".vertex.fx"))
+        ) {
+          res.statusCode = 404;
+          res.end(`Shader file not found: ${url}`);
+          return;
+        }
+        next();
+      });
+    },
+  };
 }
 
+// Check if building for Capacitor (mobile/desktop)
+const isCapacitorBuild = process.env.CAPACITOR_BUILD === "true";
+
 // https://vitejs.dev/config/
-export default ({ mode }: any) => {
-  const root = process.cwd();
-  const env = loadEnv(mode, root);
-  return defineConfig({
-    base: env.VITE_PUBLIC_PATH,
-    root,
-    // plugin
-    plugins: vitePlugins(env),
-    // alias
-    resolve: {
-      alias: {
-        "@": pathResolve("src"),
+export default defineConfig({
+  cacheDir: ".vite",
+  plugins: [
+    babylonShaderGuardPlugin(),
+    react({
+      exclude: [/node_modules/, /\.vite/],
+      babel: {
+        plugins: ["styled-jsx/babel", "babel-plugin-reactylon"],
       },
-      // https://github.com/vitejs/vite/issues/178#issuecomment-630138450
-      extensions: [".js", ".ts", ".json"],
-    },
-    // https://vitejs.cn/config/#esbuild
-    esbuild: {
-      // pure: env.VITE_DROP_CONSOLE ? ["console.log", "debugger"] : [],
-      pure: mode === "production" ? ["console.log"] : [],
-      //  drop: ["console", "debugger"],
-    },
-    // server config
-    server: {
-      // host: '192.168.0.0',
-      port: 8088,
-      open: true, // auto open
-      hmr: true,
-      cors: true,
-      // Cross domain
-      // proxy: {
-      //     '/api': {
-      //         target: 'http://',
-      //         changeOrigin: true,
-      //         ws: true,
-      //         rewrite: (path) => path.replace(/^\/api/, '')
-      //     }
-      // }
-    },
-
-    // build: https://vitejs.cn/config/#build-target
-    build: {
-      target: "modules",
-      outDir: "dist",
-      chunkSizeWarningLimit: 550,
-      assetsInlineLimit: 4096,
-      rollupOptions: {
-        output: {
-          chunkFileNames: "static/js/[name]-[hash].js",
-          entryFileNames: "static/js/[name]-[hash].js",
-          assetFileNames: "static/[ext]/[name]-[hash].[ext]",
+    }),
+    tailwindcss(),
+    // Only use singleFile for Capacitor builds (mobile/desktop)
+    // Web builds use proper chunking for better caching
+    ...(isCapacitorBuild ? [viteSingleFile()] : []),
+  ],
+  build: {
+    // Production optimizations
+    minify: "esbuild",
+    sourcemap: false,
+    // Chunking strategy for web builds
+    rollupOptions: isCapacitorBuild
+      ? {}
+      : {
+          output: {
+            // Manual chunks for better caching
+            manualChunks: {
+              // Babylon.js core (large, rarely changes)
+              babylon: ["@babylonjs/core", "@babylonjs/loaders"],
+              // React ecosystem
+              react: ["react", "react-dom"],
+              // UI libraries
+              ui: ["framer-motion", "lucide-react", "animejs"],
+              // Game engine (ECS + YUKA)
+              engine: ["miniplex", "miniplex-react", "yuka"],
+            },
+            // Asset file naming with hash for cache busting
+            assetFileNames: "assets/[name]-[hash][extname]",
+            chunkFileNames: "js/[name]-[hash].js",
+            entryFileNames: "js/[name]-[hash].js",
+          },
         },
-      },
+    // Increase chunk size warning limit (Babylon.js is large)
+    chunkSizeWarningLimit: 1500,
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
     },
-
-    optimizeDeps: {
-      exclude: ["@babylonjs/havok"],
+  },
+  server: {
+    hmr: {
+      overlay: true,
     },
-  });
-};
+  },
+});

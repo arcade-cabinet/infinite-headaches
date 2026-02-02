@@ -1,0 +1,41 @@
+{
+	"appId": "com.arcadecabinet.homestead_headaches",
+	"appName": "Homestead Headaches",
+	"webDir": "dist",
+	"server": {},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 2000,
+			"backgroundColor": "#FCD34D",
+			"showSpinner": false,
+			"androidScaleType": "CENTER_CROP",
+			"splashFullScreen": true,
+			"splashImmersive": true
+		},
+		"StatusBar": {
+			"style": "LIGHT",
+			"backgroundColor": "#FCD34D"
+		},
+		"ScreenOrientation": {},
+		"Haptics": {},
+		"Preferences": {}
+	},
+	"android": {
+		"allowMixedContent": true,
+		"backgroundColor": "#FCD34D"
+	},
+	"ios": {
+		"backgroundColor": "#FCD34D",
+		"contentInset": "automatic",
+		"preferredContentMode": "mobile"
+	},
+	"packageClassList": [
+		"AppPlugin",
+		"HapticsPlugin",
+		"PreferencesPlugin",
+		"ScreenOrientationPlugin",
+		"SharePlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin"
+	]
+}

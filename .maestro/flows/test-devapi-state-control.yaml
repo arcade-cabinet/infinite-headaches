@@ -1,0 +1,242 @@
+# DevAPI State Control E2E Test
+# Tests the comprehensive DevAPI for setting/getting game state
+#
+# VERIFIES:
+# 1. __DEV_API__ is available on window
+# 2. setScore updates score correctly
+# 3. setLevel updates level correctly
+# 4. setLives / setMaxLives work
+# 5. setCombo / setMultiplier work
+# 6. getGameState returns accurate snapshot
+# 7. getStackHeight returns correct value
+#
+# REQUIRES: Dev/development build (DevAPI is tree-shaken in production)
+
+appId: web
+---
+# ============================================================
+# SETUP: Navigate to game and start playing
+# ============================================================
+
+- openLink: ${LOCAL_URL:-https://homestead-headaches.netlify.app}
+
+- evalScript: |
+    ${
+      sessionStorage.setItem('homestead_splash_shown_session', 'true');
+      localStorage.setItem('animal-tutorial-complete', 'true');
+      localStorage.setItem('animal-modes-unlocked', JSON.stringify(['endless','time_attack','zen','boss_rush']));
+    }
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 15000
+
+- tapOn: "NEW GAME"
+
+- extendedWaitUntil:
+    visible: "SELECT MODE"
+    timeout: 5000
+
+- evalScript: |
+    ${
+      const btns = document.querySelectorAll('button');
+      const endless = Array.from(btns).find(b => b.textContent && b.textContent.includes('Endless') && !b.disabled);
+      if (endless) endless.click();
+    }
+
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- tapOn: "SELECT"
+
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.body.textContent.includes('Got it')}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn == true}
+    commands:
+      - tapOn: "Got it"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+# Wait for DevAPI to be available
+- evalScript: |
+    ${
+      output.devApiAvailable = typeof window.__DEV_API__ !== 'undefined';
+      console.log('DevAPI available:', output.devApiAvailable);
+    }
+
+# ============================================================
+# TEST 1: Verify DevAPI exists
+# ============================================================
+
+- evalScript: |
+    ${
+      output.hasDevApi = window.__DEV_API__ !== undefined;
+      output.hasSetScore = typeof window.__DEV_API__?.setScore === 'function';
+      output.hasGetGameState = typeof window.__DEV_API__?.getGameState === 'function';
+      console.log('DevAPI check:', output.hasDevApi, output.hasSetScore, output.hasGetGameState);
+    }
+
+- takeScreenshot: devapi-01-game-started
+
+# ============================================================
+# TEST 2: setScore
+# ============================================================
+
+- evalScript: |
+    ${
+      const result = window.__DEV_API__.setScore(999);
+      output.setScoreOk = result.ok;
+      console.log('setScore(999) result:', JSON.stringify(result));
+    }
+- assertTrue: ${output.setScoreOk == true}
+
+# Verify score displays in HUD
+- waitForAnimationToEnd
+
+- evalScript: |
+    ${
+      const state = window.__DEV_API__.getGameState();
+      output.scoreAfterSet = state.data?.score;
+      console.log('Score after set:', output.scoreAfterSet);
+    }
+- assertTrue: ${output.scoreAfterSet == 999}
+
+- takeScreenshot: devapi-02-score-set
+
+# ============================================================
+# TEST 3: setLevel
+# ============================================================
+
+- evalScript: |
+    ${
+      const result = window.__DEV_API__.setLevel(5);
+      output.setLevelOk = result.ok;
+      const state = window.__DEV_API__.getGameState();
+      output.levelAfterSet = state.data?.level;
+      console.log('setLevel(5) result:', JSON.stringify(result), 'Level:', output.levelAfterSet);
+    }
+- assertTrue: ${output.setLevelOk == true}
+- assertTrue: ${output.levelAfterSet == 5}
+
+# ============================================================
+# TEST 4: setLives
+# ============================================================
+
+- evalScript: |
+    ${
+      const result = window.__DEV_API__.setLives(1);
+      output.setLivesOk = result.ok;
+      const state = window.__DEV_API__.getGameState();
+      output.livesAfterSet = state.data?.lives;
+      console.log('setLives(1):', output.livesAfterSet);
+    }
+- assertTrue: ${output.setLivesOk == true}
+- assertTrue: ${output.livesAfterSet == 1}
+
+# Restore lives
+- evalScript: ${window.__DEV_API__.setLives(3)}
+
+# ============================================================
+# TEST 5: setMaxLives
+# ============================================================
+
+- evalScript: |
+    ${
+      const result = window.__DEV_API__.setMaxLives(8);
+      output.setMaxLivesOk = result.ok;
+      const state = window.__DEV_API__.getGameState();
+      output.maxLivesAfterSet = state.data?.maxLives;
+      console.log('setMaxLives(8):', output.maxLivesAfterSet);
+    }
+- assertTrue: ${output.setMaxLivesOk == true}
+- assertTrue: ${output.maxLivesAfterSet == 8}
+
+# ============================================================
+# TEST 6: setCombo and setMultiplier
+# ============================================================
+
+- evalScript: |
+    ${
+      window.__DEV_API__.setCombo(10);
+      window.__DEV_API__.setMultiplier(3);
+      const state = window.__DEV_API__.getGameState();
+      output.comboAfterSet = state.data?.combo;
+      output.multiplierAfterSet = state.data?.multiplier;
+      console.log('Combo:', output.comboAfterSet, 'Multiplier:', output.multiplierAfterSet);
+    }
+- assertTrue: ${output.comboAfterSet == 10}
+- assertTrue: ${output.multiplierAfterSet == 3}
+
+# ============================================================
+# TEST 7: getGameState snapshot
+# ============================================================
+
+- evalScript: |
+    ${
+      const state = window.__DEV_API__.getGameState();
+      output.stateOk = state.ok;
+      output.stateHasScore = typeof state.data?.score === 'number';
+      output.stateHasLevel = typeof state.data?.level === 'number';
+      output.stateHasLives = typeof state.data?.lives === 'number';
+      output.stateIsPlaying = state.data?.isPlaying;
+      output.stateEntityCount = state.data?.entityCount;
+      console.log('GameState snapshot:', JSON.stringify(state.data));
+    }
+- assertTrue: ${output.stateOk == true}
+- assertTrue: ${output.stateIsPlaying == true}
+
+# ============================================================
+# TEST 8: Input validation
+# ============================================================
+
+- evalScript: |
+    ${
+      const r1 = window.__DEV_API__.setScore(-1);
+      output.negScoreFails = !r1.ok;
+
+      const r2 = window.__DEV_API__.setLevel(0);
+      output.zeroLevelFails = !r2.ok;
+
+      const r3 = window.__DEV_API__.setLives(-5);
+      output.negLivesFails = !r3.ok;
+
+      console.log('Validation:', output.negScoreFails, output.zeroLevelFails, output.negLivesFails);
+    }
+- assertTrue: ${output.negScoreFails == true}
+- assertTrue: ${output.zeroLevelFails == true}
+- assertTrue: ${output.negLivesFails == true}
+
+- takeScreenshot: devapi-03-validation-tests
+
+# ============================================================
+# SUMMARY
+# ============================================================
+
+- evalScript: |
+    ${
+      console.log('=== DEVAPI STATE CONTROL TEST SUMMARY ===');
+      console.log('DevAPI available:', output.hasDevApi);
+      console.log('setScore works:', output.setScoreOk);
+      console.log('Score correct:', output.scoreAfterSet === 999);
+      console.log('setLevel works:', output.setLevelOk);
+      console.log('Level correct:', output.levelAfterSet === 5);
+      console.log('setLives works:', output.setLivesOk);
+      console.log('setMaxLives works:', output.setMaxLivesOk);
+      console.log('Combo set:', output.comboAfterSet === 10);
+      console.log('Multiplier set:', output.multiplierAfterSet === 3);
+      console.log('getGameState works:', output.stateOk);
+      console.log('Validation rejects invalid input:', output.negScoreFails && output.zeroLevelFails);
+      console.log('==========================================');
+    }
+
+- assertVisible: "STACK|LV|GAME OVER"

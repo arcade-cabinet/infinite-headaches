@@ -1,0 +1,30 @@
+# Maestro E2E Test Configuration for Homestead Headaches
+# https://homestead-headaches.netlify.app (production)
+# http://localhost:5174 (local development)
+
+# Flow execution settings
+flows:
+  - flows/
+
+# Environment variables
+env:
+  # Default to production URL, override with LOCAL_URL=http://localhost:5174 for local testing
+  APP_URL: ${LOCAL_URL:-https://homestead-headaches.netlify.app}
+
+  # AutoPlayer game duration in milliseconds
+  AUTOPLAYER_DURATION_MS: "30000"
+  AUTOPLAYER_DURATION_SHORT_MS: "20000"
+
+  # Wait times
+  ANIMATION_WAIT_MS: "1500"
+  SETTING_PERSIST_WAIT_MS: "500"
+  MENU_TRANSITION_MS: "800"
+
+# Test execution options
+executionOrder:
+  continueOnFailure: false
+
+# Output settings
+output:
+  screenshots: true
+  video: false

@@ -1,2 +1,52 @@
 node_modules
 dist
+
+# Environment files (contain API keys)
+.env
+.env.local
+
+# Temp files
+.!*!repo.zip
+repo.zip
+*.zip
+.DS_Store
+.gemini/
+GEMINI.md
+39854f12-a240-4815-9e83-dd0e173a9e3f/
+
+# Test reports
+playwright-report/
+test-results/
+
+# Asset bundles (download separately)
+FarmAnimals_v1.1/
+
+# Netlify local
+
+.netlify/
+
+.vite
+
+
+
+# Gradle
+
+
+
+**/.gradle/
+
+
+
+
+
+
+
+# Electron web build
+
+
+
+electron/app/
+
+
+
+

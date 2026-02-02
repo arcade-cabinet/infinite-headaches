@@ -1,0 +1,139 @@
+# Test Graphics Quality Settings
+# Verifies that graphics quality (Low/Medium/High) can be changed and persists
+#
+# Test flow:
+# 1. Open app
+# 2. Go to Settings from main menu
+# 3. Select each quality level (Low, Medium, High)
+# 4. Verify setting persists
+# 5. Start game and verify it runs
+
+appId: web
+---
+# Open the app
+- openLink: https://homestead-headaches.netlify.app
+
+# Wait for the app to fully load
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 15000
+
+# Verify main menu loaded
+- assertVisible: "HOMESTEAD"
+
+# ========== TEST GRAPHICS SETTINGS ==========
+
+# Open Settings modal
+- tapOn: "SETTINGS"
+
+# Wait for settings modal to appear
+- extendedWaitUntil:
+    visible: "Quality Preset"
+    timeout: 5000
+
+# ========== TEST LOW QUALITY ==========
+- tapOn: "Low"
+- waitForAnimationToEnd
+
+# Close and reopen settings to verify persistence
+- tapOn: "DONE"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 3000
+
+- tapOn: "SETTINGS"
+- extendedWaitUntil:
+    visible: "Quality Preset"
+    timeout: 3000
+
+# Verify Low quality persisted via JavaScript check
+- evalScript: ${output.lowChecked = document.querySelector('input[value="low"]') && document.querySelector('input[value="low"]').checked}
+- assertTrue: ${output.lowChecked == true}
+
+# ========== TEST MEDIUM QUALITY ==========
+- tapOn: "Medium"
+- waitForAnimationToEnd
+
+# Close and reopen settings to verify persistence
+- tapOn: "DONE"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 3000
+
+- tapOn: "SETTINGS"
+- extendedWaitUntil:
+    visible: "Quality Preset"
+    timeout: 3000
+
+# Verify Medium quality persisted
+- evalScript: ${output.mediumChecked = document.querySelector('input[value="medium"]') && document.querySelector('input[value="medium"]').checked}
+- assertTrue: ${output.mediumChecked == true}
+
+# ========== TEST HIGH QUALITY ==========
+- tapOn: "High"
+- waitForAnimationToEnd
+
+# Close and reopen settings to verify persistence
+- tapOn: "DONE"
+- waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 3000
+
+- tapOn: "SETTINGS"
+- extendedWaitUntil:
+    visible: "Quality Preset"
+    timeout: 3000
+
+# Verify High quality persisted
+- evalScript: ${output.highChecked = document.querySelector('input[value="high"]') && document.querySelector('input[value="high"]').checked}
+- assertTrue: ${output.highChecked == true}
+
+# Close settings
+- tapOn: "DONE"
+- waitForAnimationToEnd
+
+# ========== VERIFY GAME RUNS WITH SETTINGS ==========
+
+# Start the game to verify it runs with settings applied
+- extendedWaitUntil:
+    visible: "PLAY"
+    timeout: 3000
+
+- tapOn: "PLAY"
+
+# Wait for character select
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+# Select a character
+- tapOn: "SELECT"
+
+# Wait for game to start (may show tutorial first)
+- extendedWaitUntil:
+    visible: "STACK|Got it|DRAG"
+    timeout: 10000
+
+# If tutorial appears, dismiss it
+- evalScript: ${output.tutorialBtn = document.evaluate("//*[contains(text(), 'Got it')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn != null}
+    commands:
+      - tapOn: "Got it"
+
+# Wait a moment for the game to stabilize
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+# Take screenshot to verify game is running
+- takeScreenshot: graphics-quality-test-game-running
+
+# Verify game UI is visible (STACK or LV indicators)
+- assertVisible: "STACK|LV"

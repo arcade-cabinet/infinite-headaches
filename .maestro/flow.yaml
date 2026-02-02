@@ -1,0 +1,6 @@
+appId: com.arcadecabinet.homestead_headaches
+---
+- launchApp
+- assertVisible: "PLAY"
+- tapOn: "PLAY"
+- assertVisible: "SCORE"

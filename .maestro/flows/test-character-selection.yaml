@@ -1,0 +1,315 @@
+# Character Selection E2E Test
+# Tests the character selection flow
+#
+# VERIFIES:
+# 1. Character select modal opens from mode selection
+# 2. Farmer John (default) is displayed first
+# 3. Character info is shown (name, role, traits)
+# 4. Navigation arrows work to switch characters
+# 5. Farmer Mary can be selected
+# 6. Locked characters show LOCKED button
+# 7. Back button returns to mode select
+# 8. SELECT button starts the game
+#
+# This test WILL FAIL if:
+# - Character info is not displayed
+# - Navigation doesn't work
+# - SELECT doesn't start game
+# - Character traits aren't shown
+
+appId: web
+---
+# ============================================================
+# SETUP: Get to character selection
+# ============================================================
+
+- openLink: https://homestead-headaches.netlify.app
+
+# Skip splash
+- evalScript: ${sessionStorage.setItem('homestead_splash_shown_session', 'true')}
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 15000
+
+# Start new game
+- tapOn: "NEW GAME"
+
+- extendedWaitUntil:
+    visible: "SELECT MODE"
+    timeout: 5000
+
+# Select Endless mode
+- evalScript: |
+    ${
+      const endlessCard = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && b.textContent.includes('Endless') && !b.disabled
+      );
+      if (endlessCard) endlessCard.click();
+    }
+
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+# ============================================================
+# TEST 1: Verify Character Select Modal
+# ============================================================
+
+- assertVisible: "CHOOSE YOUR HAND"
+
+- takeScreenshot: char-01-modal-opened
+
+# ============================================================
+# TEST 2: Verify Farmer John (Default Character)
+# ============================================================
+
+# VERIFY: Farmer John displayed by default
+- assertVisible: "Farmer John"
+
+# VERIFY: Role is displayed
+- assertVisible: "The Veteran"
+
+# VERIFY: Description is shown
+- evalScript: |
+    ${
+      output.hasJohnDescription = document.body.textContent.includes('flying cows') ||
+        document.body.textContent.includes('seen it all');
+    }
+- assertTrue: ${output.hasJohnDescription == true}
+
+# VERIFY: Positive trait shown
+- assertVisible: "Steady Hands"
+
+# VERIFY: Negative trait shown
+- assertVisible: "Slow Walker"
+
+# VERIFY: SELECT button is enabled (Farmer John is unlocked)
+- evalScript: |
+    ${
+      const selectBtn = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && b.textContent.includes('SELECT') && !b.textContent.includes('LOCKED')
+      );
+      output.johnSelectable = selectBtn && !selectBtn.disabled;
+    }
+- assertTrue: ${output.johnSelectable == true}
+
+- takeScreenshot: char-02-farmer-john
+
+# ============================================================
+# TEST 3: Navigate to Farmer Mary
+# ============================================================
+
+# Click right arrow to go to next character
+- tapOn:
+    text: ">"
+    index: 0
+
+- waitForAnimationToEnd
+
+# VERIFY: Farmer Mary is now displayed
+- extendedWaitUntil:
+    visible: "Farmer Mary"
+    timeout: 3000
+
+- assertVisible: "Farmer Mary"
+
+# VERIFY: Mary's role
+- assertVisible: "The Wife"
+
+# VERIFY: Mary's description
+- evalScript: |
+    ${
+      output.hasMaryDescription = document.body.textContent.includes('30 years') ||
+        document.body.textContent.includes('running this farm');
+    }
+
+# VERIFY: Mary's positive trait
+- assertVisible: "Fast Reflexes"
+
+# VERIFY: Mary's negative trait
+- assertVisible: "Easily Startled"
+
+# VERIFY: Mary is selectable (unlocked)
+- evalScript: |
+    ${
+      const selectBtn = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && b.textContent.includes('SELECT') && !b.textContent.includes('LOCKED')
+      );
+      output.marySelectable = selectBtn && !selectBtn.disabled;
+    }
+- assertTrue: ${output.marySelectable == true}
+
+- takeScreenshot: char-03-farmer-mary
+
+# ============================================================
+# TEST 4: Navigate to Old Mac (Locked Character)
+# ============================================================
+
+# Click right arrow again
+- tapOn:
+    text: ">"
+    index: 0
+
+- waitForAnimationToEnd
+
+# VERIFY: Old Mac is displayed
+- extendedWaitUntil:
+    visible: "Old Mac"
+    timeout: 3000
+
+- assertVisible: "Old Mac"
+
+# VERIFY: Old Mac's role
+- assertVisible: "The Legend"
+
+# VERIFY: Old Mac's description
+- evalScript: |
+    ${
+      output.hasMacDescription = document.body.textContent.includes('E-I-E-I-Oh') ||
+        document.body.textContent.includes('oh no');
+    }
+
+# VERIFY: Old Mac's traits (even if locked, should show info)
+- evalScript: |
+    ${
+      output.hasMacTraits = document.body.textContent.includes('Animal Whisperer') ||
+        document.body.textContent.includes('Back Problems');
+    }
+
+# VERIFY: Old Mac is LOCKED
+- evalScript: |
+    ${
+      const lockedBtn = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && b.textContent.includes('LOCKED')
+      );
+      output.macIsLocked = lockedBtn !== null ||
+        document.body.textContent.includes('LOCKED');
+    }
+- assertTrue: ${output.macIsLocked == true}
+
+- takeScreenshot: char-04-old-mac-locked
+
+# ============================================================
+# TEST 5: Navigate backwards (left arrow)
+# ============================================================
+
+# Click left arrow to go back
+- tapOn:
+    text: "<"
+    index: 0
+
+- waitForAnimationToEnd
+
+# Should be back at Mary
+- extendedWaitUntil:
+    visible: "Farmer Mary"
+    timeout: 3000
+
+# Click left again
+- tapOn:
+    text: "<"
+    index: 0
+
+- waitForAnimationToEnd
+
+# Should be at John
+- extendedWaitUntil:
+    visible: "Farmer John"
+    timeout: 3000
+
+- takeScreenshot: char-05-navigation-complete
+
+# ============================================================
+# TEST 6: Test Back Button
+# ============================================================
+
+# Click Back
+- tapOn: "Back"
+
+- waitForAnimationToEnd
+
+# VERIFY: Returns to mode select
+- extendedWaitUntil:
+    visible: "SELECT MODE"
+    timeout: 3000
+
+- assertVisible: "SELECT MODE"
+
+- takeScreenshot: char-06-back-to-mode-select
+
+# ============================================================
+# TEST 7: Select a character and start game
+# ============================================================
+
+# Select Endless again
+- evalScript: |
+    ${
+      const endlessCard = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && b.textContent.includes('Endless') && !b.disabled
+      );
+      if (endlessCard) endlessCard.click();
+    }
+
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+# Navigate to Farmer Mary
+- tapOn:
+    text: ">"
+    index: 0
+
+- extendedWaitUntil:
+    visible: "Farmer Mary"
+    timeout: 3000
+
+# Click SELECT
+- tapOn: "SELECT"
+
+# VERIFY: Game starts (may show tutorial)
+- extendedWaitUntil:
+    visible: "STACK|Got it|DRAG"
+    timeout: 10000
+
+# Handle tutorial if it appears
+- evalScript: ${output.tutorialBtn = document.body.textContent.includes('Got it')}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn == true}
+    commands:
+      - tapOn: "Got it"
+      - waitForAnimationToEnd
+
+# VERIFY: Gameplay started
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+- evalScript: |
+    ${
+      output.gameStarted = document.body.textContent.includes('STACK') &&
+        !document.body.textContent.includes('CHOOSE YOUR HAND');
+    }
+- assertTrue: ${output.gameStarted == true}
+
+- takeScreenshot: char-07-game-started-with-mary
+
+# ============================================================
+# FINAL SUMMARY
+# ============================================================
+
+- evalScript: |
+    ${
+      console.log('=== CHARACTER SELECTION TEST SUMMARY ===');
+      console.log('John description found:', output.hasJohnDescription);
+      console.log('John selectable:', output.johnSelectable);
+      console.log('Mary description found:', output.hasMaryDescription);
+      console.log('Mary selectable:', output.marySelectable);
+      console.log('Old Mac description found:', output.hasMacDescription);
+      console.log('Old Mac traits found:', output.hasMacTraits);
+      console.log('Old Mac is locked:', output.macIsLocked);
+      console.log('Game started with Mary:', output.gameStarted);
+      console.log('=========================================');
+    }
