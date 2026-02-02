@@ -38,6 +38,7 @@ export interface LifetimeStats {
 const MAX_SESSIONS = 500;
 
 let sessionCache: SessionRecord[] | null = null;
+let sessionWriteQueue = Promise.resolve();
 
 async function loadSessions(): Promise<SessionRecord[]> {
   if (sessionCache) return sessionCache;
@@ -52,21 +53,25 @@ async function saveSessions(sessions: SessionRecord[]): Promise<void> {
 }
 
 export async function recordSession(session: Omit<SessionRecord, "id" | "date">): Promise<void> {
-  const sessions = await loadSessions();
-  const record: SessionRecord = {
-    ...session,
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    date: new Date().toISOString(),
-  };
+  // Serialize writes to prevent race conditions
+  sessionWriteQueue = sessionWriteQueue.then(async () => {
+    const sessions = await loadSessions();
+    const record: SessionRecord = {
+      ...session,
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      date: new Date().toISOString(),
+    };
 
-  sessions.push(record);
+    sessions.push(record);
 
-  // FIFO cap
-  if (sessions.length > MAX_SESSIONS) {
-    sessions.splice(0, sessions.length - MAX_SESSIONS);
-  }
+    // FIFO cap
+    if (sessions.length > MAX_SESSIONS) {
+      sessions.splice(0, sessions.length - MAX_SESSIONS);
+    }
 
-  await saveSessions(sessions);
+    await saveSessions(sessions);
+  });
+  await sessionWriteQueue;
 }
 
 export async function getSessionHistory(): Promise<SessionRecord[]> {
