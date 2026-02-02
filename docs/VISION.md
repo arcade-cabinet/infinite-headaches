@@ -14,7 +14,7 @@
     - **Effects:** Wind streaks, dust clouds, and "headache" swirls using particle systems.
 
 ### The "Headache" Mechanic
-The "Headache" is no longer just a metaphor for difficulty—it is the **Tornado**.
+The "Headache" is no longer just a metaphor for difficulty---it is the **Tornado**.
 - **The Threat:** A massive, swirling vortex in the background that grows closer/larger as the game progresses (or as the player struggles).
 - **The Goal:** Build a stack of animals to reach the "Eye of the Storm" or simply survive the chaos.
 - **Failure:** The stack topples, and the animals are sucked into the tornado (comically).
@@ -55,7 +55,7 @@ We commit fully to the 3D pipeline.
 ### Phase 2: The Storm (In Progress)
 - [x] Implement the **Tornado** visual effect (Particle system in TornadoEffect.ts).
 - [x] StormAtmosphere: Dynamic lighting that shifts based on storm intensity.
-- [ ] "Wind" physics: Lateral forces applied to the stack based on tornado proximity.
+- [x] "Wind" physics: Lateral forces applied to the stack based on weather state (v1.1.0 WeatherSystem).
 
 ### Phase 3: Farm Life (In Progress)
 - [x] Animal variants with special abilities:
@@ -77,7 +77,7 @@ We commit fully to the 3D pipeline.
 ### Phase 5: Testing & Quality
 - [x] Maestro E2E test flows for character selection and graphics quality.
 - [x] Multi-LOD graphics testing (high/medium/low).
-- [x] 1077 unit tests across 26 files (AnimationSystem, SpawningSystem, WobbleGovernor, archetypes, components, abilities, responsive scale, DropController, types).
+- [x] 1267 unit tests across 34 files (all v1.1.0 systems covered).
 - [x] DevAPI + PlayerGovernor for automated gameplay observation.
 - [x] Chrome MCP visual verification workflow.
 - [ ] Full gameplay E2E test coverage (Maestro flows for all mechanics).
@@ -97,3 +97,20 @@ We commit fully to the 3D pipeline.
 - [x] DevAPI: `window.__DEV_API__` singleton for runtime debugging and auto-play.
 - [x] Chrome MCP visual verification: Full gameplay verified with AI auto-play.
 - [x] 1077 tests across 26 files.
+
+### Phase 8: v1.1.0 Feature Expansion (Complete)
+- [x] **Weather System**: WeatherSystem state machine (clear/windy/rainy/stormy) at level 6+, wind forces on falling entities, BabylonJS particle effects (rain/wind), wobble bonus during storms, ambient audio loops with fade transitions.
+- [x] **Animal Variants**: Rare (level 3+, blue tint, 1.5x score), golden (level 8+, gold tint, 3x score), shadow (level 15+, dark tint, 5x score) with PBR material tinting.
+- [x] **HitStop**: Freeze-frame effect on perfect catches and combo milestones (respects reducedMotion).
+- [x] **Local Analytics**: SessionLog recording to Capacitor storage (500 FIFO cap), CanvasChart pure canvas renderer (line/bar/heatmap), StatsModal with 4 tabs, JSON export, clear history.
+- [x] **Remappable Keybindings**: loadKeyBindings/saveKeyBindings/resetKeyBindings with persistence.
+- [x] **Colorblind Filter**: Protanopia/deuteranopia/tritanopia post-processing via Machado 2009 matrices.
+- [x] **High Contrast Mode**: Increased contrast post-processing.
+- [x] **Combo Counter**: Tiered animations via anime.js (5x/10x/15x milestones with camera FOV pulse).
+- [x] **Level Up Flash**: White flash overlay on level transitions.
+- [x] **3 New Power-ups**: Shield (absorbs 1 miss, 15s), Slow Motion (0.5x speed, 5s), Score Frenzy (3x points, 6s).
+- [x] **Character Traits**: John (steady/slow: 0.90x speed, 0.85x wobble), Mary (fast/jittery: 1.10x speed, 1.15x wobble).
+- [x] **Difficulty Rebalance**: maxLevel 25->999, speedIncreasePerLevel 0.04->0.035, spawnRateCurve 0.85->0.88, comboDecayTime 3000->3500.
+- [x] **Integration Wiring**: LevelUpFlash, WeatherEffects, ColorblindFilter wired into component tree.
+- [x] **Bug Fixes**: Memory leak fixes in anime.js animations, WeatherEffects wind direction sign fix, SessionLog validation, StatsModal error boundary.
+- [x] **Tests**: 1267 tests across 34 files (5 new test suites, 9 pre-existing test failures fixed).

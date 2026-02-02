@@ -3,6 +3,16 @@
 ## The Game Experience
 "Homestead Headaches" is designed to be a chaotic, physics-driven arcade game. The player feels the tension of a growing, wobbling stack of animals while trying to dodge or catch specific items under the pressure of a storm.
 
+### v1.1.0 Feature Expansion
+*   **Weather System:** Dynamic weather (clear/windy/rainy/stormy) driven by WeatherSystem state machine. Activates at level 6+. Wind affects wobble, rain/storm add particle effects via BabylonJS.
+*   **Animal Variants:** Rare, golden, and shadow variants with level-gated unlock (rare at 3+, golden at 8+, shadow at 15+). Variants have score multipliers.
+*   **Power-Ups:** Shield (stack protection), Slow Motion (reduced fall speed), Score Frenzy (2x multiplier). Collectible during gameplay.
+*   **Combo System:** ComboCounter tracks consecutive catches with milestone celebrations at 5x/10x/15x. Anime.js-driven scale animations.
+*   **Level-Up Flash:** Visual feedback on level progression with reduced-motion support.
+*   **Analytics:** SessionLog records per-session stats (score, level, duration, combos) with Capacitor storage. StatsModal displays lifetime stats, session history, and CanvasChart visualizations. Export to JSON supported.
+*   **Accessibility:** ColorblindFilter (protanopia/deuteranopia/tritanopia via Machado 2009 matrices), high contrast mode, remappable keybindings, ARIA live regions, motor settings (sensitivity, one-handed mode).
+*   **Hit Stop:** Freeze-frame effect on significant catches for tactile feedback. Respects reducedMotion preference.
+
 ### The "Tornado" Theme
 *   **Context:** The game is set in Nebraska during a storm.
 *   **Representation:** The tornado is a central thematic element. It is prominently featured in the **Splash Screen Video** and as the **DropIndicatorTornado** (a procedural twisted funnel at the top of the game board).
@@ -22,12 +32,15 @@
 ## Target Audience
 *   Casual gamers looking for short bursts of fun.
 *   Fans of physics-based puzzle/action games (like Tricky Towers).
+*   Players with accessibility needs (colorblind modes, motor settings, reduced motion).
 
 ## User Experience Goals
 *   **Tactile Physics:** The wobble should feel fair but challenging. Smooth inputs are rewarded.
 *   **Visual Clarity:** It must be obvious which animals are good (catch) and which objects are threats (avoid). Per-type sizing helps distinguish animal types at a glance.
 *   **Atmosphere:** The transition from a sunny farm to a stormy chaos should build tension. The procedural tornado reinforces the storm identity.
 *   **Seamless Cross-Platform:** The game should play as well on a touch screen (mobile) as it does with a keyboard (desktop).
+*   **Accessibility:** Full colorblind support, motor accommodation, screen reader compatibility via ARIA live regions, and reduced-motion compliance.
+*   **Session Awareness:** Players can track their improvement over time via analytics dashboard with lifetime stats and session history.
 
 ## AI-Driven Gameplay
 *   **DropController:** A unified AI director that adapts difficulty and animal type selection based on player skill.
