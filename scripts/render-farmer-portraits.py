@@ -274,7 +274,6 @@ def render_farmer(farmer_config):
     pose_idle(armature)
 
     # Calculate bounds of the posed model
-    all_objects = meshes + ([armature] if armature else [])
     min_co, max_co = get_model_bounds(meshes)
 
     height = max_co[2] - min_co[2]
@@ -286,7 +285,7 @@ def render_farmer(farmer_config):
 
     # Portrait framing: focus on upper body (chest/face area)
     portrait_center_z = min_co[2] + height * 0.75
-    cam = setup_camera(center_y=0, center_z=portrait_center_z)
+    setup_camera(center_y=0, center_z=portrait_center_z)
 
     # Center model on X axis under camera
     if armature:
