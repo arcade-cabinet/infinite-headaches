@@ -47,7 +47,7 @@
 
 ### Animal Variants (Tiered Rarity)
 
-Variant animals appear as the game progresses and are visually distinct with a colored tint. They apply to any base animal type.
+Variant animals appear as the game progresses and are visually distinct with a colored tint. They apply to any base animal type. This is a separate system from Special Variants above — a Golden Pig (special, 3x) could also roll a Rare variant tint (1.5x), but the multipliers do not stack; the highest multiplier applies.
 
 | Variant Tier | Unlock Level | Visual | Score Multiplier |
 | :--- | :--- | :--- | :--- |
