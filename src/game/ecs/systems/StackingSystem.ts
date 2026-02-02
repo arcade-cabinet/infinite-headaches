@@ -352,7 +352,7 @@ export function squishEntity(entity: Entity): void {
       scaleY: 1,
       targetScaleX: 1,
       targetScaleY: 1,
-      recoverySpeed: 0.12,
+      recoverySpeed: 0.04,
     };
   }
 

@@ -35,7 +35,10 @@ export type PowerUpType =
   | "max_up"
   | "great_ball"
   | "x_attack"
-  | "full_restore";
+  | "full_restore"
+  | "shield"
+  | "slow_motion"
+  | "score_frenzy";
 
 /**
  * Animal configuration - ONLY includes animals with GLB models
@@ -132,6 +135,32 @@ export const POWER_UPS = {
     spawnWeight: 0.05,
     invincibilityDuration: 3000,
   },
+  shield: {
+    name: "Scarecrow",
+    description: "Absorb one miss!",
+    color: "#8D6E63",
+    glowColor: "rgba(141, 110, 99, 0.6)",
+    spawnWeight: 0.10,
+    duration: 15000,
+  },
+  slow_motion: {
+    name: "Sundial",
+    description: "Slow time for 5 seconds!",
+    color: "#B0BEC5",
+    glowColor: "rgba(176, 190, 197, 0.6)",
+    spawnWeight: 0.08,
+    duration: 5000,
+    multiplier: 0.5,
+  },
+  score_frenzy: {
+    name: "County Fair",
+    description: "3× score for 6 seconds!",
+    color: "#FF6F00",
+    glowColor: "rgba(255, 111, 0, 0.6)",
+    spawnWeight: 0.06,
+    duration: 6000,
+    multiplier: 3,
+  },
 } as const;
 
 export const GAME_CONFIG = {
@@ -224,7 +253,7 @@ export const GAME_CONFIG = {
   },
 
   effects: {
-    squishFactor: 0.22,
+    squishFactor: 0.30,
     headacheThreshold: 0.4,
     dangerShake: 0.02,
     particleCount: 18,
@@ -241,7 +270,7 @@ export const GAME_CONFIG = {
     perfectBonus: 2.5,
     goodBonus: 1.3,
     maxMultiplier: 15,
-    comboDecayTime: 3000,
+    comboDecayTime: 3500,
     comboMultiplier: 0.15,
     bankingPenalty: 0.4,
     bankingBonusPerDuck: 5,
@@ -258,9 +287,9 @@ export const GAME_CONFIG = {
 
   difficulty: {
     levelUpThreshold: 75,
-    maxLevel: 25,
-    speedIncreasePerLevel: 0.04,
-    spawnRateCurve: 0.85,
+    maxLevel: 999,
+    speedIncreasePerLevel: 0.035,
+    spawnRateCurve: 0.88,
     specialDuckLevelBonus: 0.02,
   },
 

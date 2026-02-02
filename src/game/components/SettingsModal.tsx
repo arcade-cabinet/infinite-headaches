@@ -12,12 +12,22 @@ import { colors, gameColors } from "@/theme/tokens/colors";
 import { useResponsiveScale } from "../hooks/useResponsiveScale";
 import { GameButton } from "./GameButton";
 import { GameCard } from "./GameCard";
+import {
+  type KeyAction,
+  type KeyBindings,
+  DEFAULT_KEY_BINDINGS,
+  getKeyBindings,
+  saveKeyBindings,
+  resetKeyBindings,
+} from "@/platform/keybindings";
+import { inputManager } from "@/platform/input";
+import type { ColorblindMode } from "@/game/graphics/shaders/ColorblindFilter";
 
 interface SettingsModalProps {
   onClose: () => void;
 }
 
-type SettingsTab = "graphics" | "sound" | "accessibility" | "seed";
+type SettingsTab = "graphics" | "sound" | "accessibility" | "seed" | "controls";
 
 interface SoundSettings {
   masterVolume: number;
@@ -51,6 +61,7 @@ const TAB_LABELS: Record<SettingsTab, string> = {
   graphics: "Graphics",
   sound: "Sound",
   accessibility: "Access",
+  controls: "Controls",
   seed: "Seed",
 };
 
@@ -60,6 +71,12 @@ const DEFAULT_SOUND_SETTINGS: SoundSettings = {
   sfxVolume: 80,
   muted: false,
 };
+
+const SENSITIVITY_CONFIG = {
+  min: 0.5,
+  max: 2.0,
+  step: 0.1,
+} as const;
 
 const STORAGE_KEY = "homestead-headaches-sound-settings";
 
@@ -268,6 +285,14 @@ interface AccessibilityTabProps {
   onToggleReducedMotion: () => void;
   onToggleScreenShake: () => void;
   fontSize: { xs: string; sm: string };
+  colorblindMode: ColorblindMode;
+  onColorblindModeChange: (mode: ColorblindMode) => void;
+  highContrastMode: boolean;
+  onToggleHighContrastMode: () => void;
+  inputSensitivity: number;
+  onInputSensitivityChange: (value: number) => void;
+  oneHandedMode: boolean;
+  onToggleOneHandedMode: () => void;
 }
 
 function AccessibilityTab({
@@ -277,6 +302,14 @@ function AccessibilityTab({
   onToggleReducedMotion,
   onToggleScreenShake,
   fontSize,
+  colorblindMode,
+  onColorblindModeChange,
+  highContrastMode,
+  onToggleHighContrastMode,
+  inputSensitivity,
+  onInputSensitivityChange,
+  oneHandedMode,
+  onToggleOneHandedMode,
 }: AccessibilityTabProps) {
   return (
     <div className="space-y-4">
@@ -328,6 +361,210 @@ function AccessibilityTab({
           Screen shake is automatically disabled when Reduced Motion is enabled.
         </p>
       )}
+
+      {/* Colorblind mode dropdown */}
+      <div
+        className="p-3 rounded-lg"
+        style={{ backgroundColor: `${colors.soil[700]}40` }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex-1 mr-4">
+            <span style={{ color: colors.wheat[300] }}>Colorblind Mode</span>
+            <p className="mt-1" style={{ color: colors.wheat[200], fontSize: fontSize.xs }}>
+              Simulates color vision for testing or correction
+            </p>
+          </div>
+          <select
+            value={colorblindMode}
+            onChange={(e) => onColorblindModeChange(e.target.value as ColorblindMode)}
+            className="rounded-lg px-3 py-1.5 text-sm"
+            style={{
+              backgroundColor: colors.soil[600],
+              color: colors.wheat[100],
+              border: `1px solid ${colors.soil[500]}`,
+            }}
+            aria-label="Select colorblind mode"
+          >
+            <option value="none">None</option>
+            <option value="protanopia">Protanopia</option>
+            <option value="deuteranopia">Deuteranopia</option>
+            <option value="tritanopia">Tritanopia</option>
+          </select>
+        </div>
+      </div>
+
+      {/* High Contrast Mode toggle */}
+      <div
+        className="flex items-center justify-between p-3 rounded-lg"
+        style={{ backgroundColor: `${colors.soil[700]}40` }}
+      >
+        <div className="flex-1 mr-4">
+          <span style={{ color: colors.wheat[300] }}>High Contrast Mode</span>
+          <p className="mt-1" style={{ color: colors.wheat[200], fontSize: fontSize.xs }}>
+            Increases contrast for better visibility
+          </p>
+        </div>
+        <ToggleSwitch
+          checked={highContrastMode}
+          onChange={onToggleHighContrastMode}
+          ariaLabel="Toggle high contrast mode"
+        />
+      </div>
+
+      {/* Input sensitivity slider */}
+      <div
+        className="p-3 rounded-lg"
+        style={{ backgroundColor: `${colors.soil[700]}40` }}
+      >
+        <div className="flex justify-between mb-2">
+          <span style={{ color: colors.wheat[300] }}>Input Sensitivity</span>
+          <span style={{ color: colors.wheat[400], fontSize: fontSize.xs }}>
+            {inputSensitivity.toFixed(1)}x
+          </span>
+        </div>
+        <input
+          type="range"
+          min={String(SENSITIVITY_CONFIG.min)}
+          max={String(SENSITIVITY_CONFIG.max)}
+          step={String(SENSITIVITY_CONFIG.step)}
+          value={inputSensitivity}
+          onChange={(e) => onInputSensitivityChange(Number(e.target.value))}
+          className="w-full h-2 rounded-full appearance-none cursor-pointer"
+          style={{
+            backgroundColor: colors.soil[600],
+            accentColor: colors.wheat[500],
+          }}
+          aria-label="Input sensitivity"
+        />
+      </div>
+
+      {/* One-handed mode toggle */}
+      <div
+        className="flex items-center justify-between p-3 rounded-lg"
+        style={{ backgroundColor: `${colors.soil[700]}40` }}
+      >
+        <div className="flex-1 mr-4">
+          <span style={{ color: colors.wheat[300] }}>One-Handed Mode</span>
+          <p className="mt-1" style={{ color: colors.wheat[200], fontSize: fontSize.xs }}>
+            Mirror J/K/L to left/action/right for one-hand play
+          </p>
+        </div>
+        <ToggleSwitch
+          checked={oneHandedMode}
+          onChange={onToggleOneHandedMode}
+          ariaLabel="Toggle one-handed mode"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Controls settings tab content - key remapping
+ */
+const KEY_ACTION_LABELS: Record<KeyAction, string> = {
+  moveLeft: "Move Left",
+  moveRight: "Move Right",
+  bank: "Bank Stack",
+  pause: "Pause",
+  fireAbility: "Fire Ability",
+  iceAbility: "Ice Ability",
+};
+
+interface ControlsTabProps {
+  bindings: KeyBindings;
+  onBindingChange: (action: KeyAction, keys: string[]) => void;
+  onReset: () => void;
+  fontSize: { xs: string; sm: string };
+}
+
+function ControlsTab({ bindings, onBindingChange, onReset, fontSize }: ControlsTabProps) {
+  const [capturingAction, setCapturingAction] = useState<KeyAction | null>(null);
+
+  useEffect(() => {
+    if (!capturingAction) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (e.code === "Escape" || e.key === "Escape") {
+        setCapturingAction(null);
+        return;
+      }
+
+      const key = e.code;
+      const current = bindings[capturingAction];
+      if (!current.includes(key)) {
+        onBindingChange(capturingAction, [...current, key]);
+      }
+      setCapturingAction(null);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [capturingAction, bindings, onBindingChange]);
+
+  return (
+    <div className="space-y-3">
+      <h3 className="font-bold mb-2" style={{ color: colors.wheat[300] }}>
+        Key Bindings
+      </h3>
+
+      {(Object.keys(KEY_ACTION_LABELS) as KeyAction[]).map((action) => (
+        <div
+          key={action}
+          className="flex items-center justify-between p-2 rounded-lg"
+          style={{ backgroundColor: `${colors.soil[700]}40` }}
+        >
+          <span style={{ color: colors.wheat[300], fontSize: fontSize.sm }}>
+            {KEY_ACTION_LABELS[action]}
+          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-xs px-2 py-1 rounded"
+              style={{
+                backgroundColor: colors.soil[600],
+                color: colors.wheat[200],
+                fontSize: fontSize.xs,
+              }}
+            >
+              {capturingAction === action
+                ? "Press a key..."
+                : bindings[action].join(", ")}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCapturingAction(capturingAction === action ? null : action)}
+              className="px-2 py-1 rounded text-xs transition-colors"
+              style={{
+                backgroundColor: capturingAction === action ? colors.barnRed[500] : colors.soil[600],
+                color: colors.wheat[100],
+              }}
+            >
+              {capturingAction === action ? "Cancel" : "Set"}
+            </button>
+            <button
+              type="button"
+              onClick={() => onBindingChange(action, DEFAULT_KEY_BINDINGS[action])}
+              className="px-2 py-1 rounded text-xs transition-colors"
+              style={{
+                backgroundColor: colors.soil[600],
+                color: colors.wheat[200],
+              }}
+              aria-label={`Reset ${KEY_ACTION_LABELS[action]} to default`}
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      ))}
+
+      <div className="mt-4 flex justify-center">
+        <GameButton onClick={onReset} variant="secondary" size="sm">
+          Reset All
+        </GameButton>
+      </div>
     </div>
   );
 }
@@ -403,6 +640,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     settings: graphicsSettings,
     setQuality,
     toggleSetting,
+    updateSettings,
     deviceCapabilities,
     isLoading: graphicsLoading,
   } = useGraphics();
@@ -416,16 +654,32 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const { shuffleSeed } = useRandomActions();
   const [copyFeedback, setCopyFeedback] = useState(false);
 
+  // Key bindings state
+  const [keyBindings, setKeyBindings] = useState<KeyBindings>(getKeyBindings);
+
+  // Motor accessibility state
+  const [inputSensitivity, setInputSensitivity] = useState(1.0);
+  const [oneHandedMode, setOneHandedMode] = useState(false);
+
+  // Load motor settings from input manager on mount
+  useEffect(() => {
+    const motor = inputManager.getMotorSettings();
+    setInputSensitivity(motor.inputSensitivity);
+    setOneHandedMode(motor.oneHandedMode);
+  }, []);
+
   // Entrance animation
+  const entranceAnimRef = useRef<ReturnType<typeof animate> | null>(null);
   useEffect(() => {
     if (modalRef.current) {
-      animate(modalRef.current, {
+      entranceAnimRef.current = animate(modalRef.current, {
         opacity: [0, 1],
         scale: [0.9, 1],
         duration: 300,
         ease: "outBack",
       });
     }
+    return () => { entranceAnimRef.current?.pause(); };
   }, []);
 
   // Save sound settings when they change
@@ -540,7 +794,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
           {/* Tab Navigation */}
           <div className="flex gap-2 mb-4 flex-wrap">
-            {(["graphics", "sound", "accessibility", "seed"] as const).map((tab) => (
+            {(["graphics", "sound", "accessibility", "controls", "seed"] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -585,6 +839,37 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 isLoading={graphicsLoading}
                 onToggleReducedMotion={() => toggleSetting("reducedMotion")}
                 onToggleScreenShake={() => toggleSetting("screenShake")}
+                fontSize={fontSize}
+                colorblindMode={graphicsSettings.colorblindMode ?? "none"}
+                onColorblindModeChange={(mode) => updateSettings({ colorblindMode: mode })}
+                highContrastMode={graphicsSettings.highContrastMode ?? false}
+                onToggleHighContrastMode={() => updateSettings({ highContrastMode: !(graphicsSettings.highContrastMode ?? false) })}
+                inputSensitivity={inputSensitivity}
+                onInputSensitivityChange={(value) => {
+                  setInputSensitivity(value);
+                  inputManager.updateMotorSettings({ inputSensitivity: value, oneHandedMode });
+                }}
+                oneHandedMode={oneHandedMode}
+                onToggleOneHandedMode={() => {
+                  const newValue = !oneHandedMode;
+                  setOneHandedMode(newValue);
+                  inputManager.updateMotorSettings({ inputSensitivity, oneHandedMode: newValue });
+                }}
+              />
+            )}
+
+            {activeTab === "controls" && (
+              <ControlsTab
+                bindings={keyBindings}
+                onBindingChange={(action, keys) => {
+                  const updated = { ...keyBindings, [action]: keys };
+                  setKeyBindings(updated);
+                  saveKeyBindings(updated);
+                }}
+                onReset={async () => {
+                  await resetKeyBindings();
+                  setKeyBindings(getKeyBindings());
+                }}
                 fontSize={fontSize}
               />
             )}

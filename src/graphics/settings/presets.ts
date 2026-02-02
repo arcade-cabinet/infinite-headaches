@@ -35,6 +35,8 @@ export const LOW_PRESET: GraphicsSettings = {
   // Accessibility
   reducedMotion: false,
   reduceFlashing: false,
+  colorblindMode: "none",
+  highContrastMode: false,
 };
 
 /**
@@ -67,6 +69,8 @@ export const MEDIUM_PRESET: GraphicsSettings = {
   // Accessibility
   reducedMotion: false,
   reduceFlashing: false,
+  colorblindMode: "none",
+  highContrastMode: false,
 };
 
 /**
@@ -99,6 +103,8 @@ export const HIGH_PRESET: GraphicsSettings = {
   // Accessibility
   reducedMotion: false,
   reduceFlashing: false,
+  colorblindMode: "none",
+  highContrastMode: false,
 };
 
 /**

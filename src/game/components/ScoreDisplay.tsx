@@ -6,6 +6,7 @@
 import { animate } from "animejs";
 import { useEffect, useRef } from "react";
 import { useResponsiveScale } from "../hooks/useResponsiveScale";
+import { ComboCounter } from "./ComboCounter";
 import { HeartsDisplay } from "./HeartsDisplay";
 
 interface ScoreDisplayProps {
@@ -19,6 +20,7 @@ interface ScoreDisplayProps {
   lives: number;
   maxLives: number;
   inDanger: boolean;
+  reducedMotion?: boolean;
 }
 
 export function ScoreDisplay({
@@ -32,19 +34,23 @@ export function ScoreDisplay({
   lives,
   maxLives,
   inDanger,
+  reducedMotion,
 }: ScoreDisplayProps) {
   const { fontSize, spacing, isMobile } = useResponsiveScale();
   const scoreRef = useRef<HTMLDivElement>(null);
-  const comboRef = useRef<HTMLDivElement>(null);
+  // comboRef removed - combo animation now handled by ComboCounter component
   const levelRef = useRef<HTMLDivElement>(null);
   const prevScoreRef = useRef(score);
   const prevLevelRef = useRef(level);
-  const prevComboRef = useRef(combo);
+  const scoreAnimRef = useRef<ReturnType<typeof animate> | null>(null);
+  const levelAnimRef = useRef<ReturnType<typeof animate> | null>(null);
+  // prevComboRef removed - combo animation now handled by ComboCounter component
 
   // Animate score change
   useEffect(() => {
     if (score !== prevScoreRef.current && scoreRef.current) {
-      animate(scoreRef.current, {
+      scoreAnimRef.current?.pause();
+      scoreAnimRef.current = animate(scoreRef.current, {
         scale: [1.15, 1],
         duration: 150,
         ease: "outBack",
@@ -56,7 +62,8 @@ export function ScoreDisplay({
   // Animate level up
   useEffect(() => {
     if (level !== prevLevelRef.current && levelRef.current) {
-      animate(levelRef.current, {
+      levelAnimRef.current?.pause();
+      levelAnimRef.current = animate(levelRef.current, {
         scale: [1.4, 1],
         color: ["#eab308", "#FFF"],
         duration: 400,
@@ -66,18 +73,15 @@ export function ScoreDisplay({
     }
   }, [level]);
 
-  // Animate combo change
+  // Combo animation now handled by ComboCounter component
+
+  // Cleanup animations on unmount
   useEffect(() => {
-    if (combo > prevComboRef.current && comboRef.current && combo > 1) {
-      animate(comboRef.current, {
-        scale: [1.3, 1],
-        translateY: [-5, 0],
-        duration: 200,
-        ease: "outBack",
-      });
-    }
-    prevComboRef.current = combo;
-  }, [combo]);
+    return () => {
+      scoreAnimRef.current?.pause();
+      levelAnimRef.current?.pause();
+    };
+  }, []);
 
   return (
     <header className="contents">
@@ -124,19 +128,7 @@ export function ScoreDisplay({
         )}
 
         {/* Combo */}
-        {combo > 1 && (
-          <div
-            ref={comboRef}
-            className="game-font text-cyan-300"
-            aria-label={`${combo} combo`}
-            style={{
-              fontSize: fontSize.sm,
-              textShadow: "1px 1px 0 #000",
-            }}
-          >
-            {combo}× COMBO
-          </div>
-        )}
+        <ComboCounter combo={combo} reducedMotion={reducedMotion} />
 
         {/* High score */}
         <div
@@ -161,6 +153,7 @@ export function ScoreDisplay({
           right: spacing.sm,
         }}
         role="status"
+        aria-live="assertive"
       >
         {/* Level */}
         <div

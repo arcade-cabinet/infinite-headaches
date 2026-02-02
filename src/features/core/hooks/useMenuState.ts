@@ -18,6 +18,7 @@ export function useMenuState(screen: ScreenState) {
   const [showModes, setShowModes] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   const selectedCharacter: CharacterInfo = CHARACTERS[selectedCharacterIndex];
   const selectedCharacterId = selectedCharacter?.id ?? "farmer_john";
@@ -53,8 +54,10 @@ export function useMenuState(screen: ScreenState) {
   const closeShop = useCallback(() => setShowShop(false), []);
   const closeHelp = useCallback(() => setShowHelp(false), []);
   const closeSettings = useCallback(() => setShowSettings(false), []);
+  const openStats = useCallback(() => setShowStats(true), []);
+  const closeStats = useCallback(() => setShowStats(false), []);
 
-  const isAnyModalOpen = showShop || showModes || showHelp || showSettings;
+  const isAnyModalOpen = showShop || showModes || showHelp || showSettings || showStats;
 
   return {
     selectedCharacterIndex,
@@ -76,6 +79,9 @@ export function useMenuState(screen: ScreenState) {
     closeShop,
     closeHelp,
     closeSettings,
+    showStats,
+    openStats,
+    closeStats,
     isAnyModalOpen,
   };
 }

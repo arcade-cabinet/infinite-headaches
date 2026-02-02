@@ -15,6 +15,8 @@ import { Entity } from "@/game/ecs/components";
 import { useGraphics } from "@/graphics";
 import { useResponsiveScale } from "@/game/hooks/useResponsiveScale";
 import { NebraskaDiorama } from "./NebraskaDiorama";
+import { WeatherEffects } from "@/game/graphics/environment/WeatherEffects";
+import type { WeatherState } from "@/game/systems/WeatherSystem";
 import { InputManager, type InputCallbacks } from "./InputManager";
 import {
   PowerUpRenderer,
@@ -63,6 +65,9 @@ interface GameSceneContentProps {
   showGameplayElements: boolean;
   tornadoGetters?: TornadoGetters;
   onPhysicsCatch?: (event: PhysicsCatchEvent) => void;
+  weather?: WeatherState | null;
+  reducedMotion?: boolean;
+  combo?: number;
 }
 
 const GameSceneContent = ({
@@ -73,6 +78,9 @@ const GameSceneContent = ({
   showGameplayElements,
   tornadoGetters,
   onPhysicsCatch,
+  weather,
+  reducedMotion,
+  combo,
 }: GameSceneContentProps) => {
   const modelEntities = entities.filter((e) => e.model && e.position);
   const powerUpEntities = entities.filter((e) => e.tag?.type === "powerup");
@@ -105,9 +113,29 @@ const GameSceneContent = ({
 
   }, [scene, aspectRatio]);
 
+  // Camera zoom pulse on combo milestones (5, 10, 15)
+  useEffect(() => {
+    if (!scene || !scene.activeCamera || reducedMotion) return;
+    if (combo !== 5 && combo !== 10 && combo !== 15) return;
+
+    const camera = scene.activeCamera as FreeCamera;
+    const originalFov = camera.fov;
+    camera.fov = originalFov * 0.95; // Zoom in by 5%
+
+    const timer = setTimeout(() => {
+      camera.fov = originalFov;
+    }, 200);
+
+    return () => {
+      clearTimeout(timer);
+      camera.fov = originalFov;
+    };
+  }, [scene, combo, reducedMotion]);
+
   return (
     <>
       <NebraskaDiorama quality={quality} />
+      {weather && <WeatherEffects weather={weather} reducedMotion={reducedMotion} />}
       <GameSystems />
       {showGameplayElements && onPhysicsCatch && (
         <PhysicsCollisionBridge onPhysicsCatch={onPhysicsCatch} />
@@ -158,6 +186,9 @@ export interface GameSceneProps {
   havokPlugin: HavokPlugin;
   tornadoGetters?: TornadoGetters;
   onPhysicsCatch?: (event: PhysicsCatchEvent) => void;
+  weather?: WeatherState | null;
+  reducedMotion?: boolean;
+  combo?: number;
   children?: React.ReactNode;
 }
 
@@ -169,6 +200,9 @@ export const GameScene = ({
   havokPlugin,
   tornadoGetters,
   onPhysicsCatch,
+  weather,
+  reducedMotion,
+  combo,
   children,
   ...props // Capture _context and other props injected by Engine
 }: GameSceneProps & { [key: string]: any }) => {
@@ -215,6 +249,9 @@ export const GameScene = ({
           showGameplayElements={showGameplayElements}
           tornadoGetters={tornadoGetters}
           onPhysicsCatch={onPhysicsCatch}
+          weather={weather}
+          reducedMotion={reducedMotion}
+          combo={combo}
         />
       )}
       {children}

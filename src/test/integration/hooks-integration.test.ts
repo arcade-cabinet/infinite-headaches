@@ -279,9 +279,9 @@ describe("Hooks Integration", () => {
       const onMove = vi.fn();
       renderHook(() => useInput({ onMove }));
 
-      // Simulate keyboard input
+      // Simulate keyboard input (KeyA = moveLeft in default bindings)
       act(() => {
-        window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+        window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyA" }));
       });
 
       await waitFor(() => {
@@ -306,8 +306,9 @@ describe("Hooks Integration", () => {
       const onAction = vi.fn();
       renderHook(() => useInput({ onAction }));
 
+      // Enter is the bank (primary action) key in default bindings
       act(() => {
-        window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" }));
+        window.dispatchEvent(new KeyboardEvent("keydown", { code: "Enter" }));
       });
 
       await waitFor(() => {
@@ -359,21 +360,22 @@ describe("Hooks Integration", () => {
 
       expect(result.current.isMoving).toBe(false);
 
+      // KeyA = moveLeft in default bindings
       act(() => {
-        window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
+        window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyA" }));
       });
 
       await waitFor(() => {
-        expect(result.current.y).toBe(-1);
+        expect(result.current.x).toBe(-1);
         expect(result.current.isMoving).toBe(true);
       });
 
       act(() => {
-        window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+        window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyA" }));
       });
 
       await waitFor(() => {
-        expect(result.current.y).toBe(0);
+        expect(result.current.x).toBe(0);
         expect(result.current.isMoving).toBe(false);
       });
     });
@@ -650,10 +652,10 @@ describe("Hooks Integration", () => {
     });
 
     it("should handle keyboard movement correctly", () => {
-      // Press W for up
-      window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyW" }));
-      expect(inputManager.getMovement().y).toBe(-1);
-      window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyW" }));
+      // Press A for left
+      window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyA" }));
+      expect(inputManager.getMovement().x).toBe(-1);
+      window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyA" }));
 
       // Press D for right
       window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyD" }));

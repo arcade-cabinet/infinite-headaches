@@ -230,6 +230,9 @@ describe("POWER_UPS", () => {
     "great_ball",
     "x_attack",
     "full_restore",
+    "shield",
+    "slow_motion",
+    "score_frenzy",
   ];
 
   it("should contain all valid power-up types", () => {
@@ -273,12 +276,12 @@ describe("POWER_UPS", () => {
   });
 
   describe("spawn weights should sum to approximately 1.0", () => {
-    it("total spawn weight should be around 0.9", () => {
+    it("total spawn weight should be around 1.14", () => {
       const totalWeight = Object.values(POWER_UPS).reduce(
         (sum, config) => sum + config.spawnWeight,
         0
       );
-      expect(totalWeight).toBeCloseTo(0.9, 1);
+      expect(totalWeight).toBeCloseTo(1.14, 1);
     });
   });
 
@@ -514,7 +517,7 @@ describe("GAME_CONFIG", () => {
 
   describe("effects", () => {
     it("should have valid squish factor", () => {
-      expect(GAME_CONFIG.effects.squishFactor).toBe(0.22);
+      expect(GAME_CONFIG.effects.squishFactor).toBe(0.30);
       expect(GAME_CONFIG.effects.squishFactor).toBeGreaterThan(0);
       expect(GAME_CONFIG.effects.squishFactor).toBeLessThan(1);
     });
@@ -550,7 +553,7 @@ describe("GAME_CONFIG", () => {
     });
 
     it("should have valid combo parameters", () => {
-      expect(GAME_CONFIG.scoring.comboDecayTime).toBe(3000);
+      expect(GAME_CONFIG.scoring.comboDecayTime).toBe(3500);
       expect(GAME_CONFIG.scoring.comboMultiplier).toBe(0.15);
     });
 
@@ -581,13 +584,13 @@ describe("GAME_CONFIG", () => {
   describe("difficulty", () => {
     it("should have valid level parameters", () => {
       expect(GAME_CONFIG.difficulty.levelUpThreshold).toBe(75);
-      expect(GAME_CONFIG.difficulty.maxLevel).toBe(25);
+      expect(GAME_CONFIG.difficulty.maxLevel).toBe(999);
       expect(GAME_CONFIG.difficulty.maxLevel).toBeGreaterThan(1);
     });
 
     it("should have valid scaling parameters", () => {
-      expect(GAME_CONFIG.difficulty.speedIncreasePerLevel).toBe(0.04);
-      expect(GAME_CONFIG.difficulty.spawnRateCurve).toBe(0.85);
+      expect(GAME_CONFIG.difficulty.speedIncreasePerLevel).toBe(0.035);
+      expect(GAME_CONFIG.difficulty.spawnRateCurve).toBe(0.88);
       expect(GAME_CONFIG.difficulty.specialDuckLevelBonus).toBe(0.02);
     });
   });

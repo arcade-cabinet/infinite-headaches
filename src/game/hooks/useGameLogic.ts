@@ -4,12 +4,15 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Vector3 } from "@babylonjs/core";
 import { audioManager } from "../audio";
 import { GAME_CONFIG } from "../config";
 import { GameLogic } from "../engine/GameLogic";
 import { deviceManager } from "../../platform/device";
+import { inputManager } from "../../platform/input";
+import { recordSession } from "../analytics/SessionLog";
+import { useAccessibilitySettings } from "@/graphics/hooks/useGraphics";
 import type { GameModeType } from "../modes/GameMode";
+import type { WeatherState } from "../systems/WeatherSystem";
 
 export interface UseGameLogicReturn {
   score: number;
@@ -46,6 +49,8 @@ export interface UseGameLogicReturn {
   getIsDropImminent: () => boolean;
   /** Push a physics collision event from PhysicsCollisionBridge. */
   pushCollisionEvent: (event: import("../../features/gameplay/scene/components/PhysicsCollisionBridge").PhysicsCatchEvent) => void;
+  weather: WeatherState | null;
+  activePowerUps: { shield: boolean; slowMotion: boolean; scoreFrenzy: boolean };
 }
 
 export interface GameLogicCallbacks {
@@ -54,6 +59,7 @@ export interface GameLogicCallbacks {
 
 export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn {
   const engineRef = useRef<GameLogic | null>(null);
+  const { reducedMotion } = useAccessibilitySettings();
   const [score, setScore] = useState(0);
   const [multiplier, setMultiplier] = useState(1);
   const [combo, setCombo] = useState(0);
@@ -71,34 +77,55 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
   const [perfectKey, setPerfectKey] = useState(0);
   const [showPerfect, setShowPerfect] = useState(false);
   const [showGood, setShowGood] = useState(false);
+  const [weather, setWeather] = useState<WeatherState | null>(null);
+  const [activePowerUps, setActivePowerUps] = useState<{ shield: boolean; slowMotion: boolean; scoreFrenzy: boolean }>({ shield: false, slowMotion: false, scoreFrenzy: false });
 
   useEffect(() => {
     const engine = new GameLogic({
       onScoreChange: (s, m, c) => { setScore(s); setMultiplier(m); setCombo(c); },
       onStackChange: (h, cb) => { setStackHeight(h); setCanBank(cb); },
       onLivesChange: (l, ml) => { setLives(l); setMaxLives(ml); },
-      onGameOver: (s, b) => { 
-        setIsPlaying(false); 
+      onGameOver: (s, b) => {
+        setIsPlaying(false);
         setIsGameOver(true);
+        // Record session analytics
+        const sessionData = engine.getSessionData();
+        recordSession(sessionData).catch(() => {/* storage write failed, non-critical */});
         if (callbacks?.onGameOver) callbacks.onGameOver(s, b);
       },
       onPerfectCatch: () => { setPerfectKey(k => k + 1); setShowPerfect(true); setTimeout(() => setShowPerfect(false), 800); },
       onGoodCatch: () => { setShowGood(true); setTimeout(() => setShowGood(false), 600); },
       onMiss: () => {},
-      onBankComplete: (t) => setBankedAnimals(t),
+      onBankComplete: (t) => { setBankedAnimals(t); audioManager.play("bank_fanfare"); },
       onLevelUp: (l) => { setLevel(l); audioManager.play("levelup"); },
       onLifeEarned: () => audioManager.play("lifeup"),
       onDangerState: (d) => setInDanger(d),
-      onStackTopple: () => {},
-      onPowerUpCollected: () => {},
-      onFireballShot: () => {},
-      onAnimalFrozen: () => {},
+      onStackTopple: () => { /* TODO: Add screen shake or visual feedback */ },
+      onPowerUpCollected: (_type) => {
+        // TODO: Play type-specific SFX when audio assets are available
+      },
+      onFireballShot: () => { /* TODO: Add fireball SFX */ },
+      onAnimalFrozen: () => { /* TODO: Add freeze SFX */ },
       onScreenShake: (i) => setScreenShake(i),
-      onParticleEffect: () => {},
+      onParticleEffect: () => { /* TODO: Wire to particle system */ },
+      onWeatherChange: (w) => {
+        setWeather(w);
+      },
+      onComboMilestone: (combo) => {
+        if (combo === 5) audioManager.play("combo5");
+        else if (combo === 10) audioManager.play("combo10");
+        else if (combo >= 15) audioManager.play("combo15");
+      },
+      onPowerUpStateChange: (state) => setActivePowerUps(state),
     });
     engineRef.current = engine;
     return () => engine.destroy();
   }, []);
+
+  // Sync reducedMotion preference to game engine
+  useEffect(() => {
+    engineRef.current?.setReducedMotion(reducedMotion);
+  }, [reducedMotion]);
 
   // Controls Detection
   useEffect(() => {
@@ -112,9 +139,11 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
     const onKeyDown = (e: KeyboardEvent) => {
       if (!hasKeyboard) return;
       keys.add(e.code);
-      
+
+      const km = inputManager.getKeyMappings();
+
       // Toggle pause
-      if (e.code === "Space" || e.code === "Escape" || e.code === "KeyP") {
+      if (km.pause.some((k) => k === e.code)) {
         if (isPaused) {
            engineRef.current?.resume();
            setIsPaused(false);
@@ -125,23 +154,28 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
            audioManager.pauseMusic();
         }
       }
-      
+
       // Bank
-      if ((e.code === "Enter" || e.code === "ArrowUp") && canBank && !isPaused) {
+      if (km.action.some((k) => k === e.code) && canBank && !isPaused) {
         engineRef.current?.bankStack();
       }
     };
-    
+
     const onKeyUp = (e: KeyboardEvent) => keys.delete(e.code);
 
     const tick = () => {
       if (hasKeyboard && engineRef.current && !isPaused) {
+        const km = inputManager.getKeyMappings();
         let dx = 0;
         // Tuning movement speed for keyboard
-        const speed = 0.4; 
-        if (keys.has("ArrowLeft") || keys.has("KeyA")) dx -= speed;
-        if (keys.has("ArrowRight") || keys.has("KeyD")) dx += speed;
-        
+        const speed = 0.4;
+        if (km.left.some((k) => keys.has(k))) dx -= speed;
+        if (km.right.some((k) => keys.has(k))) dx += speed;
+
+        // Apply sensitivity from motor settings
+        const sensitivity = inputManager.getMotorSettings().inputSensitivity;
+        dx *= sensitivity;
+
         if (dx !== 0) engineRef.current.movePlayer(dx);
       }
       frameId = requestAnimationFrame(tick);
@@ -181,5 +215,7 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
     getDropDifficulty: () => engineRef.current?.getDropDifficulty() ?? 0,
     getIsDropImminent: () => engineRef.current?.getIsDropImminent() ?? false,
     pushCollisionEvent: (event) => engineRef.current?.pushCollisionEvent(event),
+    weather,
+    activePowerUps,
   };
 }

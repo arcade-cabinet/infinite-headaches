@@ -29,6 +29,8 @@ interface MainMenuOverlayProps {
   onPlay: () => void;
   onModes: () => void;
   onUpgrades: () => void;
+  onStats: () => void;
+  onSettings?: () => void;
 }
 
 export function MainMenuOverlay({
@@ -40,6 +42,8 @@ export function MainMenuOverlay({
   onPlay,
   onModes,
   onUpgrades,
+  onStats,
+  onSettings,
 }: MainMenuOverlayProps) {
   const { fontSize, spacing, isMobile } = useResponsiveScale();
 
@@ -219,7 +223,7 @@ export function MainMenuOverlay({
                 PLAY
               </GameButton>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <GameButton
                   onClick={onModes}
                   variant="secondary"
@@ -236,6 +240,24 @@ export function MainMenuOverlay({
                 >
                   UPGRADES
                 </GameButton>
+                <GameButton
+                  onClick={onStats}
+                  variant="secondary"
+                  className="flex-1"
+                  style={{ fontSize: fontSize.sm }}
+                >
+                  STATS
+                </GameButton>
+                {onSettings && (
+                  <GameButton
+                    onClick={onSettings}
+                    variant="secondary"
+                    className="flex-1"
+                    style={{ fontSize: fontSize.sm }}
+                  >
+                    SETTINGS
+                  </GameButton>
+                )}
               </div>
             </div>
 
