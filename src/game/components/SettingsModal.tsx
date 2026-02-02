@@ -501,8 +501,8 @@ function ControlsTab({ bindings, onBindingChange, onReset, fontSize }: ControlsT
       setCapturingAction(null);
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [capturingAction, bindings, onBindingChange]);
 
   return (

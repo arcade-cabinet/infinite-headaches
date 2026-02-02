@@ -152,35 +152,43 @@ export function ScoreDisplay({
           top: `calc(${spacing.sm} + env(safe-area-inset-top, 0px))`,
           right: spacing.sm,
         }}
-        role="status"
-        aria-live="assertive"
       >
-        {/* Level */}
+        {/* Level - assertive so level-ups are announced immediately */}
         <div
-          ref={levelRef}
-          className="game-font text-white"
-          aria-label={`Level ${level}`}
-          style={{
-            fontSize: fontSize.md,
-            textShadow: "2px 2px 0 #000",
-          }}
+          role="status"
+          aria-live="assertive"
         >
-          LV.{level}
+          <div
+            ref={levelRef}
+            className="game-font text-white"
+            aria-label={`Level ${level}`}
+            style={{
+              fontSize: fontSize.md,
+              textShadow: "2px 2px 0 #000",
+            }}
+          >
+            LV.{level}
+          </div>
         </div>
 
-        {/* Stack height with danger indicator */}
+        {/* Stack height and banked animals - polite updates */}
         <div
-          className={`game-font ${inDanger ? "text-red-400" : "text-orange-300"}`}
-          aria-label={`Stack height: ${stackHeight}${inDanger ? ", Danger!" : ""}`}
-          style={{
-            fontSize: fontSize.sm,
-            textShadow: "1px 1px 0 #000",
-            animation: inDanger ? "pulse 0.5s ease-in-out infinite" : "none",
-          }}
+          role="status"
+          aria-live="polite"
         >
-          STACK: {stackHeight}
-          {inDanger && <span aria-hidden="true"> ⚠️</span>}
-        </div>
+          {/* Stack height with danger indicator */}
+          <div
+            className={`game-font ${inDanger ? "text-red-400" : "text-orange-300"}`}
+            aria-label={`Stack height: ${stackHeight}${inDanger ? ", Danger!" : ""}`}
+            style={{
+              fontSize: fontSize.sm,
+              textShadow: "1px 1px 0 #000",
+              animation: inDanger ? "pulse 0.5s ease-in-out infinite" : "none",
+            }}
+          >
+            STACK: {stackHeight}
+            {inDanger && <span aria-hidden="true"> ⚠️</span>}
+          </div>
 
           {/* Banked animals */}
           {bankedAnimals > 0 && (
@@ -195,6 +203,7 @@ export function ScoreDisplay({
               BANKED: {bankedAnimals}
             </div>
           )}
+        </div>
       </div>
     </header>
   );

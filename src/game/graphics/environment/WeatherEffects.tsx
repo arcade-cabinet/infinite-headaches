@@ -56,7 +56,7 @@ export const WeatherEffects = ({ weather, reducedMotion = false }: WeatherEffect
     // Wind streaks
     if (hasWind && !windSystemRef.current) {
       const wind = new ParticleSystem("wind", 100, scene);
-      const emitDir = weather.windDirection > 0 ? 10 : -10;
+      const emitDir = weather.windDirection > 0 ? -10 : 10;
       wind.createPointEmitter(new Vector3(0, -2, -2), new Vector3(0, 8, 2));
       wind.emitter = new Vector3(emitDir, 5, 0);
       wind.minSize = 0.01;

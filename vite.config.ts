@@ -40,7 +40,9 @@ function babylonShaderGuardPlugin(): Plugin {
 const isCapacitorBuild = process.env.CAPACITOR_BUILD === "true";
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // GitHub Pages serves from /infinite-headaches/. Dev server uses root.
+  base: command === "serve" ? "/" : "/infinite-headaches/",
   cacheDir: ".vite",
   plugins: [
     babylonShaderGuardPlugin(),
@@ -94,4 +96,4 @@ export default defineConfig({
       overlay: true,
     },
   },
-});
+}));

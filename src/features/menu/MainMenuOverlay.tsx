@@ -146,7 +146,7 @@ export function MainMenuOverlay({
           </p>
         </div>
 
-        {/* Character Carousel Controls - middle area */}
+        {/* Character Carousel - portrait + info */}
         <div className="flex items-center justify-center gap-4 md:gap-8 pointer-events-auto">
           <button
             onClick={onPrevCharacter}
@@ -156,33 +156,45 @@ export function MainMenuOverlay({
             ‹
           </button>
 
-          {/* Character info - semi-transparent card so text is readable over 3D */}
-          <div className="text-center min-w-[200px] md:min-w-[260px] bg-black/40 backdrop-blur-sm rounded-xl px-4 py-3 md:px-6 md:py-4 border border-amber-900/30">
-            <h3
-              className="game-font text-white text-xl md:text-2xl"
-              style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
-            >
-              {selectedCharacter.name}
-            </h3>
-            <p
-              className="game-font text-amber-200 text-sm md:text-base"
-              style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
-            >
-              {selectedCharacter.role}
-            </p>
-            <div className="mt-2 text-xs md:text-sm">
-              <span
-                className="text-green-400 block"
+          <div className="flex flex-col items-center">
+            {/* Character portrait */}
+            <div className="w-28 h-36 md:w-36 md:h-44 rounded-xl overflow-hidden border-2 border-amber-700/50 bg-black/30 mb-3 shadow-lg">
+              <img
+                src={`assets/sprites/${selectedCharacter.id}_portrait.png`}
+                alt={`${selectedCharacter.name} portrait`}
+                className="w-full h-full object-cover object-top"
+                draggable={false}
+              />
+            </div>
+
+            {/* Character info card */}
+            <div className="text-center min-w-[200px] md:min-w-[260px] bg-black/40 backdrop-blur-sm rounded-xl px-4 py-3 md:px-6 md:py-4 border border-amber-900/30">
+              <h3
+                className="game-font text-white text-xl md:text-2xl"
+                style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+              >
+                {selectedCharacter.name}
+              </h3>
+              <p
+                className="game-font text-amber-200 text-sm md:text-base"
                 style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
               >
-                + {selectedCharacter.traits.positive}
-              </span>
-              <span
-                className="text-red-400 block"
-                style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
-              >
-                - {selectedCharacter.traits.negative}
-              </span>
+                {selectedCharacter.role}
+              </p>
+              <div className="mt-2 text-xs md:text-sm">
+                <span
+                  className="text-green-400 block"
+                  style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+                >
+                  + {selectedCharacter.traits.positive}
+                </span>
+                <span
+                  className="text-red-400 block"
+                  style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+                >
+                  - {selectedCharacter.traits.negative}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -227,7 +239,7 @@ export function MainMenuOverlay({
                 <GameButton
                   onClick={onModes}
                   variant="secondary"
-                  className="flex-1"
+                  className="flex-1 min-w-[80px]"
                   style={{ fontSize: fontSize.sm }}
                 >
                   MODES
@@ -235,7 +247,7 @@ export function MainMenuOverlay({
                 <GameButton
                   onClick={onUpgrades}
                   variant="secondary"
-                  className="flex-1"
+                  className="flex-1 min-w-[80px]"
                   style={{ fontSize: fontSize.sm }}
                 >
                   UPGRADES
@@ -243,7 +255,7 @@ export function MainMenuOverlay({
                 <GameButton
                   onClick={onStats}
                   variant="secondary"
-                  className="flex-1"
+                  className="flex-1 min-w-[80px]"
                   style={{ fontSize: fontSize.sm }}
                 >
                   STATS
@@ -252,7 +264,7 @@ export function MainMenuOverlay({
                   <GameButton
                     onClick={onSettings}
                     variant="secondary"
-                    className="flex-1"
+                    className="flex-1 min-w-[80px]"
                     style={{ fontSize: fontSize.sm }}
                   >
                     SETTINGS
