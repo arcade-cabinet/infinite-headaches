@@ -572,6 +572,75 @@ describe("AnimationSystem", () => {
     expect(entity.animation!.currentAnimation).toBe("attack");
   });
 
+  it("sets weight=1 directly on first animation play (T-pose prevention)", () => {
+    const entityId = "entity-tpose";
+    const { groups, scene } = registerTestAnimations(entityId, [
+      "Idle",
+      "Walk",
+    ]);
+
+    const entity: Entity = {
+      id: entityId,
+      animation: createAnimationComponent({ currentAnimation: "idle" }),
+    };
+
+    vi.mocked(world.with).mockReturnValue([entity] as any);
+
+    // First frame: plays idle for the first time (no other animation playing)
+    AnimationSystem(0.016);
+
+    const idleGroup = groups.find((g) => g.name === "Idle")!;
+
+    // The animation must start at full weight immediately.
+    // If weight were set to 0 (via blendInAnimation), the model shows
+    // its bind pose (T-pose) until the blend observer runs — which never
+    // happens when the browser tab is hidden.
+    expect(idleGroup.weight).toBe(1);
+    expect(idleGroup.start).toHaveBeenCalledWith(true); // loop=true
+
+    // No blend-in observer should be registered on the scene
+    // because there is no other animation to blend FROM.
+    expect(scene.onBeforeRenderObservable.add).not.toHaveBeenCalled();
+  });
+
+  it("uses blend-in when transitioning between two animations", () => {
+    const entityId = "entity-blend-transition";
+    const { groups, scene } = registerTestAnimations(entityId, [
+      "Idle",
+      "Walk",
+    ]);
+
+    const entity: Entity = {
+      id: entityId,
+      animation: createAnimationComponent({ currentAnimation: "idle" }),
+    };
+
+    vi.mocked(world.with).mockReturnValue([entity] as any);
+
+    // First frame: start idle (direct, no blend)
+    AnimationSystem(0.016);
+
+    const idleGroup = groups.find((g) => g.name === "Idle")!;
+    const walkGroup = groups.find((g) => g.name === "Walk")!;
+
+    // Simulate that idle is now playing (mock returns isPlaying=true)
+    idleGroup.isPlaying = true;
+
+    // Clear scene observer spy from any previous calls
+    scene.onBeforeRenderObservable.add.mockClear();
+
+    // Switch to walk
+    entity.animation!.currentAnimation = "walk";
+    AnimationSystem(0.016);
+
+    // Walk should have been started with blend-in (weight starts at 0)
+    expect(walkGroup.weight).toBe(0);
+    expect(walkGroup.start).toHaveBeenCalledWith(true);
+
+    // A blend-in observer should be registered to animate the weight
+    expect(scene.onBeforeRenderObservable.add).toHaveBeenCalled();
+  });
+
   it("uses custom blend config when provided", () => {
     const entityId = "entity-custom-blend";
     registerTestAnimations(entityId, ["Idle", "Walk"]);

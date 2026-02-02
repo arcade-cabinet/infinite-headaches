@@ -13,11 +13,12 @@ interface PauseMenuProps {
   onResume: () => void;
   onMainMenu: () => void;
   onRestart: () => void;
+  onSettings?: () => void;
   score: number;
   level: number;
 }
 
-export function PauseMenu({ onResume, onMainMenu, onRestart, score, level }: PauseMenuProps) {
+export function PauseMenu({ onResume, onMainMenu, onRestart, onSettings, score, level }: PauseMenuProps) {
   const { fontSize, spacing, isMobile } = useResponsiveScale();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -93,6 +94,12 @@ export function PauseMenu({ onResume, onMainMenu, onRestart, score, level }: Pau
               RESTART
             </GameButton>
 
+            {onSettings && (
+              <GameButton onClick={onSettings} variant="secondary" style={{ fontSize: fontSize.sm }}>
+                SETTINGS
+              </GameButton>
+            )}
+
             <GameButton onClick={onMainMenu} variant="secondary" style={{ fontSize: fontSize.sm }}>
               MAIN MENU
             </GameButton>
@@ -100,7 +107,7 @@ export function PauseMenu({ onResume, onMainMenu, onRestart, score, level }: Pau
 
           {/* Hint */}
           <p className="game-font text-stone-400 mt-4" style={{ fontSize: fontSize.xs }}>
-            Press ESC or tap outside to resume
+            Press SPACE or tap outside to resume
           </p>
         </GameCard>
       </div>

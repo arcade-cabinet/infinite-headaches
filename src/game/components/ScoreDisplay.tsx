@@ -158,7 +158,7 @@ export function ScoreDisplay({
         className="absolute pointer-events-none z-30 text-right"
         style={{
           top: `calc(${spacing.sm} + env(safe-area-inset-top, 0px))`,
-          right: `calc(${spacing.sm} + 65px)`, // Account for bank zone
+          right: spacing.sm,
         }}
         role="status"
       >

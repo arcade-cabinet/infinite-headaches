@@ -152,10 +152,18 @@ function playAnimation(
   // Configure and play the target animation
   targetGroup.speedRatio = speed;
 
-  if (blendDuration > 0 && !targetGroup.isPlaying) {
-    // Blend in the new animation
+  // Only use blend-in when transitioning FROM another playing animation.
+  // For the first animation (no other playing), start at full weight immediately
+  // to avoid T-pose flash caused by weight=0 during blend-in.
+  const hasOtherPlaying = Array.from(entry.groups.values()).some(
+    (g) => g !== targetGroup && g.isPlaying
+  );
+
+  if (blendDuration > 0 && !targetGroup.isPlaying && hasOtherPlaying) {
+    // Blend transition between animations
     blendInAnimation(targetGroup, blendDuration, loop, entry.scene);
   } else if (!targetGroup.isPlaying) {
+    targetGroup.weight = 1;
     targetGroup.start(loop);
   }
 

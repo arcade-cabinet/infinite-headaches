@@ -655,7 +655,7 @@ export class GameLogic {
 
     // Max time a falling entity can exist before forced cleanup (safety net
     // for entities stuck on physics bodies that physics-catch didn't process)
-    const MAX_FALL_TIME_MS = 12000;
+    const MAX_FALL_TIME_MS = 8000;
 
     for (const f of falling) {
       if (!f.position) continue;

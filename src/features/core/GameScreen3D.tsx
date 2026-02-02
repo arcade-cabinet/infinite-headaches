@@ -41,9 +41,7 @@ import { ModeSelect } from "@/game/components/ModeSelect";
 import { SettingsModal } from "@/game/components/SettingsModal";
 import { UpgradeShop } from "@/game/components/UpgradeShop";
 import { HelpModal } from "@/game/components/HelpModal";
-import { PauseButton } from "@/game/components/PauseButton";
 import { PauseMenu } from "@/game/components/PauseMenu";
-import { SoundToggle } from "@/game/components/SoundToggle";
 import { GameOverScreen } from "@/features/gameplay/GameOverScreen";
 import { GameScene } from "@/features/gameplay/scene/GameScene";
 import { SplashScene } from "@/features/splash/SplashScene";
@@ -56,7 +54,7 @@ export function GameScreen3D() {
   const physics = usePhysicsEngine();
   const { highScore, updateHighScore } = useHighScore();
   const { settings } = useGraphics();
-  const { spacing } = useResponsiveScale();
+  useResponsiveScale();
 
   // ── Scene state machine ────────────────────────────────
   const scenes = useSceneManager();
@@ -89,9 +87,6 @@ export function GameScreen3D() {
   // ── Keyboard controls ──────────────────────────────────
   useKeyboardControls({
     screen: scenes.screen,
-    isPaused: gameplay.isPaused,
-    pauseGame: gameplay.pauseGame,
-    resumeGame: gameplay.resumeGame,
     isAnyModalOpen: menu.isAnyModalOpen,
     onPrevCharacter: menu.handlePrevCharacter,
     onNextCharacter: menu.handleNextCharacter,
@@ -287,22 +282,14 @@ export function GameScreen3D() {
           />
         )}
         {menu.showHelp && <HelpModal onClose={menu.closeHelp} />}
-        {menu.showSettings && <SettingsModal onClose={menu.closeSettings} />}
       </div>
 
-      {/* ── Top-right controls (pause + sound) ── */}
-      <div
-        className="absolute z-40 flex gap-2 items-center"
-        style={{
-          top: `calc(${spacing.sm} + env(safe-area-inset-top, 0px))`,
-          right: spacing.sm,
-        }}
-      >
-        {isPlaying && !gameplay.isPaused && (
-          <PauseButton onClick={gameplay.pauseGame} />
-        )}
-        <SoundToggle />
-      </div>
+      {/* ── Settings modal (z-60 so it renders above PauseMenu z-50) ── */}
+      {menu.showSettings && (
+        <div className="absolute inset-0 z-[60]">
+          <SettingsModal onClose={menu.closeSettings} />
+        </div>
+      )}
 
       {/* ── Wobble warning overlay ── */}
       {isPlaying && gameplay.inDanger && !gameplay.isPaused && (
@@ -330,6 +317,7 @@ export function GameScreen3D() {
             scenes.goToMenu();
           }}
           onRestart={handleRestart}
+          onSettings={menu.openSettings}
           score={gameplay.score}
           level={gameplay.level}
         />

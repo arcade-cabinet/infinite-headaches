@@ -96,10 +96,10 @@ const GameSceneContent = ({
     const dist = (requiredWidth / 2) / Math.tan(halfFov);
     const targetZ = -Math.max(18, dist / aspectRatio);
 
-    // Center camera between farmer (Y=-2) and tornado (Y=8.25).
-    // Y=2.0 favours visibility of the farmer at the bottom while
-    // keeping the tornado comfortably in the upper portion.
+    // Camera Y: center the view on the game world.
+    // Original default is 2.0 which centers between track (Y≈-3) and tornado (Y≈10).
     const cameraY = 2.0;
+
     camera.position.set(0, cameraY, targetZ);
     camera.setTarget(new Vector3(0, cameraY, 0));
 

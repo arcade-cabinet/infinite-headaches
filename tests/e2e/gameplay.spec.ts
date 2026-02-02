@@ -1,93 +1,82 @@
-import { test, expect } from '@playwright/test';
+/**
+ * Core Game Flow E2E Test
+ *
+ * Tests the full navigation path from launch to gameplay:
+ * Menu → Mode Select → Character Select → Loading → Gameplay → Player Movement
+ *
+ * This test does NOT use the shared helper's navigateToGameplay because
+ * it explicitly tests each navigation step.
+ */
 
-test('Full Game Flow: Menu -> Start -> Gameplay', async ({ page }) => {
-  // Capture console logs, filtering out noise
-  page.on('console', msg => {
+import { test, expect } from "@playwright/test";
+
+test("Full Game Flow: Menu -> Start -> Gameplay", async ({ page }) => {
+  page.on("console", (msg) => {
     const text = msg.text();
-    if (text.includes('GL Driver Message') || text.includes('GPU stall')) return;
-    console.log(`BROWSER: ${text}`);
+    if (text.includes("GL Driver Message") || text.includes("GPU stall")) return;
   });
-  page.on('pageerror', err => console.log(`BROWSER ERROR: ${err}`));
 
   // 1. Launch Game
-  await page.goto('/');
+  await page.goto("/");
 
   // Skip Tutorial in LocalStorage
   await page.evaluate(() => {
-    localStorage.setItem('animal-tutorial-complete', 'true');
-    localStorage.setItem('animal-modes-unlocked', JSON.stringify(['endless', 'time_attack', 'zen', 'boss_rush']));
+    localStorage.setItem("animal-tutorial-complete", "true");
+    localStorage.setItem(
+      "animal-modes-unlocked",
+      JSON.stringify(["endless", "time_attack", "zen", "boss_rush"])
+    );
   });
 
-  // 2. Skip Splash Screen (Wait for listener to be active)
-  await expect(page.locator('canvas#splash-canvas')).toBeVisible({ timeout: 15000 });
+  // 2. Skip Splash Screen
+  await expect(page.locator("canvas#splash-canvas")).toBeVisible({ timeout: 15000 });
   await page.waitForTimeout(1000);
-  
+
   const { width, height } = page.viewportSize() || { width: 1280, height: 720 };
   await page.mouse.click(width / 2, height / 2);
 
-  // 3. Verify Menu (Wait for API)
+  // 3. Verify Menu
   await page.waitForFunction(() => (window as any).GAME_MENU, undefined, { timeout: 20000 });
 
   // 4. Start New Game
   await page.evaluate(() => (window as any).GAME_MENU.clickPlay());
 
-  // 5. Mode Select
+  // 5. Mode Select → Loading (no separate character select screen)
   await expect(page.getByText(/SELECT MODE/i)).toBeVisible();
-  await page.getByText('Endless', { exact: true }).click();
+  await page.getByText("Endless", { exact: true }).click();
 
-  // 6. Character Select
-  await expect(page.getByText(/CHOOSE YOUR HAND/i)).toBeVisible();
-  await page.getByText('SELECT').click();
+  // 6. Loading Screen
+  await expect(page.getByText("LOADING...")).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText("LOADING...")).not.toBeVisible({ timeout: 15000 });
 
-  // 7. Wait for Loading Screen
-  console.log('Waiting for Loading Screen...');
-  await expect(page.getByText('LOADING...')).toBeVisible({ timeout: 5000 });
-  
-  // Wait for Loading to finish (text disappears)
-  console.log('Waiting for Loading to finish...');
-  await expect(page.getByText('LOADING...')).not.toBeVisible({ timeout: 15000 });
-
-  // 8. Wait for Game Start (Wait for HUD element like 'STACK:')
-  console.log('Waiting for HUD...');
+  // 7. HUD visible (gameplay started)
   await expect(page.getByText(/STACK:/i)).toBeVisible({ timeout: 30000 });
 
-  // 9. Verify Gameplay (Player Movement)
-  // We need to wait a bit for the scene to fully initialize entities
+  // 8. Verify player entity exists
   await page.waitForTimeout(3000);
 
-  // Get initial player position from the exposed GAME_WORLD
   const initialX = await page.evaluate(() => {
     const world = (window as any).GAME_WORLD;
     if (!world) return null;
     const entities = world.entities;
-    const player = entities.find((e: any) => e.tag?.type === 'player');
+    const player = entities.find((e: any) => e.tag?.type === "player");
     return player?.position?.x;
   });
 
   expect(initialX).not.toBeNull();
-  console.log(`Initial Player X: ${initialX}`);
 
-  // Move Right
-  await page.keyboard.down('ArrowRight');
-  await page.waitForTimeout(1000); // Hold for 1s
-  await page.keyboard.up('ArrowRight');
-
-  // Wait for physics/interpolation
+  // 9. Move Right
+  await page.keyboard.down("ArrowRight");
+  await page.waitForTimeout(1000);
+  await page.keyboard.up("ArrowRight");
   await page.waitForTimeout(500);
 
-  // Get new position
   const newX = await page.evaluate(() => {
     const world = (window as any).GAME_WORLD;
     const entities = world.entities;
-    const player = entities.find((e: any) => e.tag?.type === 'player');
+    const player = entities.find((e: any) => e.tag?.type === "player");
     return player?.position?.x;
   });
 
-  console.log(`New Player X: ${newX}`);
-
-  // Expect movement to the right (positive X)
   expect(newX).toBeGreaterThan(initialX!);
-
-  // Take a screenshot of gameplay
-  await page.screenshot({ path: 'gameplay-screenshot.png' });
 });

@@ -37,7 +37,7 @@ export const GameBoardOverlay = () => {
     );
 
     // Position centered on the play area, slightly behind entities (Z=0.1)
-    plane.position = new Vector3(0, 2.5, 0.1); // Y center = (-3 + 8) / 2 = 2.5
+    plane.position = new Vector3(0, 2.8, 0.1); // Y center adjusted for camera framing
 
     // Plane faces -Z by default in Babylon, which is toward the camera -- correct
 
@@ -64,31 +64,32 @@ export const GameBoardOverlay = () => {
     const borderThickness = 0.12;
     // Left edge
     const borderLeft = MeshBuilder.CreatePlane("borderLeft", { width: borderThickness, height }, scene);
-    borderLeft.position = new Vector3(-width / 2, 2.5, 0.09);
+    borderLeft.position = new Vector3(-width / 2, 2.8, 0.09);
     borderLeft.material = borderMat;
     borderLeft.isPickable = false;
     // Right edge
     const borderRight = MeshBuilder.CreatePlane("borderRight", { width: borderThickness, height }, scene);
-    borderRight.position = new Vector3(width / 2, 2.5, 0.09);
+    borderRight.position = new Vector3(width / 2, 2.8, 0.09);
     borderRight.material = borderMat;
     borderRight.isPickable = false;
 
     // --- INVISIBLE PHYSICS FLOOR ---
-    // Catches dynamic entities that fall past the catch zone at Y=-3
+    // Prevents falling entities from tunneling through the player's physics body.
+    // Entities that land here are cleaned up by GameLogic's MAX_FALL_TIME_MS safety net.
     if (scene.getPhysicsEngine()) {
       const floor = MeshBuilder.CreateBox(
         "physicsFloor",
         { width: 30, height: 0.5, depth: 5 },
         scene
       );
-      floor.position = new Vector3(0, -4, 0); // Below farmer track (Y=-2) and catch zone
+      floor.position = new Vector3(0, -4, 0);
       floor.isVisible = false;
       floor.isPickable = false;
 
       const floorAgg = new PhysicsAggregate(
         floor,
         PhysicsShapeType.BOX,
-        { mass: 0, restitution: 0.2, friction: 0.5 }, // mass=0 = static
+        { mass: 0, restitution: 0.2, friction: 0.5 },
         scene
       );
       floorAgg.body.setMotionType(PhysicsMotionType.ANIMATED);
