@@ -2,7 +2,39 @@ import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import type { Plugin } from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
+
+/**
+ * Vite plugin to prevent SPA fallback for BabylonJS shader file requests.
+ * BabylonJS dynamically loads shader source via HTTP when a shader isn't
+ * pre-registered in Effect.ShadersStore. Vite's SPA fallback serves index.html
+ * for any unresolved URL, which BabylonJS then tries to compile as GLSL,
+ * causing "SHADER ERROR: '<' : syntax error" from the DOCTYPE tag.
+ */
+function babylonShaderGuardPlugin(): Plugin {
+  return {
+    name: "babylon-shader-guard",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url;
+        if (
+          url &&
+          (url.endsWith(".fragment") ||
+            url.endsWith(".vertex") ||
+            url.endsWith(".fx") ||
+            url.endsWith(".fragment.fx") ||
+            url.endsWith(".vertex.fx"))
+        ) {
+          res.statusCode = 404;
+          res.end(`Shader file not found: ${url}`);
+          return;
+        }
+        next();
+      });
+    },
+  };
+}
 
 // Check if building for Capacitor (mobile/desktop)
 const isCapacitorBuild = process.env.CAPACITOR_BUILD === "true";
@@ -11,6 +43,7 @@ const isCapacitorBuild = process.env.CAPACITOR_BUILD === "true";
 export default defineConfig({
   cacheDir: ".vite",
   plugins: [
+    babylonShaderGuardPlugin(),
     react({
       exclude: [/node_modules/, /\.vite/],
       babel: {

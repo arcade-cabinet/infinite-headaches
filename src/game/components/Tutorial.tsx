@@ -39,11 +39,11 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     highlight: "Move smoothly",
   },
   {
-    title: "SPECIAL ANIMALS",
+    title: "ANIMAL WEIGHTS",
     description:
-      "🐸 Frogs - TAP to shoot fireballs!\n🐧 Penguins - TAP to freeze falling animals!\nAbilities have cooldowns - watch for the glow!",
-    icon: "✨",
-    highlight: "Tap special animals to activate powers",
+      "Each animal has a different weight.\nCows are heavy and wobble the stack more.\nChickens are light and easier to balance.\nPlan your catches carefully!",
+    icon: "⚖️",
+    highlight: "Heavy animals near the bottom are more stable",
   },
   {
     title: "BANK YOUR HERD",
@@ -131,8 +131,8 @@ export function Tutorial({ onComplete }: TutorialProps) {
                   i === currentStep
                     ? "bg-yellow-400 w-3 h-3"
                     : i < currentStep
-                      ? "bg-purple-400 w-2 h-2"
-                      : "bg-purple-700 w-2 h-2"
+                      ? "bg-amber-400 w-2 h-2"
+                      : "bg-stone-700 w-2 h-2"
                 }`}
                 aria-hidden="true"
               />
@@ -164,7 +164,7 @@ export function Tutorial({ onComplete }: TutorialProps) {
 
             {/* Description */}
             <p
-              className="game-font text-purple-100 mb-4 whitespace-pre-line"
+              className="game-font text-amber-100 mb-4 whitespace-pre-line"
               style={{ fontSize: fontSize.sm }}
             >
               {step.description}
@@ -201,7 +201,7 @@ export function Tutorial({ onComplete }: TutorialProps) {
           </div>
 
           {/* Step counter */}
-          <p className="game-font text-purple-500 mt-3" style={{ fontSize: fontSize.xs }}>
+          <p className="game-font text-stone-500 mt-3" style={{ fontSize: fontSize.xs }}>
             {currentStep + 1} / {TUTORIAL_STEPS.length}
           </p>
         </GameCard>

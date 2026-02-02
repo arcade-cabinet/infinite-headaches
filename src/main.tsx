@@ -9,6 +9,13 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 // Expose world for E2E testing
 (window as any).GAME_WORLD = world;
 
+// Install DevAPI in development builds (tree-shaken in production)
+if (import.meta.env.DEV) {
+  import("./game/debug/DevAPI").then((mod) => {
+    mod.installDevAPI();
+  });
+}
+
 // Allowed theme values (whitelist for security)
 const VALID_THEMES = ["light", "dark"] as const;
 

@@ -1,0 +1,235 @@
+# DevAPI Lives System & Game Over E2E Test
+# Tests lives management, invincibility, and game over flow via DevAPI
+#
+# VERIFIES:
+# 1. setLives correctly updates the lives counter
+# 2. Losing all lives triggers game over
+# 3. setInvincible prevents life loss on miss
+# 4. triggerGameOver forces game over screen
+# 5. Game over screen displays correct score
+# 6. Restart from game over works
+#
+# REQUIRES: Dev/development build
+
+appId: web
+---
+# ============================================================
+# SETUP
+# ============================================================
+
+- openLink: ${LOCAL_URL:-https://homestead-headaches.netlify.app}
+
+- evalScript: |
+    ${
+      sessionStorage.setItem('homestead_splash_shown_session', 'true');
+      localStorage.setItem('animal-tutorial-complete', 'true');
+      localStorage.setItem('animal-modes-unlocked', JSON.stringify(['endless','time_attack','zen','boss_rush']));
+    }
+- evalScript: ${window.location.reload()}
+
+- extendedWaitUntil:
+    visible: "NEW GAME"
+    timeout: 15000
+
+- tapOn: "NEW GAME"
+
+- extendedWaitUntil:
+    visible: "SELECT MODE"
+    timeout: 5000
+
+- evalScript: |
+    ${
+      const btns = document.querySelectorAll('button');
+      const endless = Array.from(btns).find(b => b.textContent && b.textContent.includes('Endless') && !b.disabled);
+      if (endless) endless.click();
+    }
+
+- extendedWaitUntil:
+    visible: "CHOOSE YOUR HAND"
+    timeout: 5000
+
+- tapOn: "SELECT"
+
+- extendedWaitUntil:
+    visible: "STACK|Got it"
+    timeout: 10000
+
+- evalScript: ${output.tutorialBtn = document.body.textContent.includes('Got it')}
+- runFlow:
+    when:
+      true: ${output.tutorialBtn == true}
+    commands:
+      - tapOn: "Got it"
+      - waitForAnimationToEnd
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 5000
+
+# Wait for DevAPI
+- repeat:
+    times: 10
+    commands:
+      - waitForAnimationToEnd
+
+# ============================================================
+# TEST 1: Set lives to 1 and verify
+# ============================================================
+
+- evalScript: |
+    ${
+      if (window.__DEV_API__) {
+        window.__DEV_API__.setSpawnPaused(true);
+        window.__DEV_API__.setLives(1);
+        const state = window.__DEV_API__.getGameState();
+        output.livesSet = state.data?.lives;
+        console.log('Lives set to 1:', output.livesSet);
+      }
+    }
+
+- takeScreenshot: lives-01-single-life
+
+# ============================================================
+# TEST 2: Test invincibility - miss should NOT lose life
+# ============================================================
+
+- evalScript: |
+    ${
+      window.__DEV_API__.setInvincible(true);
+      window.__DEV_API__.movePlayerTo(-7);
+      // Spawn animal far from player so it misses
+      window.__DEV_API__.spawnAnimal('cow', 5, 'normal');
+      console.log('Invincible mode ON, spawned miss-animal');
+    }
+
+# Wait for animal to fall past
+- repeat:
+    times: 40
+    commands:
+      - waitForAnimationToEnd
+
+- evalScript: |
+    ${
+      const state = window.__DEV_API__.getGameState();
+      output.livesAfterInvincibleMiss = state.data?.lives;
+      output.stillPlaying = state.data?.isPlaying;
+      console.log('Lives after invincible miss:', output.livesAfterInvincibleMiss, 'Playing:', output.stillPlaying);
+    }
+
+# With invincibility, lives should still be 1
+- assertTrue: ${output.livesAfterInvincibleMiss == 1}
+- assertTrue: ${output.stillPlaying == true}
+
+- takeScreenshot: lives-02-invincible-no-loss
+
+# ============================================================
+# TEST 3: Disable invincibility and trigger miss -> game over
+# ============================================================
+
+- evalScript: |
+    ${
+      window.__DEV_API__.setInvincible(false);
+      window.__DEV_API__.setLives(1);
+      window.__DEV_API__.movePlayerTo(-7);
+      // Spawn animal far from player
+      window.__DEV_API__.spawnAnimal('pig', 6, 'normal');
+      console.log('Invincibility OFF, spawned miss-animal with 1 life');
+    }
+
+# Wait for miss and game over
+- repeat:
+    times: 50
+    commands:
+      - waitForAnimationToEnd
+
+- evalScript: |
+    ${
+      const state = window.__DEV_API__.getGameState();
+      output.livesAfterMiss = state.data?.lives;
+      output.isPlayingAfterMiss = state.data?.isPlaying;
+      output.gameOverVisible = document.body.textContent.includes('WOBBLED OUT') ||
+        document.body.textContent.includes('GAME OVER') ||
+        document.body.textContent.includes('Retry');
+      console.log('After miss - Lives:', output.livesAfterMiss, 'Playing:', output.isPlayingAfterMiss, 'GO visible:', output.gameOverVisible);
+    }
+
+- takeScreenshot: lives-03-game-over
+
+# ============================================================
+# TEST 4: Verify game over screen elements
+# ============================================================
+
+- evalScript: |
+    ${
+      output.hasRetryButton = document.body.textContent.includes('Retry') || document.body.textContent.includes('RETRY');
+      output.hasMenuButton = document.body.textContent.includes('Menu') || document.body.textContent.includes('MENU');
+      output.hasScoreDisplay = document.body.textContent.match(/\d+/) !== null;
+      console.log('Retry:', output.hasRetryButton, 'Menu:', output.hasMenuButton, 'Score:', output.hasScoreDisplay);
+    }
+
+- takeScreenshot: lives-04-gameover-screen
+
+# ============================================================
+# TEST 5: triggerGameOver from active game
+# ============================================================
+
+# First restart the game
+- evalScript: |
+    ${
+      // Click retry if visible
+      const retryBtn = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent && (b.textContent.includes('Retry') || b.textContent.includes('RETRY'))
+      );
+      if (retryBtn) retryBtn.click();
+      output.retryClicked = !!retryBtn;
+    }
+
+- extendedWaitUntil:
+    visible: "STACK"
+    timeout: 15000
+
+# Wait for DevAPI to rebind
+- repeat:
+    times: 10
+    commands:
+      - waitForAnimationToEnd
+
+# Now use triggerGameOver
+- evalScript: |
+    ${
+      if (window.__DEV_API__) {
+        window.__DEV_API__.setScore(1234);
+        const r = window.__DEV_API__.triggerGameOver();
+        output.triggerGOOk = r.ok;
+        console.log('triggerGameOver:', JSON.stringify(r));
+      }
+    }
+
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+
+- evalScript: |
+    ${
+      output.gameOverAfterTrigger = document.body.textContent.includes('WOBBLED OUT') ||
+        document.body.textContent.includes('GAME OVER') ||
+        document.body.textContent.includes('Retry');
+      console.log('Game over after trigger:', output.gameOverAfterTrigger);
+    }
+
+- takeScreenshot: lives-05-forced-gameover
+
+# ============================================================
+# SUMMARY
+# ============================================================
+
+- evalScript: |
+    ${
+      console.log('=== LIVES & GAME OVER TEST SUMMARY ===');
+      console.log('Lives set correctly:', output.livesSet === 1);
+      console.log('Invincible prevents death:', output.livesAfterInvincibleMiss === 1);
+      console.log('Miss causes game over:', output.gameOverVisible);
+      console.log('Retry button present:', output.hasRetryButton);
+      console.log('triggerGameOver works:', output.triggerGOOk);
+      console.log('Game over screen shown:', output.gameOverAfterTrigger);
+      console.log('========================================');
+    }

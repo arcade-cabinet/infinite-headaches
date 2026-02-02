@@ -51,6 +51,25 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Nebraska Homestead Farm Palette */
+  --color-farm-barn: #b91c1c;
+  --color-farm-barn-light: #f87171;
+  --color-farm-barn-dark: #7f1d1d;
+  --color-farm-wheat: #eab308;
+  --color-farm-wheat-light: #fef9c3;
+  --color-farm-wheat-dark: #a16207;
+  --color-farm-sky: #0ea5e9;
+  --color-farm-pasture: #22c55e;
+  --color-farm-soil: #8b7355;
+  --color-farm-soil-dark: #4a3c30;
+  --color-farm-soil-darkest: #382e25;
+  --color-farm-wood: #a08b64;
+  --color-farm-wood-dark: #554730;
+  --color-farm-wood-border: #6b5a3a;
+  --color-farm-storm: #64748b;
+  --color-farm-storm-dark: #334155;
+  --color-farm-storm-darkest: #1e293b;
 }
 
 /* Light theme variables - Nebraska Homestead */

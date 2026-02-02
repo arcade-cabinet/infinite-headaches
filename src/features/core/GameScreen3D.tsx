@@ -1,417 +1,358 @@
 /**
- * GameScreen3D - Pure Babylon.js game screen
- * Manages Scene transitions and 3D Menu integration
+ * GameScreen3D - Thin orchestrator shell.
+ *
+ * All logic lives in hooks (TS, not TSX):
+ *   usePhysicsEngine  - Havok init
+ *   useSceneManager   - screen state machine
+ *   useMenuState      - character selection, modals, coins
+ *   useGameSession    - game-over scoring, achievements, mode
+ *   useGameLogic      - core gameplay engine (pre-existing)
+ *   useLoadingSimulation - fake loading progress
+ *   useKeyboardControls  - global key bindings
+ *
+ * This file ONLY composes components. No business logic.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { Engine } from "reactylon/web";
-import { Vector3, HavokPlugin } from "@babylonjs/core";
-import HavokPhysics from "@babylonjs/havok";
-import { type Achievement, checkAchievements, loadStats, saveStats } from "@/game/achievements";
+
+// Logic hooks (TS)
+import { usePhysicsEngine } from "./hooks/usePhysicsEngine";
+import { useSceneManager } from "./hooks/useSceneManager";
+import { useMenuState } from "./hooks/useMenuState";
+import { useGameSession } from "./hooks/useGameSession";
+import { useLoadingSimulation } from "./hooks/useLoadingSimulation";
+import { useKeyboardControls } from "./hooks/useKeyboardControls";
+import { useGameLogic } from "@/game/hooks/useGameLogic";
+import { useHighScore } from "@/game/hooks/useHighScore";
+import { useResponsiveScale } from "@/game/hooks/useResponsiveScale";
+import { useGraphics } from "@/graphics";
+
+// UI Components
 import { AchievementToastList } from "@/game/components/AchievementToast";
 import { GameStyles } from "@/game/components/GameStyles";
 import { MainMenuBackground } from "@/game/components/MainMenuBackground";
 import { CaptureBallButton } from "@/game/components/CaptureBallButton";
 import { ScoreDisplay } from "@/game/components/ScoreDisplay";
-import { hasCompletedTutorial, Tutorial } from "@/game/components/Tutorial";
+import { Tutorial } from "@/game/components/Tutorial";
 import { LoadingScreen } from "@/game/components/LoadingScreen";
 import { PerfectIndicator } from "@/game/components/PerfectIndicator";
 import { ModeSelect } from "@/game/components/ModeSelect";
 import { SettingsModal } from "@/game/components/SettingsModal";
 import { UpgradeShop } from "@/game/components/UpgradeShop";
 import { HelpModal } from "@/game/components/HelpModal";
-import { CharacterSelect } from "@/features/menu/CharacterSelect";
-
-import { useGameLogic } from "@/game/hooks/useGameLogic";
-import { useHighScore } from "@/game/hooks/useHighScore";
-import { useResponsiveScale } from "@/game/hooks/useResponsiveScale";
-import { checkModeUnlocks, type GameModeType, saveUnlockedModes } from "@/game/modes/GameMode";
-import { addCoins, calculateCoinsFromScore } from "@/game/progression/Upgrades";
+import { PauseButton } from "@/game/components/PauseButton";
+import { PauseMenu } from "@/game/components/PauseMenu";
+import { SoundToggle } from "@/game/components/SoundToggle";
 import { GameOverScreen } from "@/features/gameplay/GameOverScreen";
 import { GameScene } from "@/features/gameplay/scene/GameScene";
 import { SplashScene } from "@/features/splash/SplashScene";
 import { MainMenu3D } from "@/features/menu/MainMenu3D";
-import { audioManager } from "@/game/audio";
-import { useGraphics } from "@/graphics";
-
-type ScreenState = "splash" | "menu" | "loading" | "playing" | "gameover";
-
-const SPLASH_SHOWN_KEY = "homestead_splash_shown_session";
+import { MainMenuOverlay } from "@/features/menu/MainMenuOverlay";
+import { PeekingAnimal3D } from "@/features/menu/PeekingAnimal3D";
 
 export function GameScreen3D() {
-  const getInitialScreen = (): ScreenState => {
-    if (typeof window !== "undefined" && sessionStorage.getItem(SPLASH_SHOWN_KEY)) {
-      return "menu";
-    }
-    return "splash";
-  };
-
-  const [screen, setScreen] = useState<ScreenState>(getInitialScreen);
-  const [havokPlugin, setHavokPlugin] = useState<HavokPlugin | null>(null);
-  const [isPhysicsReady, setIsPhysicsReady] = useState(false);
-  const [physicsError, setPhysicsError] = useState<string | null>(null);
-
-  // Load Physics Engine
-  useEffect(() => {
-    (async () => {
-      try {
-        const havokInstance = await HavokPhysics({ locateFile: () => "./HavokPhysics.wasm" });
-        setHavokPlugin(new HavokPlugin(true, havokInstance));
-        setIsPhysicsReady(true);
-      } catch (e) {
-        console.error("Failed to load Havok Physics:", e);
-        setPhysicsError("Failed to load Physics Engine. Please reload.");
-      }
-    })();
-  }, []);
-
-  const [currentMode, setCurrentMode] = useState<GameModeType>("endless");
-  const [selectedCharacter, setSelectedCharacter] = useState<"farmer_john" | "farmer_mary" | null>(null);
-  const [finalScore, setFinalScore] = useState(0);
-  const [finalBanked, setFinalBanked] = useState(0);
-  const [earnedCoins, setEarnedCoins] = useState(0);
-  const [isNewHighScore, setIsNewHighScore] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
-  
-  // Menu Modals
-  const [showShop, setShowShop] = useState(false);
-  const [showModes, setShowModes] = useState(false);
-  const [showCharacterSelect, setShowCharacterSelect] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingStatus, setLoadingStatus] = useState("Initializing...");
-  
+  // ── Core services ──────────────────────────────────────
+  const physics = usePhysicsEngine();
   const { highScore, updateHighScore } = useHighScore();
-  const { spacing } = useResponsiveScale();
   const { settings } = useGraphics();
+  const { spacing } = useResponsiveScale();
 
-  useEffect(() => {
-    if (screen === "menu") {
-      audioManager.playTrack("mainMenu");
-    }
-  }, [screen]);
+  // ── Scene state machine ────────────────────────────────
+  const scenes = useSceneManager();
 
-  const handleSplashComplete = useCallback(() => {
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(SPLASH_SHOWN_KEY, "true");
-    }
-    setScreen("menu");
-  }, []);
+  // ── Menu state (character, modals, coins) ──────────────
+  const menu = useMenuState(scenes.screen);
 
-  const handleGameOver = useCallback(
-    (score: number, bankedAnimals: number) => {
-      try {
-        setFinalScore(score);
-        setFinalBanked(bankedAnimals);
-        const isNew = updateHighScore(score);
-        setIsNewHighScore(isNew);
+  // ── Game session (mode, scoring, achievements) ─────────
+  const session = useGameSession({
+    updateHighScore,
+    goToGameOver: scenes.goToGameOver,
+    goToLoading: scenes.goToLoading,
+  });
 
-        if (currentMode !== "zen") {
-          const baseCoins = calculateCoinsFromScore(score);
-          const coins = addCoins(baseCoins);
-          setEarnedCoins(coins);
-        } else {
-          setEarnedCoins(0);
-        }
+  // ── Gameplay engine ────────────────────────────────────
+  const gameplay = useGameLogic({ onGameOver: session.handleGameOver });
 
-        const stats = loadStats();
-        stats.totalScore += score;
-        stats.highScore = Math.max(stats.highScore, score);
-        stats.totalGames += 1;
-        stats.totalBanked += bankedAnimals;
-        saveStats(stats);
+  // ── Loading simulation ─────────────────────────────────
+  const handleLoadingComplete = useCallback(() => {
+    scenes.goToPlaying();
+    session.resetForNewGame();
+    gameplay.startGame(menu.selectedCharacterId, session.currentMode);
+  }, [scenes.goToPlaying, session.resetForNewGame, gameplay.startGame, menu.selectedCharacterId, session.currentMode]);
 
-        const newModes = checkModeUnlocks({
-          highScore: stats.highScore,
-          totalGames: stats.totalGames,
-        });
-        if (newModes.length > 0) {
-          saveUnlockedModes();
-        }
-
-        const newAchievements = checkAchievements(stats);
-        if (newAchievements.length > 0) {
-          setUnlockedAchievements((prev) => [...prev, ...newAchievements]);
-        }
-
-        setScreen("gameover");
-      } catch (e) {
-        console.error("Error in handleGameOver:", e);
-      }
-    },
-    [updateHighScore, currentMode]
+  const loading = useLoadingSimulation(
+    scenes.screen === "loading",
+    handleLoadingComplete
   );
 
-  const {
-    score,
-    multiplier,
-    combo,
-    stackHeight,
-    bankedAnimals,
-    level,
-    lives,
-    maxLives,
-    canBank,
-    perfectKey,
-    showPerfect,
-    showGood,
-    inDanger,
-    isPaused,
-    startGame,
-    bankStack,
-    pauseGame,
-    resumeGame,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    setScreenDimensions,
-  } = useGameLogic({ onGameOver: handleGameOver });
+  // ── Keyboard controls ──────────────────────────────────
+  useKeyboardControls({
+    screen: scenes.screen,
+    isPaused: gameplay.isPaused,
+    pauseGame: gameplay.pauseGame,
+    resumeGame: gameplay.resumeGame,
+    isAnyModalOpen: menu.isAnyModalOpen,
+    onPrevCharacter: menu.handlePrevCharacter,
+    onNextCharacter: menu.handleNextCharacter,
+  });
 
+  // ── Window resize ──────────────────────────────────────
   useEffect(() => {
-    if (screen === "loading") {
-      setLoadingProgress(0);
-      setLoadingStatus("Preparing Diorama...");
+    const onResize = () =>
+      gameplay.setScreenDimensions(window.innerWidth, window.innerHeight);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [gameplay.setScreenDimensions]);
 
-      const stages = [
-        { progress: 20, text: "Planting Crops..." },
-        { progress: 40, text: "Polishing Tractors..." },
-        { progress: 60, text: "Waking up Roosters..." },
-        { progress: 80, text: "Loading Farmers..." },
-        { progress: 100, text: "Ready!" }
-      ];
-
-      let currentStage = 0;
-      const interval = setInterval(() => {
-        if (currentStage >= stages.length) {
-          clearInterval(interval);
-          if (selectedCharacter) {
-             setScreen("playing");
-             setIsNewHighScore(false);
-             setEarnedCoins(0);
-             startGame(selectedCharacter);
-          }
-          return;
-        }
-        const stage = stages[currentStage];
-        setLoadingProgress(stage.progress);
-        setLoadingStatus(stage.text);
-        currentStage++;
-      }, 400);
-
-      return () => clearInterval(interval);
-    }
-  }, [screen, selectedCharacter, startGame]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setScreenDimensions(window.innerWidth, window.innerHeight);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [setScreenDimensions]);
-
-  // Menu Callbacks
-  const handleNewGameClick = useCallback(() => setShowModes(true), []);
-  const handleUpgradesClick = useCallback(() => setShowShop(true), []);
-  const handleSettingsClick = useCallback(() => setShowSettings(true), []);
-  const handleHelpClick = useCallback(() => setShowHelp(true), []);
-
-  const handleSelectMode = useCallback((mode: GameModeType) => {
-    setCurrentMode(mode);
-    setShowModes(false);
-    setShowCharacterSelect(true);
-  }, []);
-
-  const handleSelectCharacter = useCallback((charId: string) => {
-    setSelectedCharacter(charId as "farmer_john" | "farmer_mary");
-    setShowCharacterSelect(false);
-    
-    if (!hasCompletedTutorial()) {
-        setShowTutorial(true);
-        return;
-    }
-    setScreen("loading");
-  }, []);
-
-  const handleTutorialComplete = useCallback(() => {
-    setShowTutorial(false);
-    setScreen("loading");
-  }, []);
-
-  const handleMainMenu = useCallback(() => {
-    setScreen("menu");
-    audioManager.playTrack("mainMenu");
-  }, []);
+  // ── Thin action wrappers ───────────────────────────────
+  const handleSelectMode = useCallback(
+    (mode: Parameters<typeof session.handleSelectMode>[0]) => {
+      menu.closeModes();
+      session.handleSelectMode(mode);
+    },
+    [menu.closeModes, session.handleSelectMode]
+  );
 
   const handleRestart = useCallback(() => {
-    if (!selectedCharacter) return;
-    resumeGame();
-    setScreen("playing");
-    setIsNewHighScore(false);
-    startGame(selectedCharacter);
-  }, [resumeGame, startGame, selectedCharacter]);
+    gameplay.resumeGame();
+    scenes.goToPlaying();
+    session.resetForNewGame();
+    gameplay.startGame(menu.selectedCharacterId, session.currentMode);
+  }, [
+    gameplay.resumeGame,
+    scenes.goToPlaying,
+    session.resetForNewGame,
+    gameplay.startGame,
+    session.currentMode,
+    menu.selectedCharacterId,
+  ]);
 
-  const handleDismissAchievement = useCallback((id: string) => {
-    setUnlockedAchievements((prev) => prev.filter((a) => a.id !== id));
-  }, []);
+  // ── Derived flags ──────────────────────────────────────
+  const isMenu = scenes.screen === "menu";
+  const isPlaying = scenes.screen === "playing";
+  const isGameOver = scenes.screen === "gameover";
+  const isLoading = scenes.screen === "loading";
+  const isSplash = scenes.screen === "splash";
+  const showBackground = isMenu || isGameOver || isLoading;
+  const showEngine =
+    (isMenu || isLoading || isPlaying || isGameOver) && physics.isReady;
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && screen === "playing") {
-        if (isPaused) {
-          resumeGame();
-        } else {
-          pauseGame();
-        }
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [screen, isPaused, pauseGame, resumeGame]);
-
-  const inputCallbacks = {
-    onDragStart: handlePointerDown,
-    onDrag: handlePointerMove,
-    onDragEnd: handlePointerUp,
-  };
-
-  // Render GameScene for Menu, Loading, Playing (keeps context alive)
-  const showGameScene = (screen === "menu" || screen === "loading" || screen === "playing" || screen === "gameover") && isPhysicsReady;
-
+  // ── Render ─────────────────────────────────────────────
   return (
     <div className="fixed inset-0 overflow-hidden select-none touch-none no-zoom safe-area-inset">
       <GameStyles />
 
-      {/* Background for GameOver (Menu now uses 3D background) */}
-      {(screen === "gameover" || screen === "loading") && <MainMenuBackground />}
-      
-      {/* Show Loading Screen if Physics is initializing */}
-      {!isPhysicsReady && screen !== "splash" && !physicsError && (
-        <LoadingScreen progress={50} status="Initializing Physics Engine..." />
-      )}
-      
-      {/* Error Screen */}
-      {physicsError && (
+      {/* Farm background for non-gameplay screens */}
+      {showBackground && <MainMenuBackground />}
+
+      {/* Physics error */}
+      {physics.error && (
         <div className="absolute inset-0 z-50 bg-black flex items-center justify-center text-red-500 font-bold p-4">
-            {physicsError}
+          {physics.error}
         </div>
       )}
 
-      {/* Splash Scene Engine */}
-      {screen === "splash" && (
+      {/* Physics initializing */}
+      {!physics.isReady && !isSplash && !physics.error && (
+        <LoadingScreen progress={50} status="Initializing Physics Engine..." />
+      )}
+
+      {/* ── Splash Scene ── */}
+      {isSplash && (
         <div className="absolute inset-0 z-50 bg-black">
-          <Engine 
-            engineOptions={{ antialias: true, adaptToDeviceRatio: true }} 
+          <Engine
+            engineOptions={{ antialias: true, adaptToDeviceRatio: true }}
             canvasId="splash-canvas"
+            forceWebGL={true}
           >
-            <SplashScene onComplete={handleSplashComplete} />
+            <SplashScene onComplete={scenes.handleSplashComplete} />
           </Engine>
         </div>
       )}
 
-      {/* Game Scene Engine (Persistent) */}
-      {showGameScene && havokPlugin && (
+      {/* ── Game Engine (persistent across menu → loading → playing → gameover) ── */}
+      {showEngine && physics.havokPlugin && (
         <div className="absolute inset-0" style={{ zIndex: 1 }}>
-          <Engine 
-            engineOptions={{ antialias: settings.antialiasing, adaptToDeviceRatio: true }} 
+          <Engine
+            engineOptions={{
+              antialias: settings.antialiasing,
+              adaptToDeviceRatio: true,
+            }}
             canvasId="game-canvas"
+            forceWebGL={true}
           >
             <GameScene
-              inputCallbacks={inputCallbacks}
-              inputEnabled={!isPaused && screen === "playing"}
-              showGameplayElements={screen === "playing"}
-              havokPlugin={havokPlugin}
+              inputCallbacks={{
+                onDragStart: gameplay.handlePointerDown,
+                onDrag: gameplay.handlePointerMove,
+                onDragEnd: gameplay.handlePointerUp,
+              }}
+              inputEnabled={!gameplay.isPaused && isPlaying}
+              showGameplayElements={isPlaying}
+              showEnvironment={isPlaying || isLoading}
+              havokPlugin={physics.havokPlugin}
+              tornadoGetters={{
+                getNextDropX: gameplay.getNextDropX,
+                getDropDifficulty: gameplay.getDropDifficulty,
+                getIsDropImminent: gameplay.getIsDropImminent,
+              }}
+              onPhysicsCatch={gameplay.pushCollisionEvent}
             >
-                {screen === "menu" && (
-                    <MainMenu3D 
-                        onPlay={handleNewGameClick}
-                        onUpgrades={handleUpgradesClick}
-                        onSettings={handleSettingsClick}
-                        highScore={highScore}
-                    />
-                )}
+              {isMenu && (
+                <>
+                  <MainMenu3D
+                    onPlay={menu.openPlay}
+                    onUpgrades={menu.openUpgrades}
+                    onSettings={menu.openSettings}
+                    highScore={highScore}
+                    selectedCharacterIndex={menu.selectedCharacterIndex}
+                    onCharacterChange={menu.handleCharacterChange}
+                  />
+                  <PeekingAnimal3D />
+                </>
+              )}
             </GameScene>
           </Engine>
         </div>
       )}
 
-      {/* UI Overlay */}
+      {/* ── Menu HTML Overlay ── */}
+      {isMenu && (
+        <MainMenuOverlay
+          highScore={highScore}
+          coins={menu.coins}
+          selectedCharacter={menu.selectedCharacter}
+          onPrevCharacter={menu.handlePrevCharacter}
+          onNextCharacter={menu.handleNextCharacter}
+          onPlay={menu.openPlay}
+          onModes={menu.openPlay}
+          onUpgrades={menu.openUpgrades}
+        />
+      )}
+
+      {/* ── Gameplay UI Overlay ── */}
       <div className="absolute inset-0 pointer-events-none flex flex-col justify-center items-center text-center z-20 safe-area-inset">
-        {screen === "playing" && (
+        {isPlaying && (
           <ScoreDisplay
-            score={score}
-            multiplier={multiplier}
-            combo={combo}
-            level={level}
-            stackHeight={stackHeight}
-            bankedAnimals={bankedAnimals}
+            score={gameplay.score}
+            multiplier={gameplay.multiplier}
+            combo={gameplay.combo}
+            level={gameplay.level}
+            stackHeight={gameplay.stackHeight}
+            bankedAnimals={gameplay.bankedAnimals}
             highScore={highScore}
-            lives={lives}
-            maxLives={maxLives}
-            inDanger={inDanger}
+            lives={gameplay.lives}
+            maxLives={gameplay.maxLives}
+            inDanger={gameplay.inDanger}
           />
         )}
 
-        {screen === "loading" && (
-          <LoadingScreen progress={loadingProgress} status={loadingStatus} />
+        {isLoading && (
+          <LoadingScreen progress={loading.progress} status={loading.status} />
         )}
 
-        <PerfectIndicator show={showPerfect} animationKey={perfectKey} />
+        <PerfectIndicator
+          show={gameplay.showPerfect}
+          animationKey={gameplay.perfectKey}
+        />
 
-        {showGood && (
+        {gameplay.showGood && (
           <div className="absolute left-1/2 top-[30%] -translate-x-1/2 game-font text-green-300 animate-pulse">
             NICE!
           </div>
         )}
 
-        {/* Note: MainMenu (2D) removed, replaced by MainMenu3D inside Scene */}
-        
-        {screen === "gameover" && (
+        {isGameOver && (
           <GameOverScreen
-            score={finalScore}
-            bankedAnimals={finalBanked}
+            score={session.finalScore}
+            bankedAnimals={session.finalBanked}
             highScore={highScore}
-            isNewHighScore={isNewHighScore}
-            earnedCoins={earnedCoins}
+            isNewHighScore={session.isNewHighScore}
+            earnedCoins={session.earnedCoins}
             onRetry={handleRestart}
-            onMainMenu={handleMainMenu}
+            onMainMenu={scenes.goToMenu}
           />
         )}
       </div>
-      
-      {/* Modals (Pointer Events Auto) */}
+
+      {/* ── Modals ── */}
       <div className="absolute inset-0 z-30 pointer-events-none flex justify-center items-center">
-          {showShop && <UpgradeShop onClose={() => setShowShop(false)} />}
-          
-          {showModes && (
-            <ModeSelect onSelectMode={handleSelectMode} onClose={() => setShowModes(false)} />
-          )}
-
-          {showCharacterSelect && (
-            <CharacterSelect
-              onSelect={handleSelectCharacter}
-              onBack={() => setShowCharacterSelect(false)}
-            />
-          )}
-
-          {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
-
-          {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+        {menu.showShop && <UpgradeShop onClose={menu.closeShop} />}
+        {menu.showModes && (
+          <ModeSelect
+            onSelectMode={handleSelectMode}
+            onClose={menu.closeModes}
+          />
+        )}
+        {menu.showHelp && <HelpModal onClose={menu.closeHelp} />}
+        {menu.showSettings && <SettingsModal onClose={menu.closeSettings} />}
       </div>
 
-      {screen === "playing" && (
-        <CaptureBallButton visible={canBank} stackCount={stackHeight} onClick={bankStack} />
+      {/* ── Top-right controls (pause + sound) ── */}
+      <div
+        className="absolute z-40 flex gap-2 items-center"
+        style={{
+          top: `calc(${spacing.sm} + env(safe-area-inset-top, 0px))`,
+          right: spacing.sm,
+        }}
+      >
+        {isPlaying && !gameplay.isPaused && (
+          <PauseButton onClick={gameplay.pauseGame} />
+        )}
+        <SoundToggle />
+      </div>
+
+      {/* ── Wobble warning overlay ── */}
+      {isPlaying && gameplay.inDanger && !gameplay.isPaused && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30">
+          <div
+            className="game-font text-red-500 animate-pulse"
+            style={{
+              fontSize: "clamp(1.5rem, 5vw, 2.5rem)",
+              textShadow:
+                "0 0 20px rgba(244, 67, 54, 0.8), 3px 3px 0 #000",
+              opacity: 0.9,
+            }}
+          >
+            WOBBLE WARNING!
+          </div>
+        </div>
       )}
 
-      {showTutorial && <Tutorial onComplete={handleTutorialComplete} />}
+      {/* ── Pause menu overlay ── */}
+      {isPlaying && gameplay.isPaused && (
+        <PauseMenu
+          onResume={gameplay.resumeGame}
+          onMainMenu={() => {
+            gameplay.resumeGame();
+            scenes.goToMenu();
+          }}
+          onRestart={handleRestart}
+          score={gameplay.score}
+          level={gameplay.level}
+        />
+      )}
 
+      {/* ── Gameplay buttons ── */}
+      {isPlaying && (
+        <CaptureBallButton
+          visible={gameplay.canBank}
+          stackCount={gameplay.stackHeight}
+          onClick={gameplay.bankStack}
+        />
+      )}
+
+      {/* ── Tutorial ── */}
+      {session.showTutorial && (
+        <Tutorial onComplete={session.handleTutorialComplete} />
+      )}
+
+      {/* ── Achievement toasts ── */}
       <AchievementToastList
-        achievements={unlockedAchievements}
-        onDismiss={handleDismissAchievement}
+        achievements={session.unlockedAchievements}
+        onDismiss={session.dismissAchievement}
       />
     </div>
   );

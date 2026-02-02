@@ -74,7 +74,7 @@ export function PauseMenu({ onResume, onMainMenu, onRestart, score, level }: Pau
           </h2>
 
           {/* Current stats */}
-          <div className="game-font text-purple-200 mb-6" style={{ fontSize: fontSize.sm }} role="status">
+          <div className="game-font text-amber-200 mb-6" style={{ fontSize: fontSize.sm }} role="status">
             <div>
               Score: <span className="text-white" aria-label={`Current Score: ${score}`}>{score.toLocaleString()}</span>
             </div>
@@ -99,7 +99,7 @@ export function PauseMenu({ onResume, onMainMenu, onRestart, score, level }: Pau
           </div>
 
           {/* Hint */}
-          <p className="game-font text-purple-400 mt-4" style={{ fontSize: fontSize.xs }}>
+          <p className="game-font text-stone-400 mt-4" style={{ fontSize: fontSize.xs }}>
             Press ESC or tap outside to resume
           </p>
         </GameCard>

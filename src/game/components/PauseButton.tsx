@@ -16,11 +16,11 @@ export function PauseButton({ onClick, className = "" }: PauseButtonProps) {
         pointer-events-auto
         w-12 h-12 
         rounded-full 
-        bg-purple-900/80 
-        border-2 border-purple-400/50
+        bg-stone-900/80
+        border-2 border-amber-400/50
         flex items-center justify-center
         transition-all duration-200
-        hover:bg-purple-800/80 hover:scale-110
+        hover:bg-stone-800/80 hover:scale-110
         active:scale-95
         shadow-lg
         ${className}
@@ -32,7 +32,7 @@ export function PauseButton({ onClick, className = "" }: PauseButtonProps) {
         height="24"
         viewBox="0 0 24 24"
         fill="currentColor"
-        className="text-purple-200"
+        className="text-amber-200"
       >
         <rect x="6" y="4" width="4" height="16" rx="1" />
         <rect x="14" y="4" width="4" height="16" rx="1" />

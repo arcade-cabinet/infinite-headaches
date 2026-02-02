@@ -66,7 +66,7 @@ export function UpgradeShop({ onClose }: UpgradeShopProps) {
         <GameCard className="flex flex-col" style={{ padding: 0, maxHeight: "85vh" }}>
           {/* Header */}
           <div
-            className="flex items-center justify-between border-b border-purple-500/30"
+            className="flex items-center justify-between border-b border-amber-500/30"
             style={{ padding: spacing.md }}
           >
             <div>
@@ -76,7 +76,7 @@ export function UpgradeShop({ onClose }: UpgradeShopProps) {
               >
                 UPGRADE SHOP
               </h2>
-              <p className="game-font text-purple-300" style={{ fontSize: fontSize.sm }}>
+              <p className="game-font text-amber-300" style={{ fontSize: fontSize.sm }}>
                 Permanent upgrades for all games
               </p>
             </div>
@@ -106,7 +106,7 @@ export function UpgradeShop({ onClose }: UpgradeShopProps) {
 
           {/* Footer */}
           <div
-            className="border-t border-purple-500/30 flex justify-center"
+            className="border-t border-amber-500/30 flex justify-center"
             style={{ padding: spacing.md }}
           >
             <GameButton onClick={onClose} variant="secondary">
@@ -149,18 +149,18 @@ function UpgradeCard({ upgrade, coins, onSelect }: UpgradeCardProps) {
         text-left rounded-xl p-3 transition-all duration-200
         ${
           isMaxed
-            ? "bg-purple-900/30 opacity-60"
+            ? "bg-stone-900/30 opacity-60"
             : canAfford
-              ? "bg-purple-800/50 hover:bg-purple-700/50 hover:scale-[1.02]"
-              : "bg-purple-900/40 opacity-80"
+              ? "bg-stone-800/50 hover:bg-stone-700/50 hover:scale-[1.02]"
+              : "bg-stone-900/40 opacity-80"
         }
-        border-2 ${isMaxed ? "border-green-500/30" : canAfford ? "border-purple-400/40" : "border-purple-600/30"}
+        border-2 ${isMaxed ? "border-green-500/30" : canAfford ? "border-amber-400/40" : "border-stone-600/30"}
       `}
     >
       <div className="flex items-start gap-3">
         {/* Icon */}
         <div
-          className="flex items-center justify-center w-12 h-12 rounded-lg bg-purple-900/50"
+          className="flex items-center justify-center w-12 h-12 rounded-lg bg-stone-900/50"
           style={{ fontSize: "1.5rem" }}
         >
           {upgrade.icon}
@@ -175,7 +175,7 @@ function UpgradeCard({ upgrade, coins, onSelect }: UpgradeCardProps) {
             {isMaxed && <span className="text-green-400 text-xs">MAX</span>}
           </div>
 
-          <p className="text-purple-300 truncate" style={{ fontSize: fontSize.xs }}>
+          <p className="text-amber-300 truncate" style={{ fontSize: fontSize.xs }}>
             {upgrade.description}
           </p>
 
@@ -186,7 +186,7 @@ function UpgradeCard({ upgrade, coins, onSelect }: UpgradeCardProps) {
                 <div
                   key={i}
                   className={`w-2 h-2 rounded-full ${
-                    i < upgrade.currentLevel ? "bg-yellow-400" : "bg-purple-700"
+                    i < upgrade.currentLevel ? "bg-yellow-400" : "bg-stone-700"
                   }`}
                 />
               ))}
@@ -194,7 +194,7 @@ function UpgradeCard({ upgrade, coins, onSelect }: UpgradeCardProps) {
 
             {!isMaxed && (
               <span
-                className={`game-font ${canAfford ? "text-yellow-300" : "text-purple-400"}`}
+                className={`game-font ${canAfford ? "text-yellow-300" : "text-stone-400"}`}
                 style={{ fontSize: fontSize.xs }}
               >
                 🪙 {cost.toLocaleString()}
@@ -240,15 +240,15 @@ function PurchaseModal({ upgrade, coins, onConfirm, onCancel }: PurchaseModalPro
             {upgrade.name}
           </h3>
 
-          <p className="text-purple-200 mt-1" style={{ fontSize: fontSize.sm }}>
+          <p className="text-amber-200 mt-1" style={{ fontSize: fontSize.sm }}>
             Level {upgrade.currentLevel} → {nextLevel}
           </p>
 
           <div
-            className="bg-purple-900/50 rounded-lg py-2 px-4 mt-3"
+            className="bg-stone-900/50 rounded-lg py-2 px-4 mt-3"
             style={{ fontSize: fontSize.sm }}
           >
-            <span className="text-purple-300">Effect: </span>
+            <span className="text-amber-300">Effect: </span>
             <span className="text-green-400">{upgrade.effectDescription(nextLevel)}</span>
           </div>
 

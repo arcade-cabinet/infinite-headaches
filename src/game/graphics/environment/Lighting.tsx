@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useScene } from "reactylon";
-import { 
-  Vector3, 
+import {
+  Vector3,
   DirectionalLight,
-  EXRCubeTexture,
-  ShadowGenerator
+  HDRCubeTexture,
+  ShadowGenerator,
+  Texture
 } from "@babylonjs/core";
 import { QualityLevel } from "../../../graphics";
 
@@ -16,27 +17,19 @@ export const Lighting = ({ quality }: { quality: QualityLevel }) => {
   useEffect(() => {
     if (!scene) return;
 
-    // 1. Setup Image Based Lighting (IBL)
-    const envTexture = new EXRCubeTexture(
-      "/assets/environment/environment.exr",
-      scene,
-      1024, 
-      false, 
-      true,  
-      false, 
-      undefined, 
-      undefined, 
-      undefined, 
-      undefined, 
-      true
-    );
-    
-    scene.environmentTexture = envTexture;
+    // Setup Image Based Lighting (IBL) using the environment dome JPG
+    // as a basic environment texture for PBR reflections.
+    // The EXR would be ideal for HDR IBL, but BabylonJS handles equirectangular
+    // EXR via specialized loaders. Using createDefaultEnvironment for reliable IBL.
+    const envHelper = scene.createDefaultEnvironment({
+      createGround: false,
+      createSkybox: false,
+    });
+
     scene.environmentIntensity = 1.0;
 
     return () => {
-      scene.environmentTexture = null;
-      envTexture.dispose();
+      if (envHelper) envHelper.dispose();
     };
   }, [scene]);
 
@@ -45,8 +38,8 @@ export const Lighting = ({ quality }: { quality: QualityLevel }) => {
         (window as any).MAIN_SHADOW_GENERATOR = shadowRef.current;
     }
     return () => { delete (window as any).MAIN_SHADOW_GENERATOR; }
-  }, [shadowRef.current, light]); // Re-run when shadow generator is created
-  
+  }, [shadowRef.current, light]);
+
   return (
     <>
       <directionalLight

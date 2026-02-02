@@ -58,7 +58,7 @@ export function ScoreDisplay({
     if (level !== prevLevelRef.current && levelRef.current) {
       animate(levelRef.current, {
         scale: [1.4, 1],
-        color: ["#FFD700", "#FFF"],
+        color: ["#eab308", "#FFF"],
         duration: 400,
         ease: "outElastic(1, .6)",
       });

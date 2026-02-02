@@ -30,9 +30,9 @@ const TIER_COLORS = {
     text: "text-yellow-100",
   },
   platinum: {
-    bg: "from-purple-500 to-purple-700",
-    border: "border-purple-300",
-    text: "text-purple-100",
+    bg: "from-red-700 to-red-900",
+    border: "border-red-400",
+    text: "text-red-100",
   },
 };
 

@@ -132,7 +132,7 @@ export function GameOverScreen({
 
         {/* Score */}
         <div className="text-center mb-4" role="status">
-          <p className="game-font text-purple-300" style={{ fontSize: fontSize.md }}>
+          <p className="game-font text-amber-300" style={{ fontSize: fontSize.md }}>
             FINAL SCORE
           </p>
           <div className="flex items-baseline justify-center gap-2">
@@ -211,7 +211,7 @@ export function GameOverScreen({
           </GameButton>
           <button
             onClick={onMainMenu}
-            className="game-font text-purple-300 hover:text-white transition-colors underline decoration-dotted"
+            className="game-font text-amber-300 hover:text-white transition-colors underline decoration-dotted"
             style={{ fontSize: fontSize.sm }}
           >
             Back to Menu
@@ -220,7 +220,7 @@ export function GameOverScreen({
 
         {/* Tips based on performance */}
         <p
-          className="game-font text-purple-400/60 text-center mt-4"
+          className="game-font text-stone-400/60 text-center mt-4"
           style={{ fontSize: fontSize.xs }}
         >
           {bankedAnimals === 0 && score > 100
