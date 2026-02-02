@@ -1,9 +1,11 @@
 # Homestead Headaches - Game Design Document
 
 ## Core Concept
+
 Nebraska farm arcade game. Catch falling farm animals, stack them on your head, bank them for points.
 
 ## Theme
+
 - **Setting**: Nebraska farmland
 - **Story**: Tornado threatens homestead (shown in splash VIDEO, not gameplay)
 - **Tone**: Chaotic, fun arcade action
@@ -11,21 +13,25 @@ Nebraska farm arcade game. Catch falling farm animals, stack them on your head, 
 ## Core Mechanics
 
 ### Catching
+
 - Animals fall from sky
 - Move farmer left/right to catch
 - Stack on head
 
 ### Wobble Physics
+
 - Stacked animals wobble
 - Off-center catches = more wobble
 - Too much wobble = animals fall
 
 ### Banking
+
 - Stack 5+ to unlock Barn button
 - Save animals for points
 - Risk/reward: tall stacks = more points but unstable
 
 ### Weather (v1.1.0)
+
 - WeatherSystem state machine: clear -> windy -> rainy -> stormy
 - Activates at level 6+
 - Wind forces affect falling entities
@@ -34,17 +40,20 @@ Nebraska farm arcade game. Catch falling farm animals, stack them on your head, 
 - Ambient audio loops with fade transitions
 
 ### Combo System (v1.1.0)
+
 - Combo counter with tiered animations (anime.js)
 - Milestones at 5x, 10x, 15x with camera FOV pulse
 - ComboDecayTime: 3500ms
 
 ## Tech Stack
+
 - React 19 + TypeScript + Vite
 - Babylon.js (3D)
 - Miniplex (ECS)
 - Capacitor (mobile) / Electron (desktop)
 
 ## Key Files
+
 - `src/game/engine/GameLogic.ts` - Game loop, core logic, entity lifecycle cleanup
 - `src/game/ai/DropController.ts` - AI director with Yahtzee-aware type distribution
 - `src/game/ai/WobbleGovernor.ts` - Wobble difficulty scaling
@@ -68,11 +77,13 @@ Nebraska farm arcade game. Catch falling farm animals, stack them on your head, 
 - `src/game/accessibility/KeyBindings.ts` - Remappable keybinding persistence
 
 ### Assets
+
 - `public/assets/models/` - Animal and Farmer GLBs (cow, pig, chicken, duck, sheep, farmer_john, farmer_mary)
 - `public/assets/audio/` - Kenney audio library + 6 placeholder SFX (combo/weather/bank)
 - Splash video shows tornado theme
 
 ## AI Director (DropController)
+
 - **Yahtzee Combo System**: Drops are chosen to help players build combos (pair, two_pair, three_of_kind, four_of_kind, full_house, straight, flush)
 - **Fairness Distribution**: Helpful/neutral/disruptive ratios vary by level (70/20/10 early, 35/30/35 late)
 - **Remediation**: After 2 disruptive drops, forces helpful type or compensating power-up
@@ -80,16 +91,19 @@ Nebraska farm arcade game. Catch falling farm animals, stack them on your head, 
 - **5 Competing Strategies**: build_pressure, release_tension, challenge, mercy, reward
 
 ## Character Traits (v1.1.0)
+
 - **Farmer John** (steady/slow): 0.90x speed, 0.85x wobble
 - **Farmer Mary** (fast/jittery): 1.10x speed, 1.15x wobble
 
 ## Difficulty Rebalance (v1.1.0)
+
 - maxLevel: 25 -> 999
 - speedIncreasePerLevel: 0.04 -> 0.035
 - spawnRateCurve: 0.85 -> 0.88
 - comboDecayTime: 3000 -> 3500
 
 ## Status
+
 - Stacking/catching: WORKS
 - Wobble physics: WORKS
 - Banking: WORKS

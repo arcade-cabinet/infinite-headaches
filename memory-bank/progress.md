@@ -1,6 +1,7 @@
 # Progress
 
 ## Status
+
 *   **Core Game Loop:** Functional (Havok Physics + Miniplex ECS).
 *   **Engine Migration:** Completed (`reactylon` + React 19).
 *   **3D Assets:** Functional (Animals + Farmers with proportional per-type scaling).
@@ -24,11 +25,12 @@
 *   **Design System:** Nebraska Homestead palette enforced (no more purple/lavender).
 *   **Dev Tooling:** Functional (DevAPI singleton + PlayerGovernor AI auto-player).
 *   **Tests:** 1267 passing (Unit across 34 files, 0 failures).
-*   **Deployment:** Live at https://homestead-headaches.netlify.app.
+*   **Deployment:** Live at [homestead-headaches.netlify.app](https://homestead-headaches.netlify.app).
 
 ## Completed Milestones
 
 ### v1.0 Milestones
+
 *   **Fix Asset Pipeline:** Farmers render correctly.
 *   **ECS Migration:** Fully migrated to Miniplex Hybrid.
 *   **Havok Integration:** Physics replaced custom implementation.
@@ -56,6 +58,7 @@
 *   **Documentation:** All docs and memory bank aligned with current architecture.
 
 ### v1.1.0 Milestones (Feature Expansion -- 55 Issues, 8 Workstreams)
+
 *   **Weather System:** WeatherSystem state machine (clear/windy/rainy/stormy) with wind forces on falling entities, BabylonJS particle effects (WeatherEffects), wobble bonus, ambient audio loops. Wired into GameScene.
 *   **Animal Variants:** Rare (level 3+), golden (level 8+), shadow (level 15+) with PBR material tinting and score multipliers. Configured in AnimalVariants.ts.
 *   **Hit Stop:** Freeze-frame effect on perfect catches and combo milestones. Respects reducedMotion via GameLogic.setReducedMotion().
@@ -76,11 +79,13 @@
 *   **Dead Code Cleanup:** Removed unused Vector3 import, annotated empty callbacks with TODOs, extracted sensitivity config constants.
 
 ## Known Issues
+
 *   [MINOR] `Stacking Mechanics` E2E test occasionally times out due to physics unpredictability (Visual only, gameplay is functional).
 *   [TODO] Power-up specific audio feedback not yet implemented.
 *   [PLACEHOLDER] 6 audio files (combo5, combo10, combo15, weather_wind, weather_rain, bank_fanfare) are placeholder .ogg files awaiting final assets.
 
 ## Roadmap
+
 1.  **Release 1.1.0:** (Current) Feature expansion complete -- weather, variants, analytics, accessibility, combo system, power-ups, keybindings, colorblind filters.
 2.  **Post-1.1.0:**
     *   Human play testing to validate weather balance, animal variant spawn rates, and combo fairness.

@@ -1,12 +1,14 @@
 # Active Context
 
 ## Current Status
+
 **RELEASE 1.1.0 -- Feature Expansion Complete**
 The "Homestead Headaches" project has completed the v1.1.0 feature expansion encompassing 55 issues across 8 workstreams. New systems include weather, animal variants, hit stop, local analytics, remappable keybindings, colorblind filters, combo counter, level-up flash, 3 new power-ups, character traits, and a full difficulty rebalance. 1267 tests pass across 34 files with 0 failures.
 
 ## Recent Achievements (v1.1.0 Feature Expansion)
 
 ### Workstream 1: Critical Integration Wiring
+
 1.  **LevelUpFlash** wired into GameScreen3D.
 2.  **WeatherEffects** wired into GameScene (weather state in useGameLogic).
 3.  **ColorblindFilter** wired into PostProcessEffects via NebraskaDiorama.
@@ -16,6 +18,7 @@ The "Homestead Headaches" project has completed the v1.1.0 feature expansion enc
 7.  **Settings button** added to MainMenuOverlay.
 
 ### Workstream 2: Missing Features
+
 1.  **Camera FOV zoom pulse** on combo milestones (5x/10x/15x), guarded by reducedMotion.
 2.  **High contrast mode** toggle in SettingsModal AccessibilityTab.
 3.  **Settings button** on main menu.
@@ -23,6 +26,7 @@ The "Homestead Headaches" project has completed the v1.1.0 feature expansion enc
 5.  **Active power-up state** exposed to UI (getActivePowerUps(), onPowerUpStateChange callback).
 
 ### Workstream 3: Accessibility
+
 1.  **Motor settings persistence** (load from inputManager on mount, immediate save).
 2.  **ARIA live region severity** (level changed to assertive).
 3.  **Key capture Escape handling** (cancels capture, doesn't close modal).
@@ -30,6 +34,7 @@ The "Homestead Headaches" project has completed the v1.1.0 feature expansion enc
 5.  Power-up specific audio feedback (TODO).
 
 ### Workstream 4: Bug Fixes
+
 1.  **WeatherEffects** wind direction sign fix.
 2.  **WeatherSystem** level reset (force clear when level <= 5).
 3.  **SessionLog** storage validation (Array.isArray check).
@@ -39,26 +44,31 @@ The "Homestead Headaches" project has completed the v1.1.0 feature expansion enc
 7.  **clearSessionHistory** queue reset.
 
 ### Workstream 5: Memory Leak Fixes
+
 1.  **ComboCounter** animation cleanup (anime.js ref tracking).
 2.  **ScoreDisplay** animation cleanup.
 3.  **SettingsModal** animation cleanup.
 4.  **GameLogic** weather/dropController cleanup in destroy().
 
 ### Workstream 6: Audio Assets
+
 *   6 placeholder .ogg files: combo5, combo10, combo15, weather_wind, weather_rain, bank_fanfare.
 
 ### Workstream 7: Tests
+
 *   5 new test suites (58 tests): WeatherSystem, HitStop, AnimalVariants, SessionLog, Keybindings.
 *   Fixed 9 pre-existing test failures in config.test.ts and hooks-integration.test.ts.
 *   Total: 1267 tests passing across 34 files, 0 failures.
 
 ### Workstream 8: Dead Code & Cleanup
+
 *   Removed unused Vector3 import from useGameLogic.
 *   Empty callbacks annotated with TODOs.
 *   clearSessionHistory wired with UI button and confirmation.
 *   Sensitivity config constants extracted.
 
 ## Prior Achievements (v1.0 Phases 1-16)
+
 1.  **Animal Scale Rebalance:** Reduced all animal `modelScale` values so stacks are readable and the farmer (2.5) is clearly dominant.
 2.  **Tornado Ribbon Rewrite:** Procedural `CreateRibbon` twisted funnel mesh + 3 dark spiral bands.
 3.  **Entity Lifecycle Cleanup:** `cleanupTransientEntities()` in `GameLogic.tick()`.
@@ -67,12 +77,14 @@ The "Homestead Headaches" project has completed the v1.1.0 feature expansion enc
 6.  **Chrome MCP Visual Verification:** Full gameplay verified via browser automation.
 
 ## Immediate Goals
+
 1.  **Play Testing:** Validate new weather system, animal variants, and combo mechanics with human input across devices.
 2.  **Performance Profiling:** Ensure weather particles + colorblind filter post-processing + anime.js combo animations don't impact frame rate on mobile.
 3.  **Audio Polish:** Replace 6 placeholder .ogg files with final audio assets.
 4.  **Power-up Audio Feedback:** Implement power-up specific audio feedback (currently TODO).
 
 ## Active Decisions
+
 *   **Physics Loading:** Havok is loaded in `GameScreen3D` (parent) to ensure `GameScene` never mounts without physics.
 *   **AI Architecture:** DropController is a pure TypeScript class (no YUKA dependency) with same public API as former GameDirector.
 *   **Weather System:** WeatherSystem is a state machine (clear/windy/rainy/stormy) driven by level progression. Wind forces apply lateral drift to falling entities. BabylonJS particle effects render rain/wind. Ambient audio loops per weather state.
@@ -93,6 +105,7 @@ The "Homestead Headaches" project has completed the v1.1.0 feature expansion enc
 *   **Deployment:** `vite.config.ts` uses standard chunks for web, `viteSingleFile` for Capacitor.
 
 ## Current Focus
+
 *   v1.1.0 feature expansion complete (55 issues, 8 workstreams).
 *   All 1267 tests passing across 34 files.
 *   Ready for human play testing of new systems, audio asset finalization, and performance validation.

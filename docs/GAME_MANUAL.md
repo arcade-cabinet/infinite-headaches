@@ -3,6 +3,7 @@
 ## Game Manual
 
 ### Overview
+
 **Homestead Headaches** is a 3D stacking game where you save farm animals from an incoming storm! Drag your base animal to catch falling friends, build a tower to the sky, and "bank" them in the barn before the wind blows them away.
 
 ---
@@ -10,12 +11,14 @@
 ## Core Gameplay
 
 ### Controls
+
 - **Drag (Mouse/Touch):** Move your base animal left/right to catch falling animals.
 - **Keyboard:** Arrow keys for movement (remappable in Settings).
 - **Tap Stack:** Poke an animal to trigger a reaction (or special ability!).
 - **Bank Button:** Appears when you stack 5+ animals. Tap to save them!
 
 ### The Goal
+
 1.  **Catch:** Don't let animals hit the ground.
 2.  **Stack:** Build as high as you can.
 3.  **Balance:** Manage the "Wobble." Moving too fast or landing off-center makes the stack unstable.
@@ -53,7 +56,7 @@ Variant animals appear as the game progresses and are visually distinct with a c
 | :--- | :--- | :--- | :--- |
 | **Rare** | Level 3+ | Blue tint | 1.5x |
 | **Golden** | Level 8+ | Gold tint | 3x |
-| **Shadow** | Level 15+ | Dark tint | 5x |
+| **Shadow** | Level 15+ | Dark tint | 2x |
 
 ### Player Characters
 
@@ -67,12 +70,14 @@ Variant animals appear as the game progresses and are visually distinct with a c
 ## Mechanics
 
 ### Wobble Physics
+
 Your stack is physics-based!
 - **Momentum:** Moving quickly adds momentum to the stack.
 - **Impact:** Catching an animal off-center causes the stack to lean.
 - **Danger:** If the stack leans too far (turns red), it will topple!
 
 ### The Storm (AI Director)
+
 The game is watched by a **DropController** AI that adapts to your skill:
 - **Yahtzee Combos:** Animals are chosen to help you build scoring combos --- pairs, three-of-a-kind, full house, straights, and more!
 - **Tornado Indicator:** Watch the twisted funnel tornado at the top of the board --- it shows where the next animal will drop. It speeds up and grows when a drop is imminent!
@@ -80,6 +85,7 @@ The game is watched by a **DropController** AI that adapts to your skill:
 - **Challenge:** If you're playing perfectly, expect trickier patterns and faster drops!
 
 ### Weather System
+
 Starting at level 6, the weather changes dynamically as you play:
 - **Clear:** Normal conditions. No weather effects.
 - **Windy:** Light wind pushes falling animals sideways. Adjust your positioning!
@@ -89,6 +95,7 @@ Starting at level 6, the weather changes dynamically as you play:
 Weather transitions are accompanied by ambient audio (rain, wind, thunder) that fades between states.
 
 ### Combo System
+
 Build combos by catching animals consecutively without dropping any:
 - **5x Combo:** Scale pulse animation.
 - **10x Combo:** Larger pulse with screen shake.
@@ -97,9 +104,11 @@ Build combos by catching animals consecutively without dropping any:
 - Combo milestones trigger a satisfying hit-stop freeze-frame effect.
 
 ### Hit Stop
+
 A brief freeze-frame effect plays on perfect catches and combo milestones, adding impact and weight to your best plays. This effect respects the reduced motion accessibility setting.
 
 ### Level Up Flash
+
 A white flash overlay plays when you advance to a new level, signaling your progression.
 
 ---
@@ -120,11 +129,12 @@ Catch these falling items to help your farm:
 ---
 
 ## Scoring
+
 - **Catch:** Base points based on height.
 - **Perfect Catch:** Center alignment = 2.5x Points + "Perfect" Sparkles.
 - **Bank:** Secure points + Earn "Bank Bonus".
 - **Combo Milestones:** 5x, 10x, and 15x consecutive catches trigger bonus effects and score boosts.
-- **Animal Variants:** Rare (1.5x), Golden (3x), and Shadow (5x) animals multiply their catch and bank scores.
+- **Animal Variants:** Rare (1.5x), Golden (3x), and Shadow (2x) animals multiply catch scores.
 - **Storm Bonus:** Catching animals during stormy weather grants a wobble bonus.
 - **Lives:** You have 3 Hearts (max 5, can extend to 8). Dropping an animal or toppling loses a heart.
 
@@ -147,6 +157,7 @@ Up to 500 sessions are stored locally on your device.
 ## Accessibility
 
 ### Colorblind Modes
+
 Three colorblind correction filters are available in Settings:
 - **Protanopia** (red-blind)
 - **Deuteranopia** (green-blind)
@@ -155,24 +166,29 @@ Three colorblind correction filters are available in Settings:
 Filters use Machado 2009 color transformation matrices applied as a post-processing effect.
 
 ### High Contrast Mode
+
 Enable increased contrast in Settings for improved visibility of game elements.
 
 ### Key Remapping
+
 Customize your keyboard controls in Settings:
 - Remap movement, bank, and pause keys.
 - Press Escape during key capture to cancel.
 - Reset to defaults at any time.
 
 ### Reduced Motion
+
 When your system's reduced motion preference is enabled, the game automatically disables:
 - Hit-stop freeze-frame effects
 - Combo milestone animations
 - Level up flash overlay
 
 ### Motor Accessibility
+
 Adjust movement sensitivity in Settings. Your sensitivity preferences are saved between sessions.
 
 ### Screen Reader Support
+
 ARIA live regions announce:
 - Score changes
 - Combo milestones

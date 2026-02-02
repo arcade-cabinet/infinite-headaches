@@ -16,7 +16,7 @@ A physics-based 3D stacking game featuring low-poly farm animals, built with Rea
 **Major pivot from 2D Canvas to 3D ECS Architecture.**
 
 #### Core Changes
-- **Rebranding:** Renamed to "Homestead Headaches". Theme shifted from Pokemon/Ducks to Farm Animals vs. Tornado.
+- **Rebranding:** Renamed to "Homestead Headaches". Theme shifted from Pokémon/Ducks to Farm Animals vs. Tornado.
 - **Tech Stack:**
     - **Logic:** `GameEngine` now drives a **Miniplex** ECS world.
     - **Rendering:** Replaced 2D Context API with **Babylon.js**.
@@ -282,7 +282,7 @@ src/
 - **AnimalVariants:** New `src/game/variants/AnimalVariants.ts` defining three variant tiers:
   - **Rare** (level 3+): Blue PBR material tint, 1.5x score multiplier.
   - **Golden** (level 8+): Gold PBR material tint, 3x score multiplier.
-  - **Shadow** (level 15+): Dark PBR material tint, 5x score multiplier.
+  - **Shadow** (level 15+): Dark PBR material tint, 2x score multiplier.
 - **Visual System:** PBR material tinting applied at spawn time via BabylonJS StandardMaterial/PBRMaterial color properties.
 - Variant type is determined by level and RNG at spawn, independent of the base animal type.
 
