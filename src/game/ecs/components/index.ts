@@ -232,6 +232,9 @@ export interface SquishComponent {
   recoverySpeed: number;
 }
 
+/** Physics tag for collision bridge identification. */
+export type PhysicsTag = 'player' | 'falling' | 'stacked' | 'banking' | 'scattering';
+
 // Union type of all possible components
 export type Entity = {
   id?: string;
@@ -266,4 +269,6 @@ export type Entity = {
   merged?: MergedComponent;
   emotion?: EmotionComponent;
   squish?: SquishComponent;
+  /** Identifies entity type for physics collision bridge. */
+  physicsTag?: PhysicsTag;
 };

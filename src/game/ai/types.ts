@@ -29,6 +29,7 @@ export interface PlayerState {
   screenHeight: number;
   level: number;
   bankedAnimals: number;
+  stackComposition?: Record<AnimalType, number>;
 }
 
 export interface SpawnDecision {
@@ -39,7 +40,17 @@ export interface SpawnDecision {
   initialVelocityX: number;
   initialVelocityY: number;
   targetBias: number;
+  nextDropX: number;
 }
+
+export type YahtzeeCombo =
+  | "pair"           // 2 of same type
+  | "two_pair"       // 2 different pairs
+  | "three_of_kind"  // 3 of same type
+  | "four_of_kind"   // 4 of same type
+  | "full_house"     // 3 + 2 of different types
+  | "straight"       // one of each of 5 types
+  | "flush";         // all same type (5+)
 
 export interface PowerUpDecision {
   shouldSpawn: boolean;

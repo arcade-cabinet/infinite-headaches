@@ -87,7 +87,7 @@ function normalizeAnimationName(name: string): string {
 
 /**
  * Determines the appropriate animation based on entity velocity.
- * Returns "idle" for stationary entities and "walk" for moving entities.
+ * Uses X velocity for side-scroller movement: idle / walk / run.
  */
 function determineAnimationFromVelocity(
   entity: Entity,
@@ -97,9 +97,12 @@ function determineAnimationFromVelocity(
     return "idle";
   }
 
-  const velocityMagnitude = entity.velocity.length();
+  const speed = Math.abs(entity.velocity.x);
 
-  if (velocityMagnitude > config.velocityThreshold) {
+  if (speed > 5) {
+    return "run";
+  }
+  if (speed > config.velocityThreshold) {
     return "walk";
   }
 
@@ -343,7 +346,7 @@ export function AnimationSystem(
         const transitionDuration =
           animation._transitionDuration ?? config.transitionDuration;
 
-        playAnimation(
+        const success = playAnimation(
           entityId,
           targetAnimation,
           animation.animationSpeed,
@@ -351,7 +354,13 @@ export function AnimationSystem(
           transitionDuration
         );
 
-        animation._lastAnimation = targetAnimation;
+        // Only mark as last animation if playback actually succeeded.
+        // Before the model loads, playAnimation fails because no animations
+        // are registered yet — we must NOT mark it as played or the system
+        // will never retry once the model finishes loading.
+        if (success) {
+          animation._lastAnimation = targetAnimation;
+        }
       }
     } else {
       // Stop animations if not playing

@@ -1,7 +1,7 @@
 /**
  * SpawningSystem - ECS system for spawning falling animals
  *
- * Integrates with GameDirector to spawn animals based on:
+ * Integrates with DropController to spawn animals based on:
  * 1. Game difficulty and timing
  * 2. Player position and stack height
  * 3. AI behavior types
@@ -56,7 +56,7 @@ function mapToWorld(x: number, y: number, screenWidth: number, screenHeight: num
 }
 
 /**
- * Spawns an animal entity based on a spawn decision from GameDirector
+ * Spawns an animal entity based on a spawn decision from DropController
  */
 export function spawnAnimalFromDecision(
   decision: SpawnDecision,
@@ -181,10 +181,10 @@ export function getRandomAnimalType(level: number): AnimalType {
 /**
  * SpawningSystem - Processes spawn decisions and creates entities
  *
- * Note: This system is typically called manually when GameDirector
+ * Note: This system is typically called manually when DropController
  * decides to spawn, rather than running every frame.
  *
- * @param decision - Spawn decision from GameDirector
+ * @param decision - Spawn decision from DropController
  * @param screenWidth - Screen width for coordinate mapping
  * @param screenHeight - Screen height for coordinate mapping
  * @param playerEntity - Player entity for targeting

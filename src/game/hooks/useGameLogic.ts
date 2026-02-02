@@ -9,6 +9,7 @@ import { audioManager } from "../audio";
 import { GAME_CONFIG } from "../config";
 import { GameLogic } from "../engine/GameLogic";
 import { deviceManager } from "../../platform/device";
+import type { GameModeType } from "../modes/GameMode";
 
 export interface UseGameLogicReturn {
   score: number;
@@ -28,7 +29,7 @@ export interface UseGameLogicReturn {
   perfectKey: number;
   showPerfect: boolean;
   showGood: boolean;
-  startGame: (characterId: "farmer_john" | "farmer_mary") => void;
+  startGame: (characterId: "farmer_john" | "farmer_mary", mode?: GameModeType) => void;
   bankStack: () => void;
   pauseGame: () => void;
   resumeGame: () => void;
@@ -36,6 +37,15 @@ export interface UseGameLogicReturn {
   handlePointerMove: (worldX: number) => void;
   handlePointerUp: () => void;
   setScreenDimensions: (width: number, height: number) => void;
+  pokeDuck: (entityId: string) => void;
+  /** Read per-frame tornado X position (world-space). Call inside useFrame/render loop. */
+  getNextDropX: () => number;
+  /** Read per-frame difficulty (0-1) for tornado intensity. */
+  getDropDifficulty: () => number;
+  /** Read per-frame drop imminence flag. */
+  getIsDropImminent: () => boolean;
+  /** Push a physics collision event from PhysicsCollisionBridge. */
+  pushCollisionEvent: (event: import("../../features/gameplay/scene/components/PhysicsCollisionBridge").PhysicsCatchEvent) => void;
 }
 
 export interface GameLogicCallbacks {
@@ -51,7 +61,7 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
   const [bankedAnimals, setBankedAnimals] = useState(0);
   const [level, setLevel] = useState(1);
   const [lives, setLives] = useState<number>(GAME_CONFIG.lives.starting);
-  const [maxLives] = useState(GAME_CONFIG.lives.max);
+  const [maxLives, setMaxLives] = useState<number>(GAME_CONFIG.lives.max);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -66,7 +76,7 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
     const engine = new GameLogic({
       onScoreChange: (s, m, c) => { setScore(s); setMultiplier(m); setCombo(c); },
       onStackChange: (h, cb) => { setStackHeight(h); setCanBank(cb); },
-      onLivesChange: (l) => { setLives(l); },
+      onLivesChange: (l, ml) => { setLives(l); setMaxLives(ml); },
       onGameOver: (s, b) => { 
         setIsPlaying(false); 
         setIsGameOver(true);
@@ -148,10 +158,11 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
     };
   }, [isPlaying, isPaused, canBank]);
 
-  const startGame = useCallback((characterId: "farmer_john" | "farmer_mary") => {
+  const startGame = useCallback((characterId: "farmer_john" | "farmer_mary", mode?: GameModeType) => {
     setIsPlaying(true);
     setIsPaused(false);
-    engineRef.current?.start(characterId);
+    setIsGameOver(false);
+    engineRef.current?.start(characterId, mode);
   }, []);
 
   return {
@@ -165,5 +176,10 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
     handlePointerMove: (x) => engineRef.current?.handlePointerMove(x),
     handlePointerUp: () => engineRef.current?.handlePointerUp(),
     setScreenDimensions: (w, h) => engineRef.current?.setScreenDimensions(w, h),
+    pokeDuck: (entityId: string) => engineRef.current?.pokeDuck(entityId),
+    getNextDropX: () => engineRef.current?.getNextDropX() ?? 0,
+    getDropDifficulty: () => engineRef.current?.getDropDifficulty() ?? 0,
+    getIsDropImminent: () => engineRef.current?.getIsDropImminent() ?? false,
+    pushCollisionEvent: (event) => engineRef.current?.pushCollisionEvent(event),
   };
 }

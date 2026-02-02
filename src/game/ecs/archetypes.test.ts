@@ -41,13 +41,15 @@ describe("createAnimal", () => {
     expect(entity.velocity?.x).toBe(0);
     expect(entity.velocity?.y).toBe(0);
     expect(entity.velocity?.z).toBe(0);
-    expect(entity.scale?.x).toBe(1);
-    expect(entity.scale?.y).toBe(1);
-    expect(entity.scale?.z).toBe(1);
+    // Scale matches modelScale from ANIMAL_TYPES config (cow: 1.15)
+    expect(entity.scale?.x).toBe(1.15);
+    expect(entity.scale?.y).toBe(1.15);
+    expect(entity.scale?.z).toBe(1.15);
     expect(entity.model).toBe("assets/models/animals/cow.glb");
     expect(entity.tag?.type).toBe("animal");
     expect(entity.tag?.subtype).toBe("cow");
-    expect(entity.physics?.mass).toBe(1);
+    // Mass matches weight from ANIMAL_TYPES config (cow: 2.0)
+    expect(entity.physics?.mass).toBe(2.0);
     expect(entity.physics?.restitution).toBe(0.2);
     expect(entity.physics?.friction).toBe(0.5);
     expect(entity.wobble?.offset).toBe(0);
@@ -111,9 +113,9 @@ describe("createPlayer", () => {
     expect(entity.position).toBe(position);
     expect(entity.velocity?.x).toBe(0);
     expect(entity.velocity?.y).toBe(0);
-    expect(entity.scale?.x).toBe(1.2);
-    expect(entity.scale?.y).toBe(1.2);
-    expect(entity.scale?.z).toBe(1.2);
+    expect(entity.scale?.x).toBe(2.5);
+    expect(entity.scale?.y).toBe(2.5);
+    expect(entity.scale?.z).toBe(2.5);
     expect(entity.model).toBe("assets/models/farmers/john.glb");
     expect(entity.tag?.type).toBe("player");
     expect(entity.tag?.subtype).toBe("farmer_john");
@@ -140,9 +142,9 @@ describe("createPlayer", () => {
     expect(entity.traits?.positiveTraits).toContain("Fast Reflexes");
     expect(entity.traits?.negativeTraits).toContain("Easily Startled");
     expect(entity.player?.characterId).toBe("farmer_mary");
-    expect(entity.scale?.x).toBe(1.1);
-    expect(entity.scale?.y).toBe(1.1);
-    expect(entity.scale?.z).toBe(1.1);
+    expect(entity.scale?.x).toBe(2.3);
+    expect(entity.scale?.y).toBe(2.3);
+    expect(entity.scale?.z).toBe(2.3);
   });
 
   it("should have different springiness than animals", () => {
@@ -164,7 +166,8 @@ describe("createFallingAnimal", () => {
     expect(entity.position?.x).toBe(150);
     expect(entity.position?.y).toBe(50);
     expect(entity.velocity).toBeDefined();
-    expect(entity.scale?.x).toBe(1);
+    // Scale matches modelScale from ANIMAL_TYPES config (chicken: 0.5)
+    expect(entity.scale?.x).toBe(0.5);
     expect(entity.model).toBe("assets/models/animals/chicken.glb");
     expect(entity.tag?.type).toBe("animal");
     expect(entity.tag?.subtype).toBe("chicken");
@@ -726,10 +729,10 @@ describe("createBossAnimal", () => {
     expect(entity.boss?.pulsePhase).toBe(0);
     expect(entity.boss?.reward).toBe(500);
 
-    // Scale should be multiplied by boss size (1.8)
-    expect(entity.scale?.x).toBe(1.8);
-    expect(entity.scale?.y).toBe(1.8);
-    expect(entity.scale?.z).toBe(1.8);
+    // Scale = cow modelScale (1.15) * mega boss size (1.8) = 2.07
+    expect(entity.scale?.x).toBeCloseTo(2.07);
+    expect(entity.scale?.y).toBeCloseTo(2.07);
+    expect(entity.scale?.z).toBeCloseTo(2.07);
 
     // Should have falling component from createFallingAnimal
     expect(entity.falling).toBeDefined();
@@ -745,10 +748,10 @@ describe("createBossAnimal", () => {
     expect(entity.boss?.maxHealth).toBe(5);
     expect(entity.boss?.reward).toBe(750);
 
-    // Scale should be multiplied by boss size (1.5)
-    expect(entity.scale?.x).toBe(1.5);
-    expect(entity.scale?.y).toBe(1.5);
-    expect(entity.scale?.z).toBe(1.5);
+    // Scale = pig modelScale (0.85) * shadow boss size (1.5) = 1.275
+    expect(entity.scale?.x).toBeCloseTo(1.275);
+    expect(entity.scale?.y).toBeCloseTo(1.275);
+    expect(entity.scale?.z).toBeCloseTo(1.275);
   });
 
   it("should create golden boss with correct properties", () => {
@@ -760,10 +763,10 @@ describe("createBossAnimal", () => {
     expect(entity.boss?.maxHealth).toBe(2);
     expect(entity.boss?.reward).toBe(1000);
 
-    // Scale should be multiplied by boss size (1.4)
-    expect(entity.scale?.x).toBeCloseTo(1.4);
-    expect(entity.scale?.y).toBeCloseTo(1.4);
-    expect(entity.scale?.z).toBeCloseTo(1.4);
+    // Scale = chicken modelScale (0.5) * golden boss size (1.4) = 0.7
+    expect(entity.scale?.x).toBeCloseTo(0.7);
+    expect(entity.scale?.y).toBeCloseTo(0.7);
+    expect(entity.scale?.z).toBeCloseTo(0.7);
   });
 
   it("should inherit all falling animal components", () => {

@@ -13,6 +13,7 @@ import {
   WobbleComponent,
 } from "./components";
 import { AnimalType, ANIMAL_TYPES, GAME_CONFIG } from "../config";
+import { createAnimationComponent } from "./systems/AnimationSystem";
 
 /**
  * Creates an animal entity for the ECS world
@@ -35,15 +36,16 @@ export const createAnimal = (type: AnimalType, position: Vector3): Entity => {
   }
 
   const modelPath = `assets/models/animals/${type}.glb`;
+  const s = config.modelScale;
 
   return {
     id: crypto.randomUUID(),
     position,
     velocity: new Vector3(0, 0, 0),
-    scale: new Vector3(1, 1, 1),
+    scale: new Vector3(s, s, s),
     model: modelPath,
     tag: { type: "animal", subtype: type },
-    physics: { mass: 1, restitution: 0.2, friction: 0.5 },
+    physics: { mass: config.weight, restitution: 0.2, friction: 0.5 },
     wobble: { offset: 0, velocity: 0, damping: 0.9, springiness: 0.1 },
     mergeable: { level: 1, mergeRadius: 1.5 },
     colorOverlay: { color: new Color3(1, 1, 1), intensity: 0 },
@@ -64,28 +66,28 @@ const CHARACTER_CONFIG: Record<CharacterId, {
     name: "Farmer John",
     positiveTraits: ["Steady Hands"],
     negativeTraits: ["Slow Walker"],
-    scale: new Vector3(1.2, 1.2, 1.2),
+    scale: new Vector3(2.5, 2.5, 2.5),
   },
   farmer_ben: {
     model: "assets/models/farmers/john.glb", // Using John as placeholder for Ben
     name: "Farmer Ben",
     positiveTraits: ["Sprints"],
     negativeTraits: ["Low Stamina"],
-    scale: new Vector3(1.0, 1.0, 1.0),
+    scale: new Vector3(2.5, 2.5, 2.5),
   },
   farmer_mary: {
     model: "assets/models/farmers/mary.glb",
     name: "Farmer Mary",
     positiveTraits: ["Fast Reflexes"],
     negativeTraits: ["Easily Startled"],
-    scale: new Vector3(1.1, 1.1, 1.1),
+    scale: new Vector3(2.3, 2.3, 2.3),
   },
   farmhand_sue: {
     model: "assets/models/farmers/mary.glb", // Using Mary as placeholder for Sue
     name: "Farmhand Sue",
     positiveTraits: ["Animal Whisperer"],
     negativeTraits: ["Clumsy"],
-    scale: new Vector3(0.9, 0.9, 0.9),
+    scale: new Vector3(2.1, 2.1, 2.1),
   },
 };
 
@@ -96,7 +98,9 @@ export const createPlayer = (characterId: CharacterId, position: Vector3): Entit
     id: crypto.randomUUID(),
     position,
     velocity: new Vector3(0, 0, 0),
-    scale: config.scale || new Vector3(1.2, 1.2, 1.2),
+    scale: config.scale || new Vector3(2.5, 2.5, 2.5),
+    // GLB models face +Z; rotate Math.PI around Y to face the camera (-Z)
+    modelRotation: new Vector3(0, Math.PI, 0),
     model: config.model,
     // skinTexture removed as we use pre-baked unique GLBs
     tag: { type: "player", subtype: characterId },
@@ -113,6 +117,8 @@ export const createPlayer = (characterId: CharacterId, position: Vector3): Entit
       lastDragX: 0,
       smoothedVelocity: 0,
     },
+    animation: createAnimationComponent(),
+    physicsTag: 'player' as const,
   };
 };
 
@@ -138,15 +144,16 @@ export const createFallingAnimal = (
 
   const modelPath = `assets/models/animals/${type}.glb`;
   const { physics } = GAME_CONFIG;
+  const s = config.modelScale;
 
   const entity: Entity = {
     id: crypto.randomUUID(),
     position,
     velocity: initialVelocity ?? new Vector3(0, 0, 0),
-    scale: new Vector3(1, 1, 1),
+    scale: new Vector3(s, s, s),
     model: modelPath,
     tag: { type: "animal", subtype: type },
-    physics: { mass: 1, restitution: 0.2, friction: 0.5 },
+    physics: { mass: config.weight, restitution: 0.2, friction: 0.5 },
     wobble: {
       offset: 0,
       velocity: 0,
@@ -174,6 +181,7 @@ export const createFallingAnimal = (
       targetScaleY: 1,
       recoverySpeed: 0.12,
     },
+    physicsTag: 'falling' as const,
   };
 
   // Add ability if animal type has one
@@ -208,6 +216,9 @@ export const convertToStacked = (
     baseEntityId,
   });
 
+  // Update physics tag
+  entity.physicsTag = 'stacked';
+
   // Reset velocity
   if (entity.velocity) {
     entity.velocity.set(0, 0, 0);
@@ -231,6 +242,9 @@ export const convertToBanking = (
     targetY,
     startedAt: Date.now(),
   });
+
+  // Update physics tag
+  entity.physicsTag = 'banking';
 };
 
 /**
@@ -245,6 +259,9 @@ export const convertToScattering = (entity: Entity): void => {
     rotationVelocity: (Math.random() - 0.5) * 0.3,
     startedAt: Date.now(),
   });
+
+  // Update physics tag
+  entity.physicsTag = 'scattering';
 
   // Give random velocity
   if (entity.velocity) {
