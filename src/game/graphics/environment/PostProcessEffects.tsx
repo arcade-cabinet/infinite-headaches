@@ -1,21 +1,32 @@
 import { useEffect } from "react";
 import { useScene } from "reactylon";
-import { 
-  DefaultRenderingPipeline,  DepthOfFieldEffectBlurLevel } from "@babylonjs/core";
+import {
+  DefaultRenderingPipeline,
+  PostProcess,
+} from "@babylonjs/core";
 import { QualityLevel } from "../../../graphics";
+import {
+  createColorblindPostProcess,
+  type ColorblindMode,
+} from "../shaders/ColorblindFilter";
 
-export const PostProcessEffects = ({ quality }: { quality: QualityLevel }) => {
+interface PostProcessEffectsProps {
+  quality: QualityLevel;
+  colorblindMode?: ColorblindMode;
+}
+
+export const PostProcessEffects = ({ quality, colorblindMode = "none" }: PostProcessEffectsProps) => {
   const scene = useScene();
 
   useEffect(() => {
     if (!scene || !scene.activeCamera) return;
 
     const pipeline = new DefaultRenderingPipeline("pipeline", true, scene, [scene.activeCamera]);
-    
+
     // 1. Sharpness: Enable MSAA (Multi-Sample Anti-Aliasing)
     // This is much sharper than FXAA and removes jagged edges without blurring.
     pipeline.samples = quality === "high" ? 4 : 2;
-    
+
     // 2. Sharpen Effect: Makes diorama details pop
     pipeline.sharpenEnabled = true;
     pipeline.sharpen.edgeAmount = 0.3;
@@ -30,13 +41,23 @@ export const PostProcessEffects = ({ quality }: { quality: QualityLevel }) => {
     pipeline.bloomWeight = 0.15;
     pipeline.bloomScale = 0.5;
 
-    // 4. Tone Mapping
+    // 5. Tone Mapping
     pipeline.imageProcessingEnabled = true;
     pipeline.imageProcessing.contrast = 1.2;
     pipeline.imageProcessing.exposure = 1.1;
 
     return () => pipeline.dispose();
   }, [scene, quality]);
+
+  // Colorblind post-processing filter
+  useEffect(() => {
+    if (!scene || !scene.activeCamera || colorblindMode === "none") return;
+
+    const postProcess = createColorblindPostProcess(scene, colorblindMode);
+    return () => {
+      postProcess?.dispose();
+    };
+  }, [scene, colorblindMode]);
 
   return null;
 };

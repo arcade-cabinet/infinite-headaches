@@ -40,6 +40,7 @@ import { PerfectIndicator } from "@/game/components/PerfectIndicator";
 import { ModeSelect } from "@/game/components/ModeSelect";
 import { SettingsModal } from "@/game/components/SettingsModal";
 import { UpgradeShop } from "@/game/components/UpgradeShop";
+import { StatsModal } from "@/game/components/StatsModal";
 import { HelpModal } from "@/game/components/HelpModal";
 import { PauseMenu } from "@/game/components/PauseMenu";
 import { GameOverScreen } from "@/features/gameplay/GameOverScreen";
@@ -224,6 +225,7 @@ export function GameScreen3D() {
           onPlay={menu.openPlay}
           onModes={menu.openPlay}
           onUpgrades={menu.openUpgrades}
+          onStats={menu.openStats}
         />
       )}
 
@@ -282,6 +284,7 @@ export function GameScreen3D() {
           />
         )}
         {menu.showHelp && <HelpModal onClose={menu.closeHelp} />}
+        {menu.showStats && <StatsModal onClose={menu.closeStats} />}
       </div>
 
       {/* ── Settings modal (z-60 so it renders above PauseMenu z-50) ── */}

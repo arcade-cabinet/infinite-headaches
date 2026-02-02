@@ -9,6 +9,8 @@ import { audioManager } from "../audio";
 import { GAME_CONFIG } from "../config";
 import { GameLogic } from "../engine/GameLogic";
 import { deviceManager } from "../../platform/device";
+import { inputManager } from "../../platform/input";
+import { recordSession } from "../analytics/SessionLog";
 import type { GameModeType } from "../modes/GameMode";
 
 export interface UseGameLogicReturn {
@@ -77,9 +79,12 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
       onScoreChange: (s, m, c) => { setScore(s); setMultiplier(m); setCombo(c); },
       onStackChange: (h, cb) => { setStackHeight(h); setCanBank(cb); },
       onLivesChange: (l, ml) => { setLives(l); setMaxLives(ml); },
-      onGameOver: (s, b) => { 
-        setIsPlaying(false); 
+      onGameOver: (s, b) => {
+        setIsPlaying(false);
         setIsGameOver(true);
+        // Record session analytics
+        const sessionData = engine.getSessionData();
+        recordSession(sessionData).catch(() => {/* storage write failed, non-critical */});
         if (callbacks?.onGameOver) callbacks.onGameOver(s, b);
       },
       onPerfectCatch: () => { setPerfectKey(k => k + 1); setShowPerfect(true); setTimeout(() => setShowPerfect(false), 800); },
@@ -112,9 +117,11 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
     const onKeyDown = (e: KeyboardEvent) => {
       if (!hasKeyboard) return;
       keys.add(e.code);
-      
+
+      const km = inputManager.getKeyMappings();
+
       // Toggle pause
-      if (e.code === "Space" || e.code === "Escape" || e.code === "KeyP") {
+      if (km.pause.some((k) => k === e.code)) {
         if (isPaused) {
            engineRef.current?.resume();
            setIsPaused(false);
@@ -125,23 +132,28 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
            audioManager.pauseMusic();
         }
       }
-      
+
       // Bank
-      if ((e.code === "Enter" || e.code === "ArrowUp") && canBank && !isPaused) {
+      if (km.action.some((k) => k === e.code) && canBank && !isPaused) {
         engineRef.current?.bankStack();
       }
     };
-    
+
     const onKeyUp = (e: KeyboardEvent) => keys.delete(e.code);
 
     const tick = () => {
       if (hasKeyboard && engineRef.current && !isPaused) {
+        const km = inputManager.getKeyMappings();
         let dx = 0;
         // Tuning movement speed for keyboard
-        const speed = 0.4; 
-        if (keys.has("ArrowLeft") || keys.has("KeyA")) dx -= speed;
-        if (keys.has("ArrowRight") || keys.has("KeyD")) dx += speed;
-        
+        const speed = 0.4;
+        if (km.left.some((k) => keys.has(k))) dx -= speed;
+        if (km.right.some((k) => keys.has(k))) dx += speed;
+
+        // Apply sensitivity from motor settings
+        const sensitivity = inputManager.getMotorSettings().inputSensitivity;
+        dx *= sensitivity;
+
         if (dx !== 0) engineRef.current.movePlayer(dx);
       }
       frameId = requestAnimationFrame(tick);

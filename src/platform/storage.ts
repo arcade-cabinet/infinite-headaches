@@ -104,4 +104,7 @@ export const STORAGE_KEYS = {
   TUTORIAL_COMPLETED: "animal_tutorial_completed",
   SOUND_MUTED: "animal_sound_muted",
   SETTINGS: "animal_settings",
+  KEY_BINDINGS: "animal_key_bindings",
+  MOTOR_SETTINGS: "animal_motor_settings",
+  SESSION_HISTORY: "animal_session_history",
 } as const;

@@ -64,6 +64,10 @@ export interface GraphicsSettings {
   reducedMotion: boolean;
   /** Reduce flash effects intensity */
   reduceFlashing: boolean;
+  /** Colorblind mode simulation filter */
+  colorblindMode: "none" | "protanopia" | "deuteranopia" | "tritanopia";
+  /** High contrast mode for improved visibility */
+  highContrastMode: boolean;
 }
 
 /**

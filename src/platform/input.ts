@@ -5,8 +5,19 @@
  */
 
 import { Capacitor } from "@capacitor/core";
+import {
+  getKeyBindings,
+  loadKeyBindings,
+  type KeyBindings,
+} from "./keybindings";
+import { storage, STORAGE_KEYS } from "./storage";
 
 export type InputSource = "keyboard" | "mouse" | "touch" | "gamepad";
+
+export interface MotorSettings {
+  inputSensitivity: number; // 0.5 - 2.0
+  oneHandedMode: boolean;
+}
 
 export type InputDirection = {
   x: number;
@@ -28,16 +39,42 @@ export interface DragEventData extends InputState {
 
 type InputEventCallback<T = InputState> = (state: T) => void;
 
-// Key mappings for movement - supports both Arrow keys and WASD
-const KEY_MAPPINGS = {
-  up: ["ArrowUp", "KeyW", "w", "W"],
-  down: ["ArrowDown", "KeyS", "s", "S"],
-  left: ["ArrowLeft", "KeyA", "a", "A"],
-  right: ["ArrowRight", "KeyD", "d", "D"],
-  pause: ["Escape", "KeyP", "p", "P"],
-  action: ["Space", " ", "Enter"],
-  secondaryAction: ["ShiftLeft", "ShiftRight", "Shift", "KeyE", "e", "E"],
-} as const;
+// One-handed mode key mirrors: J/K/L → left/action/right
+const ONE_HANDED_MIRRORS: Record<string, { action: string; code: string }> = {
+  KeyJ: { action: "moveLeft", code: "KeyJ" },
+  KeyK: { action: "bank", code: "KeyK" },
+  KeyL: { action: "moveRight", code: "KeyL" },
+};
+
+/**
+ * Build currentKeyMappings from dynamic KeyBindings.
+ * Maps the semantic actions to the format used internally.
+ */
+function buildKeyMappings(bindings: KeyBindings, oneHanded: boolean) {
+  const left = [...bindings.moveLeft];
+  const right = [...bindings.moveRight];
+  const action = [...bindings.bank];
+  const pause = [...bindings.pause];
+  const secondaryAction = [...bindings.fireAbility];
+
+  if (oneHanded) {
+    left.push("KeyJ");
+    action.push("KeyK");
+    right.push("KeyL");
+  }
+
+  return {
+    left,
+    right,
+    up: [] as string[],
+    down: [] as string[],
+    pause,
+    action,
+    secondaryAction,
+  };
+}
+
+let currentKeyMappings = buildKeyMappings(getKeyBindings(), false);
 
 /**
  * InputManager - Singleton class for handling all input across platforms
@@ -60,6 +97,7 @@ class InputManager {
   private gamepadIndex: number | null = null;
   private gamepadPollInterval: number | null = null;
   private deadzone = 0.15; // Gamepad stick deadzone
+  private motorSettings: MotorSettings = { inputSensitivity: 1.0, oneHandedMode: false };
 
   /**
    * Initialize the input system
@@ -93,6 +131,14 @@ class InputManager {
 
     // Blur event to reset keys when window loses focus
     window.addEventListener("blur", this.handleBlur);
+
+    // Load dynamic key bindings and motor settings
+    const bindings = await loadKeyBindings();
+    const motorStored = await storage.get<MotorSettings>(STORAGE_KEYS.MOTOR_SETTINGS);
+    if (motorStored) {
+      this.motorSettings = motorStored;
+    }
+    currentKeyMappings = buildKeyMappings(bindings, this.motorSettings.oneHandedMode);
 
     this.initialized = true;
     console.log(`[Input] Initialized on ${Capacitor.getPlatform()} platform`);
@@ -155,19 +201,19 @@ class InputManager {
     this.updateMovementFromKeys();
 
     // Check for pause
-    if (KEY_MAPPINGS.pause.some((k) => k === e.code || k === e.key)) {
+    if (currentKeyMappings.pause.some((k) => k === e.code || k === e.key)) {
       this.state.pause = true;
       this.emit("pause", this.state);
     }
 
     // Check for primary action
-    if (KEY_MAPPINGS.action.some((k) => k === e.code || k === e.key)) {
+    if (currentKeyMappings.action.some((k) => k === e.code || k === e.key)) {
       this.state.primaryAction = true;
       this.emit("action", this.state);
     }
 
     // Check for secondary action
-    if (KEY_MAPPINGS.secondaryAction.some((k) => k === e.code || k === e.key)) {
+    if (currentKeyMappings.secondaryAction.some((k) => k === e.code || k === e.key)) {
       this.state.secondaryAction = true;
       this.emit("secondaryAction", this.state);
     }
@@ -183,13 +229,13 @@ class InputManager {
     this.keysPressed.delete(e.key);
     this.updateMovementFromKeys();
 
-    if (KEY_MAPPINGS.pause.some((k) => k === e.code || k === e.key)) {
+    if (currentKeyMappings.pause.some((k) => k === e.code || k === e.key)) {
       this.state.pause = false;
     }
-    if (KEY_MAPPINGS.action.some((k) => k === e.code || k === e.key)) {
+    if (currentKeyMappings.action.some((k) => k === e.code || k === e.key)) {
       this.state.primaryAction = false;
     }
-    if (KEY_MAPPINGS.secondaryAction.some((k) => k === e.code || k === e.key)) {
+    if (currentKeyMappings.secondaryAction.some((k) => k === e.code || k === e.key)) {
       this.state.secondaryAction = false;
     }
 
@@ -201,10 +247,10 @@ class InputManager {
     let x = 0;
     let y = 0;
 
-    if (KEY_MAPPINGS.left.some((k) => this.keysPressed.has(k))) x -= 1;
-    if (KEY_MAPPINGS.right.some((k) => this.keysPressed.has(k))) x += 1;
-    if (KEY_MAPPINGS.up.some((k) => this.keysPressed.has(k))) y -= 1;
-    if (KEY_MAPPINGS.down.some((k) => this.keysPressed.has(k))) y += 1;
+    if (currentKeyMappings.left.some((k) => this.keysPressed.has(k))) x -= 1;
+    if (currentKeyMappings.right.some((k) => this.keysPressed.has(k))) x += 1;
+    if (currentKeyMappings.up.some((k) => this.keysPressed.has(k))) y -= 1;
+    if (currentKeyMappings.down.some((k) => this.keysPressed.has(k))) y += 1;
 
     // Normalize diagonal movement to prevent faster diagonal speed
     if (x !== 0 && y !== 0) {
@@ -568,10 +614,14 @@ class InputManager {
   }
 
   /**
-   * Get current movement direction
+   * Get current movement direction (with sensitivity applied)
    */
   getMovement(): InputDirection {
-    return { ...this.state.movement };
+    const s = this.motorSettings.inputSensitivity;
+    return {
+      x: this.state.movement.x * s,
+      y: this.state.movement.y * s,
+    };
   }
 
   /**
@@ -667,6 +717,36 @@ class InputManager {
    */
   isDragging(): boolean {
     return this.dragStartPos !== null;
+  }
+
+  /**
+   * Update key bindings at runtime (called from settings UI)
+   */
+  updateKeyBindings(bindings: KeyBindings): void {
+    currentKeyMappings = buildKeyMappings(bindings, this.motorSettings.oneHandedMode);
+  }
+
+  /**
+   * Update motor accessibility settings at runtime
+   */
+  async updateMotorSettings(settings: MotorSettings): Promise<void> {
+    this.motorSettings = { ...settings };
+    currentKeyMappings = buildKeyMappings(getKeyBindings(), settings.oneHandedMode);
+    await storage.set(STORAGE_KEYS.MOTOR_SETTINGS, this.motorSettings);
+  }
+
+  /**
+   * Get current motor settings
+   */
+  getMotorSettings(): MotorSettings {
+    return { ...this.motorSettings };
+  }
+
+  /**
+   * Get the current resolved key mappings (for external consumers like useGameLogic)
+   */
+  getKeyMappings() {
+    return currentKeyMappings;
   }
 }
 

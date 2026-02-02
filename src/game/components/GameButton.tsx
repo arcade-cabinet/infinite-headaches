@@ -58,6 +58,7 @@ export function GameButton({
         "disabled:opacity-50 disabled:cursor-not-allowed",
         "select-none",
         "touch-manipulation",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b91c1c]",
         sizeClasses[size],
         variantClasses[variant],
         className

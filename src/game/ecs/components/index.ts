@@ -1,5 +1,6 @@
 import { Vector3, Color3 } from "@babylonjs/core";
 import { AnimalType, PowerUpType } from "../../config";
+import type { VariantType } from "../../config/AnimalVariants";
 
 export interface PositionComponent {
   position: Vector3;
@@ -37,6 +38,7 @@ export type CharacterId = "farmer_john" | "farmer_mary" | "farmer_ben" | "farmha
 export interface TagComponent {
   type: "animal" | "player" | "powerup" | "platform";
   subtype?: AnimalType | CharacterId | PowerUpType;
+  variant?: VariantType;
 }
 
 export interface MergeableComponent {

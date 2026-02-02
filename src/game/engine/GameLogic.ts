@@ -8,6 +8,10 @@
 import { Vector3, Color3 } from "@babylonjs/core";
 import { feedback } from "@/platform";
 import { ANIMAL_TYPES, GAME_CONFIG, POWER_UPS, type AnimalType, type PowerUpType } from "../config";
+import { CHARACTERS, type CharacterModifiers } from "../characters";
+import { rollVariant, VARIANT_CONFIGS, type VariantType } from "../config/AnimalVariants";
+import { hitStop } from "../effects/HitStop";
+import { WeatherSystem, type WeatherState } from "../systems/WeatherSystem";
 import { world } from "../ecs/world";
 import { forkRng } from "../seed/SeedManager";
 import {
@@ -79,6 +83,7 @@ export interface GameCallbacks {
   onAnimalFrozen: () => void;
   onScreenShake: (intensity: number) => void;
   onParticleEffect: (type: string, position: Vector3) => void;
+  onWeatherChange?: (weather: WeatherState) => void;
 }
 
 export class GameLogic {
@@ -124,11 +129,20 @@ export class GameLogic {
   private xAttackActive = false;
   private xAttackUntil = 0;
   private xAttackMultiplier = 1;
+  private shieldCharges = 0;
+  private shieldUntil = 0;
+  private slowMotionActive = false;
+  private slowMotionUntil = 0;
+  private slowMotionMultiplier = 1;
+  private scoreFrenzyActive = false;
+  private scoreFrenzyUntil = 0;
+  private scoreFrenzyMultiplier = 1;
   private lastPowerUpSpawnTime = 0;
 
   // AI systems
   private dropController: DropController;
   private wobbleGovernor: WobbleGovernor;
+  private weatherSystem: WeatherSystem;
 
   // Physics collision queue (populated by PhysicsCollisionBridge, consumed each fixedUpdate)
   private physicsCollisionQueue: PhysicsCatchEvent[] = [];
@@ -142,10 +156,21 @@ export class GameLogic {
   private timeSinceLastMiss = Infinity;
   private timeSinceLastPerfect = Infinity;
 
+  // Session tracking for analytics
+  private catchPositions: number[] = [];
+  private missPositions: number[] = [];
+  private maxCombo = 0;
+  private maxStack = 0;
+  private powerUpsCollected = 0;
+  private selectedCharacterId: string = "farmer_john";
+
   // Game mode
   private gameMode: GameModeType = "endless";
   private modeTimeRemaining = 0; // For time_attack mode (ms)
   private lastBossSpawnTime = 0; // For boss_rush mode
+
+  // Character modifiers (applied at game start)
+  private characterModifiers: CharacterModifiers = { speedMultiplier: 1, wobbleMultiplier: 1 };
 
   // Upgrade modifiers (applied at game start)
   private upgradeModifiers = {
@@ -178,12 +203,26 @@ export class GameLogic {
     this.callbacks = callbacks;
     this.dropController = new DropController(GAME_CONFIG);
     this.wobbleGovernor = new WobbleGovernor(GAME_CONFIG);
+    this.weatherSystem = new WeatherSystem(this.gameRNG);
+    this.weatherSystem.onWeatherChange((w) => this.callbacks.onWeatherChange?.(w));
     document.addEventListener("visibilitychange", this.onVisibilityChange);
   }
 
   start(characterId: "farmer_john" | "farmer_mary", mode: GameModeType = "endless"): void {
     world.clear();
     this.gameRNG = forkRng(`gameplay-${performance.now()}`);
+
+    // Reset analytics tracking
+    this.catchPositions = [];
+    this.missPositions = [];
+    this.maxCombo = 0;
+    this.maxStack = 0;
+    this.powerUpsCollected = 0;
+    this.selectedCharacterId = characterId;
+
+    // Apply character modifiers
+    const character = CHARACTERS.find((c) => c.id === characterId);
+    this.characterModifiers = character?.modifiers ?? { speedMultiplier: 1, wobbleMultiplier: 1 };
 
     // Apply upgrade modifiers before setting initial state
     this.upgradeModifiers = getUpgradeModifiers();
@@ -211,6 +250,14 @@ export class GameLogic {
     this.xAttackActive = false;
     this.xAttackUntil = 0;
     this.xAttackMultiplier = 1;
+    this.shieldCharges = 0;
+    this.shieldUntil = 0;
+    this.slowMotionActive = false;
+    this.slowMotionUntil = 0;
+    this.slowMotionMultiplier = 1;
+    this.scoreFrenzyActive = false;
+    this.scoreFrenzyUntil = 0;
+    this.scoreFrenzyMultiplier = 1;
     this.lastPowerUpSpawnTime = 0;
 
     // Reset AI tracking state
@@ -225,12 +272,15 @@ export class GameLogic {
     // Recreate AI systems for fresh state
     this.dropController = new DropController(GAME_CONFIG);
     this.wobbleGovernor = new WobbleGovernor(GAME_CONFIG);
+    this.weatherSystem = new WeatherSystem(this.gameRNG);
+    this.weatherSystem.onWeatherChange((w) => this.callbacks.onWeatherChange?.(w));
 
     this.playerWorldX = 0;
     const playerPos = new Vector3(this.playerWorldX, this.playerWorldY, 0);
     this.playerEntity = createPlayer(characterId, playerPos);
     world.add(this.playerEntity);
 
+    hitStop.reset();
     this.isPlaying = true;
     this.isPaused = false;
     this.accumulator = 0;
@@ -278,6 +328,24 @@ export class GameLogic {
     feedback.stopMusic();
     feedback.play("fail");
     this.callbacks.onGameOver(this.score, this.bankedAnimals);
+  }
+
+  /** Get session data for analytics recording (call after game over). */
+  getSessionData() {
+    return {
+      characterId: this.selectedCharacterId,
+      score: this.score,
+      levelReached: this.level,
+      duration: this.gameTime,
+      catches: this.totalCatches,
+      misses: this.totalMisses,
+      maxCombo: this.maxCombo,
+      maxStack: this.maxStack,
+      powerUpsCollected: this.powerUpsCollected,
+      bankedAnimals: this.bankedAnimals,
+      catchPositions: [...this.catchPositions],
+      missPositions: [...this.missPositions],
+    };
   }
 
   pause(): void {
@@ -333,7 +401,7 @@ export class GameLogic {
   }
 
   movePlayer(deltaX: number): void {
-    this.playerWorldX = clampToRail(this.playerWorldX + deltaX, PLAYER_RAIL_CONFIG);
+    this.playerWorldX = clampToRail(this.playerWorldX + deltaX * this.characterModifiers.speedMultiplier, PLAYER_RAIL_CONFIG);
     if (this.playerEntity?.position) {
       this.playerEntity.position.x = this.playerWorldX;
     }
@@ -385,14 +453,17 @@ export class GameLogic {
     const frameTime = Math.min(timestamp - this.lastFrameTime, 100);
     this.lastFrameTime = timestamp;
 
-    // Apply game speed multiplier from DevAPI
-    const speedMultiplier = (import.meta.env.DEV && devAPI) ? devAPI.gameSpeedMultiplier : 1;
+    // Apply game speed multiplier from DevAPI and slow-motion power-up
+    const devSpeed = (import.meta.env.DEV && devAPI) ? devAPI.gameSpeedMultiplier : 1;
+    const speedMultiplier = devSpeed * this.slowMotionMultiplier;
     this.accumulator += frameTime * speedMultiplier;
 
     while (this.accumulator >= this.FIXED_TIMESTEP) {
-      this.fixedUpdate(this.FIXED_TIMESTEP);
+      if (!hitStop.shouldPause()) {
+        this.fixedUpdate(this.FIXED_TIMESTEP);
+        this.gameTime += this.FIXED_TIMESTEP;
+      }
       this.accumulator -= this.FIXED_TIMESTEP;
-      this.gameTime += this.FIXED_TIMESTEP;
     }
 
     this.animationId = requestAnimationFrame(this.gameLoop);
@@ -533,6 +604,17 @@ export class GameLogic {
       this.xAttackActive = false;
       this.xAttackMultiplier = 1;
     }
+    if (this.shieldCharges > 0 && this.gameTime > this.shieldUntil) {
+      this.shieldCharges = 0;
+    }
+    if (this.slowMotionActive && this.gameTime > this.slowMotionUntil) {
+      this.slowMotionActive = false;
+      this.slowMotionMultiplier = 1;
+    }
+    if (this.scoreFrenzyActive && this.gameTime > this.scoreFrenzyUntil) {
+      this.scoreFrenzyActive = false;
+      this.scoreFrenzyMultiplier = 1;
+    }
 
     // Combo decay
     const comboDecayTime = scoring.comboDecayTime * this.upgradeModifiers.comboDecayMultiplier;
@@ -540,6 +622,10 @@ export class GameLogic {
       this.combo = 0;
       this.callbacks.onScoreChange(this.score, this.currentMultiplier, this.combo);
     }
+
+    // Update weather system
+    this.weatherSystem.setLevel(this.level);
+    this.weatherSystem.update(deltaTime);
 
     // Wobble based on weights (with upgrade reduction)
     this.updateWobble();
@@ -571,6 +657,17 @@ export class GameLogic {
       }
     }
 
+    // Apply wind force to falling entities from weather
+    const windForce = this.weatherSystem.getWindForce();
+    if (windForce !== 0) {
+      const falling = getFallingEntities();
+      for (const f of falling) {
+        if (f.position) {
+          f.position.x += windForce * (deltaTime / 1000);
+        }
+      }
+    }
+
     // Cleanup banking/scattering entities that have outlived their animation
     this.cleanupTransientEntities();
   }
@@ -584,6 +681,18 @@ export class GameLogic {
     const entity = createFallingAnimal(type, new Vector3(spawnX, SPAWN_Y, 0), targetX, -2);
     // Sync spawn time
     if (entity.falling) entity.falling.spawnTime = this.gameTime;
+
+    // Roll for variant
+    const variant = rollVariant(this.level, this.gameRNG);
+    if (entity.tag) entity.tag.variant = variant;
+    if (variant !== "normal") {
+      const cfg = VARIANT_CONFIGS[variant];
+      entity.colorOverlay = {
+        color: new Color3(cfg.colorOverlay.r, cfg.colorOverlay.g, cfg.colorOverlay.b),
+        intensity: cfg.emissiveIntensity,
+      };
+    }
+
     world.add(entity);
 
     // Check DevAPI freeze-next flag
@@ -612,6 +721,18 @@ export class GameLogic {
     if (entity.falling) {
       entity.falling.spawnTime = this.gameTime;
     }
+
+    // Roll for variant
+    const variant = rollVariant(this.level, this.gameRNG);
+    if (entity.tag) entity.tag.variant = variant;
+    if (variant !== "normal") {
+      const cfg = VARIANT_CONFIGS[variant];
+      entity.colorOverlay = {
+        color: new Color3(cfg.colorOverlay.r, cfg.colorOverlay.g, cfg.colorOverlay.b),
+        intensity: cfg.emissiveIntensity,
+      };
+    }
+
     world.add(entity);
 
     // Check DevAPI freeze-next flag
@@ -632,13 +753,14 @@ export class GameLogic {
     }
     // More weight = more wobble sensitivity, reduced by stable_stack upgrade
     const wobbleReduction = 1 - this.upgradeModifiers.wobbleReduction;
-    const baseSpringiness = (0.05 + (totalWeight * 0.01)) * wobbleReduction;
+    const baseSpringiness = (0.05 + (totalWeight * 0.01)) * wobbleReduction * this.characterModifiers.wobbleMultiplier;
 
     // WobbleGovernor adds AI-driven wobble pressure on top of weight-based springiness
     this.wobbleGovernor.update(this.FIXED_TIMESTEP, stacked.length, this.inDangerState);
     const governorForce = this.wobbleGovernor.getWobbleForce();
 
-    this.playerEntity.wobble.springiness = baseSpringiness + governorForce;
+    const weatherWobble = this.weatherSystem.getWobbleBonus();
+    this.playerEntity.wobble.springiness = baseSpringiness + governorForce + weatherWobble;
   }
 
   private checkCollisions(): void {
@@ -678,6 +800,7 @@ export class GameLogic {
 
       // Y-threshold miss detection: animal fell below the floor
       if (f.position.y < -4) {
+        this.missPositions.push(f.position.x);
         world.remove(f);
         // Notify AI director of missed animal regardless of invincibility
         this.dropController.onAnimalMissed();
@@ -766,6 +889,10 @@ export class GameLogic {
     const comboMultiplier = 1 + this.combo * scoring.comboMultiplier;
     const xAttackBonus = this.xAttackActive ? this.xAttackMultiplier : 1;
     const modeScoreMultiplier = modeConfig.scoreMultiplier;
+    const variantBonus = (entity.tag?.variant && entity.tag.variant !== "normal")
+      ? VARIANT_CONFIGS[entity.tag.variant].scoreMultiplier
+      : 1;
+    const frenzyBonus = this.scoreFrenzyActive ? this.scoreFrenzyMultiplier : 1;
     const points = Math.floor(
       scoring.basePoints *
         stackMultiplier *
@@ -773,7 +900,9 @@ export class GameLogic {
         this.currentMultiplier *
         comboMultiplier *
         xAttackBonus *
-        modeScoreMultiplier
+        modeScoreMultiplier *
+        variantBonus *
+        frenzyBonus
     );
 
     this.score += points;
@@ -798,6 +927,12 @@ export class GameLogic {
         livesConfig.earnThresholds.scoreBonus;
     }
 
+    // --- Analytics tracking ---
+    this.catchPositions.push(this.playerWorldX);
+    if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+    const currentStack = getStackedEntitiesSorted().length;
+    if (currentStack > this.maxStack) this.maxStack = currentStack;
+
     // --- Feed AI Director ---
     const catchQuality: "perfect" | "good" | "normal" = isPerfect ? "perfect" : isGood ? "good" : "normal";
     this.dropController.onAnimalCaught(catchQuality);
@@ -808,6 +943,14 @@ export class GameLogic {
     if (isPerfect) {
       this.recentPerfects++;
       this.timeSinceLastPerfect = 0;
+    }
+
+    // --- Hit stop for impactful moments ---
+    if (isPerfect) {
+      hitStop.trigger(80);
+    }
+    if (this.combo === 5 || this.combo === 10 || this.combo === 15) {
+      hitStop.trigger(120);
     }
 
     // --- Visual/audio feedback ---
@@ -832,6 +975,14 @@ export class GameLogic {
   private loseLife(reason: "miss" | "topple"): void {
     // Invincibility check (after-hit grace period)
     if (this.gameTime < this.invincibleUntil) return;
+
+    // Shield absorbs the hit instead of losing a life
+    if (this.shieldCharges > 0) {
+      this.shieldCharges--;
+      this.invincibleUntil = this.gameTime + livesConfig.invincibilityDuration;
+      feedback.play("powerup");
+      return;
+    }
 
     this.lives--;
     this.callbacks.onLivesChange(this.lives, this.maxLives);
@@ -932,6 +1083,7 @@ export class GameLogic {
   }
 
   private collectPowerUp(type: PowerUpType): void {
+    this.powerUpsCollected++;
     this.callbacks.onPowerUpCollected(type);
     feedback.play("powerup");
 
@@ -983,6 +1135,24 @@ export class GameLogic {
         this.lives = this.maxLives;
         this.invincibleUntil = this.gameTime + (POWER_UPS.full_restore.invincibilityDuration ?? 3000);
         this.callbacks.onLivesChange(this.lives, this.maxLives);
+        break;
+
+      case "shield":
+        this.shieldCharges = 1;
+        this.shieldUntil = this.gameTime + (POWER_UPS.shield.duration ?? 15000);
+        break;
+
+      case "slow_motion":
+        this.slowMotionActive = true;
+        this.slowMotionUntil = this.gameTime + (POWER_UPS.slow_motion.duration ?? 5000);
+        this.slowMotionMultiplier = POWER_UPS.slow_motion.multiplier ?? 0.5;
+        break;
+
+      case "score_frenzy":
+        this.scoreFrenzyActive = true;
+        this.scoreFrenzyUntil = this.gameTime + (POWER_UPS.score_frenzy.duration ?? 6000);
+        this.scoreFrenzyMultiplier = POWER_UPS.score_frenzy.multiplier ?? 3;
+        this.callbacks.onScoreChange(this.score, this.currentMultiplier, this.combo);
         break;
     }
   }
@@ -1053,6 +1223,11 @@ export class GameLogic {
   }
 
   setScreenDimensions(w: number, h: number) {}
+
+  /** Get current weather state (for UI rendering). */
+  getWeatherState(): WeatherState {
+    return this.weatherSystem.getState();
+  }
 
   // =========================================================================
   // DevAPI accessors (dev builds only, called by DevAPI singleton)

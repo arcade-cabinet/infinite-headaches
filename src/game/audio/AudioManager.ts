@@ -34,7 +34,13 @@ export type SoundEffect =
   | "topple"
   | "click"
   | "toggle"
-  | "back";
+  | "back"
+  | "weather_wind"
+  | "weather_rain"
+  | "combo5"
+  | "combo10"
+  | "combo15"
+  | "bank_fanfare";
 
 export type VoiceClip =
   | "levelup"
@@ -83,6 +89,13 @@ const SFX_FILES: Record<SoundEffect, { file: string; volume: number }> = {
   click: { file: "/assets/audio/ui/click.ogg", volume: 0.5 },
   toggle: { file: "/assets/audio/ui/toggle.ogg", volume: 0.5 },
   back: { file: "/assets/audio/ui/back.ogg", volume: 0.5 },
+  // Weather & combo SFX (files need to be added to public/assets/audio/sfx/)
+  weather_wind: { file: "/assets/audio/sfx/weather_wind.ogg", volume: 0.3 },
+  weather_rain: { file: "/assets/audio/sfx/weather_rain.ogg", volume: 0.3 },
+  combo5: { file: "/assets/audio/sfx/combo5.ogg", volume: 0.5 },
+  combo10: { file: "/assets/audio/sfx/combo10.ogg", volume: 0.6 },
+  combo15: { file: "/assets/audio/sfx/combo15.ogg", volume: 0.7 },
+  bank_fanfare: { file: "/assets/audio/sfx/bank_fanfare.ogg", volume: 0.6 },
 };
 
 // Voice clips with male/female variants

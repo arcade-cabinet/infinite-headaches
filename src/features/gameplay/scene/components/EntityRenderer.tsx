@@ -6,11 +6,14 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useScene } from "reactylon";
 import {
   Vector3,
+  Color3,
   AbstractMesh,
   ISceneLoaderAsyncResult,
   PhysicsAggregate,
   PhysicsShapeType,
-  PhysicsMotionType
+  PhysicsMotionType,
+  PBRMaterial,
+  StandardMaterial,
 } from "@babylonjs/core";
 import { Entity } from "@/game/ecs/components";
 import {
@@ -140,6 +143,30 @@ export const EntityRenderer = ({ entity }: EntityRendererProps) => {
          };
 
          aggregateRef.current = agg;
+      }
+
+      // Apply variant color overlay to materials
+      if (entity.colorOverlay && rootMesh) {
+        const overlay = entity.colorOverlay;
+        const allMeshes = rootMesh.getChildMeshes(false);
+        for (const mesh of allMeshes) {
+          const mat = mesh.material;
+          if (mat instanceof PBRMaterial) {
+            mat.albedoColor = Color3.Lerp(
+              mat.albedoColor || Color3.White(),
+              overlay.color,
+              0.4,
+            );
+            mat.emissiveColor = overlay.color.scale(overlay.intensity);
+          } else if (mat instanceof StandardMaterial) {
+            mat.diffuseColor = Color3.Lerp(
+              mat.diffuseColor || Color3.White(),
+              overlay.color,
+              0.4,
+            );
+            mat.emissiveColor = overlay.color.scale(overlay.intensity);
+          }
+        }
       }
 
     } catch (error) {

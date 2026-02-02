@@ -6,6 +6,7 @@
 import { animate } from "animejs";
 import { useEffect, useRef } from "react";
 import { useResponsiveScale } from "../hooks/useResponsiveScale";
+import { ComboCounter } from "./ComboCounter";
 import { HeartsDisplay } from "./HeartsDisplay";
 
 interface ScoreDisplayProps {
@@ -35,11 +36,11 @@ export function ScoreDisplay({
 }: ScoreDisplayProps) {
   const { fontSize, spacing, isMobile } = useResponsiveScale();
   const scoreRef = useRef<HTMLDivElement>(null);
-  const comboRef = useRef<HTMLDivElement>(null);
+  // comboRef removed - combo animation now handled by ComboCounter component
   const levelRef = useRef<HTMLDivElement>(null);
   const prevScoreRef = useRef(score);
   const prevLevelRef = useRef(level);
-  const prevComboRef = useRef(combo);
+  // prevComboRef removed - combo animation now handled by ComboCounter component
 
   // Animate score change
   useEffect(() => {
@@ -66,18 +67,7 @@ export function ScoreDisplay({
     }
   }, [level]);
 
-  // Animate combo change
-  useEffect(() => {
-    if (combo > prevComboRef.current && comboRef.current && combo > 1) {
-      animate(comboRef.current, {
-        scale: [1.3, 1],
-        translateY: [-5, 0],
-        duration: 200,
-        ease: "outBack",
-      });
-    }
-    prevComboRef.current = combo;
-  }, [combo]);
+  // Combo animation now handled by ComboCounter component
 
   return (
     <header className="contents">
@@ -124,19 +114,7 @@ export function ScoreDisplay({
         )}
 
         {/* Combo */}
-        {combo > 1 && (
-          <div
-            ref={comboRef}
-            className="game-font text-cyan-300"
-            aria-label={`${combo} combo`}
-            style={{
-              fontSize: fontSize.sm,
-              textShadow: "1px 1px 0 #000",
-            }}
-          >
-            {combo}× COMBO
-          </div>
-        )}
+        <ComboCounter combo={combo} />
 
         {/* High score */}
         <div
@@ -161,6 +139,7 @@ export function ScoreDisplay({
           right: spacing.sm,
         }}
         role="status"
+        aria-live="polite"
       >
         {/* Level */}
         <div

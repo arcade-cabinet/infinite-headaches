@@ -67,9 +67,10 @@ const SPAWNABLE_TYPES: AnimalType[] = (
 
 /** Fairness distribution by game phase. */
 const FAIRNESS_TABLE = {
-  early:  { helpful: 0.70, neutral: 0.20, disruptive: 0.10 }, // levels 1-5
-  mid:    { helpful: 0.50, neutral: 0.30, disruptive: 0.20 }, // levels 6-15
-  late:   { helpful: 0.35, neutral: 0.30, disruptive: 0.35 }, // levels 16-25
+  early:     { helpful: 0.70, neutral: 0.20, disruptive: 0.10 }, // levels 1-5
+  mid:       { helpful: 0.50, neutral: 0.30, disruptive: 0.20 }, // levels 6-15
+  late:      { helpful: 0.35, neutral: 0.30, disruptive: 0.35 }, // levels 16-25
+  legendary: { helpful: 0.25, neutral: 0.30, disruptive: 0.45 }, // levels 26+
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -637,7 +638,7 @@ export class DropController {
     const comboPaths = this.analyzeComboProgress();
 
     // Determine game phase for fairness distribution
-    const phase = level <= 5 ? "early" : level <= 15 ? "mid" : "late";
+    const phase = level <= 5 ? "early" : level <= 15 ? "mid" : level <= 25 ? "late" : "legendary";
     const fairness = FAIRNESS_TABLE[phase];
 
     // Remediation: if last 2 drops were disruptive, force helpful or trigger power-up compensation
