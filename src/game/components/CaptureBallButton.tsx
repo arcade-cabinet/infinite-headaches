@@ -121,14 +121,14 @@ export function CaptureBallButton({ visible, stackCount, onClick }: CaptureBallB
 
   // Wobble animation when stack count changes
   useEffect(() => {
-    if (!buttonRef.current || !visible) return;
+    if (!buttonRef.current || !visible || stackCount === 0) return;
 
     animate(buttonRef.current, {
       scale: [1, 1.15, 1],
       duration: 300,
       ease: "outElastic(1, .5)",
     });
-  }, [visible]);
+  }, [visible, stackCount]);
 
   if (!visible) return null;
 

@@ -5,9 +5,13 @@
 
 export function GameStyles() {
   return (
+    <>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap"
+      precedence="low"
+    />
     <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
-      
       /* Base font class */
       .game-font {
         font-family: 'Fredoka One', cursive;
@@ -200,10 +204,11 @@ export function GameStyles() {
         scroll-behavior: smooth;
       }
       
-      /* Remove tap highlight on mobile */
-      * {
+      /* Remove tap highlight on game elements (scoped to avoid accessibility issues) */
+      .no-select, canvas, .game-font {
         -webkit-tap-highlight-color: transparent;
       }
     `}</style>
+    </>
   );
 }

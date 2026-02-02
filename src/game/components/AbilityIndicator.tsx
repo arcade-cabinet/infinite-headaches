@@ -16,18 +16,19 @@ export function AbilityIndicator({ type, cooldownPercent, visible }: AbilityIndi
 
   if (!visible) return null;
 
+  const clamped = Math.max(0, Math.min(1, cooldownPercent));
   const size = Math.round(40 * game);
   const strokeWidth = 3;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference * (1 - cooldownPercent);
+  const dashOffset = circumference * (1 - clamped);
 
   const colors =
     type === "fire"
       ? { main: "#FF7043", glow: "rgba(255, 112, 67, 0.6)", icon: "🔥" }
       : { main: "#81D4FA", glow: "rgba(129, 212, 250, 0.6)", icon: "❄️" };
 
-  const isReady = cooldownPercent >= 1;
+  const isReady = clamped >= 1;
 
   return (
     <div
@@ -74,6 +75,8 @@ export function AbilityIndicator({ type, cooldownPercent, visible }: AbilityIndi
 
       {/* Icon */}
       <span
+        role="img"
+        aria-label={type === "fire" ? "Fire ability" : "Ice ability"}
         style={{
           fontSize: size * 0.5,
           opacity: isReady ? 1 : 0.5,

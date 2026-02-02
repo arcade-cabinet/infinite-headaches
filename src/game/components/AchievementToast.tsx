@@ -4,7 +4,7 @@
  */
 
 import { animate } from "animejs";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { Achievement } from "../achievements";
 import { useResponsiveScale } from "../hooks/useResponsiveScale";
 
@@ -39,6 +39,10 @@ const TIER_COLORS = {
 export function AchievementToast({ achievement, onComplete }: AchievementToastProps) {
   const { fontSize, spacing } = useResponsiveScale();
   const containerRef = useRef<HTMLDivElement>(null);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  const stableOnComplete = useCallback(() => onCompleteRef.current(), []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -60,13 +64,13 @@ export function AchievementToast({ achievement, onComplete }: AchievementToastPr
           duration: 400,
           ease: "inBack",
         }).then(() => {
-          onComplete();
+          stableOnComplete();
         });
       }
     }, 3000);
 
     return () => clearTimeout(timeout);
-  }, [onComplete]);
+  }, [stableOnComplete]);
 
   const colors = TIER_COLORS[achievement.tier];
 

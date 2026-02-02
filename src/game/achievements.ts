@@ -337,12 +337,13 @@ export function loadAchievements(): Achievement[] {
  */
 export function checkAchievements(stats: GameStats): Achievement[] {
   const current = loadAchievements();
+  const currentById = new Map(current.map((a) => [a.id, a]));
   const newlyUnlocked: Achievement[] = [];
   const unlockedIds: string[] = [];
 
-  for (let i = 0; i < ACHIEVEMENTS.length; i++) {
-    const def = ACHIEVEMENTS[i];
-    const achievement = current[i];
+  for (const def of ACHIEVEMENTS) {
+    const achievement = currentById.get(def.id);
+    if (!achievement) continue;
 
     if (!achievement.unlocked && def.condition(stats)) {
       achievement.unlocked = true;

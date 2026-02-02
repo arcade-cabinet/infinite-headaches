@@ -2,9 +2,11 @@ import bpy
 import os
 import sys
 
-# Paths
-source_dir = os.path.abspath("FarmAnimals_v1.1")
-target_dir = os.path.abspath("public/assets/models")
+# Paths (relative to this script, not CWD)
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_project_root = os.path.abspath(os.path.join(_script_dir, "..", ".."))
+source_dir = os.path.join(_project_root, "FarmAnimals_v1.1")
+target_dir = os.path.join(_project_root, "public", "assets", "models")
 
 if not os.path.exists(target_dir):
     os.makedirs(target_dir)
@@ -19,6 +21,10 @@ name_map = {
 }
 
 def reset_scene():
+    # Ensure we're in OBJECT mode before operating on objects
+    if bpy.context.object and bpy.context.object.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete()
 
@@ -53,12 +59,15 @@ def setup_vertex_colors_material():
                 nodes = mat.node_tree.nodes
                 links = mat.node_tree.links
                 
-                # Clear existing nodes to be safe or find Principled BSDF
-                for n in nodes:
-                    nodes.remove(n)
-                
-                # Create Principled BSDF and Output
-                node_output = nodes.new(type='ShaderNodeOutputMaterial')
+                # Clear existing nodes except Material Output
+                for n in list(nodes):
+                    if n.type != 'OUTPUT_MATERIAL':
+                        nodes.remove(n)
+
+                # Reuse existing Output node or create one
+                node_output = next((n for n in nodes if n.type == 'OUTPUT_MATERIAL'), None)
+                if not node_output:
+                    node_output = nodes.new(type='ShaderNodeOutputMaterial')
                 node_output.location = (400, 0)
                 node_principled = nodes.new(type='ShaderNodeBsdfPrincipled')
                 node_principled.location = (0, 0)

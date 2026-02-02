@@ -79,5 +79,5 @@ The `DropController` (`src/game/ai/DropController.ts`) is the unified AI directo
 ## Commands
 *   `pnpm dev`: Start dev server.
 *   `pnpm build`: Build for production.
-*   `pnpm test:run`: Run unit tests (Vitest, 1077 tests across 26 files).
-*   `pnpm test:e2e`: Run Playwright tests.
+*   `pnpm test:run`: Run unit tests (Vitest, 1194+ tests across 29 files).
+*   `pnpm test:e2e`: Run Playwright E2E tests (36 tests across 4 spec files).
