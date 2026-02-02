@@ -99,6 +99,7 @@ We commit fully to the 3D pipeline.
 - [x] 1077 tests across 26 files.
 
 ### Phase 8: v1.1.0 Feature Expansion (Complete)
+
 - [x] **Weather System**: WeatherSystem state machine (clear/windy/rainy/stormy) at level 6+, wind forces on falling entities, BabylonJS particle effects (rain/wind), wobble bonus during storms, ambient audio loops with fade transitions.
 - [x] **Animal Variants**: Rare (level 3+, blue tint, 1.5x score), golden (level 8+, gold tint, 3x score), shadow (level 15+, dark tint, 2x score) with PBR material tinting.
 - [x] **HitStop**: Freeze-frame effect on perfect catches and combo milestones (respects reducedMotion).

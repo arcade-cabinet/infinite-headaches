@@ -96,9 +96,9 @@ The project employs a **Hybrid Entity Component System (ECS)** architecture to s
 
 *   **Location:** `src/game/config/AnimalVariants.ts`
 *   **Pattern:** Tiered variant system unlocked by level progression.
-  *   **Rare:** Level 3+ -- subtle visual distinction.
-  *   **Golden:** Level 8+ -- PBR gold material tinting, score multiplier.
-  *   **Shadow:** Level 15+ -- PBR dark tinting, highest score multiplier.
+  *   **Rare:** Level 3+ -- blue tint, 1.5x score multiplier.
+  *   **Golden:** Level 8+ -- gold PBR tint, 3x score multiplier.
+  *   **Shadow:** Level 15+ -- dark PBR tint, 2x score multiplier.
 *   **Rendering:** PBR material tinting applied to base animal models. No additional GLB assets required.
 
 ### Hit Stop (v1.1.0)
