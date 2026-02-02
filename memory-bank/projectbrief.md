@@ -9,6 +9,10 @@
 *   **Physics:** The stack wobbles based on movement and impact. Top-heavy stacks are unstable.
 *   **Banking:** Players can "bank" (save) the stack for points once it reaches a certain height.
 *   **Threat:** A **Tornado** threatens the farm (visualized in splash video/background theme).
+*   **Weather:** Dynamic weather system (clear/windy/rainy/stormy) adds wind wobble and visual effects at higher levels.
+*   **Combos:** Consecutive catches build combo multipliers with milestone celebrations.
+*   **Power-Ups:** Shield, Slow Motion, and Score Frenzy provide temporary gameplay advantages.
+*   **Variants:** Rare, golden, and shadow animal variants with score multipliers unlock at higher levels.
 
 ## Platform Targets
 *   **Web/PWA:** Primary development target.
@@ -20,3 +24,6 @@
 *   Maintain a "Nebraska Homestead" aesthetic (low-poly, barn red, wheat gold).
 *   High-quality 3D rendering with Babylon.js.
 *   Robust entity management via ECS (Miniplex).
+*   Full accessibility support (colorblind filters, motor accommodation, reduced motion, screen readers).
+*   Session analytics and player progression tracking.
+*   Cross-platform deployment (Web/PWA, Android, iOS, Desktop).
