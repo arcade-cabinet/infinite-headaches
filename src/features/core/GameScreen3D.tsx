@@ -46,7 +46,6 @@ import { PauseMenu } from "@/game/components/PauseMenu";
 import { GameOverScreen } from "@/features/gameplay/GameOverScreen";
 import { GameScene } from "@/features/gameplay/scene/GameScene";
 import { SplashScene } from "@/features/splash/SplashScene";
-import { MainMenu3D } from "@/features/menu/MainMenu3D";
 import { MainMenuOverlay } from "@/features/menu/MainMenuOverlay";
 import { PeekingAnimal3D } from "@/features/menu/PeekingAnimal3D";
 import { LevelUpFlash } from "@/game/components/LevelUpFlash";
@@ -200,19 +199,7 @@ export function GameScreen3D() {
               reducedMotion={settings.reducedMotion}
               combo={gameplay.combo}
             >
-              {isMenu && (
-                <>
-                  <MainMenu3D
-                    onPlay={menu.openPlay}
-                    onUpgrades={menu.openUpgrades}
-                    onSettings={menu.openSettings}
-                    highScore={highScore}
-                    selectedCharacterIndex={menu.selectedCharacterIndex}
-                    onCharacterChange={menu.handleCharacterChange}
-                  />
-                  <PeekingAnimal3D />
-                </>
-              )}
+              {isMenu && <PeekingAnimal3D />}
             </GameScene>
           </Engine>
         </div>

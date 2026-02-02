@@ -100,16 +100,19 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
       onLevelUp: (l) => { setLevel(l); audioManager.play("levelup"); },
       onLifeEarned: () => audioManager.play("lifeup"),
       onDangerState: (d) => setInDanger(d),
-      onStackTopple: () => { /* TODO: Add screen shake or visual feedback */ },
-      onPowerUpCollected: (_type) => {
-        // TODO: Play type-specific SFX when audio assets are available
+      onStackTopple: () => { setScreenShake(1); audioManager.play("topple"); },
+      onPowerUpCollected: (type) => {
+        audioManager.play("powerup");
+        if (type === "shield" || type === "full_restore") audioManager.play("lifeup");
       },
-      onFireballShot: () => { /* TODO: Add fireball SFX */ },
-      onAnimalFrozen: () => { /* TODO: Add freeze SFX */ },
+      onFireballShot: () => { audioManager.play("fireball"); },
+      onAnimalFrozen: () => { audioManager.play("freeze"); },
       onScreenShake: (i) => setScreenShake(i),
-      onParticleEffect: () => { /* TODO: Wire to particle system */ },
+      onParticleEffect: () => {},
       onWeatherChange: (w) => {
         setWeather(w);
+        if (w.type === "windy" || w.type === "stormy") audioManager.play("weather_wind");
+        if (w.type === "rainy" || w.type === "stormy") audioManager.play("weather_rain");
       },
       onComboMilestone: (combo) => {
         if (combo === 5) audioManager.play("combo5");

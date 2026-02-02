@@ -109,13 +109,19 @@ export async function loadModel3D(options: LoadModel3DOptions): Promise<LoadMode
   }
 
   // ── Root motion stripping ───────────────────────────────
+  // Prevents characters from drifting during animations by zeroing
+  // positional keyframes on root-level bones. The Hips bone preserves
+  // its Y value (standing height) — only X/Z (horizontal drift) is zeroed.
+  // NOTE: enableBlending is NOT set here. The AnimationSystem handles
+  // blending via weight-based transitions. Setting it on the group caused
+  // a slow T-pose→idle blend (blendingSpeed=0.01) that made characters
+  // appear frozen in T-pose on the main menu.
   for (const group of result.animationGroups) {
-    group.enableBlending = true;
-
     for (const targeted of group.targetedAnimations) {
       const target = targeted.target;
 
       // Comprehensive root bone detection (covers Blender, Mixamo, etc.)
+      const isHipsBone = target?.name === "mixamorig:Hips";
       const isRootBone =
         target === rootMesh ||
         (target?.parent === rootMesh &&
@@ -123,12 +129,18 @@ export async function loadModel3D(options: LoadModel3DOptions): Promise<LoadMode
         target?.name === "root" ||
         target?.name === "Root" ||
         target?.name === "Armature" ||
-        target?.name === "mixamorig:Hips";
+        isHipsBone;
 
       if (isRootBone && targeted.animation?.targetProperty === "position") {
         const keys = targeted.animation.getKeys();
         for (const key of keys) {
-          key.value = Vector3.Zero();
+          if (isHipsBone) {
+            // Hips: only zero X/Z (horizontal drift). Preserve Y (standing height)
+            // so the character doesn't collapse to ground level.
+            key.value = new Vector3(0, key.value.y, 0);
+          } else {
+            key.value = Vector3.Zero();
+          }
         }
       }
     }

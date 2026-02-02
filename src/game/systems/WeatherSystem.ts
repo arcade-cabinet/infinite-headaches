@@ -69,10 +69,9 @@ export class WeatherSystem {
   }
 
   setLevel(level: number): void {
-    const prevLevel = this.gameLevel;
     this.gameLevel = level;
-    // If level drops to 5 or below, force clear weather immediately
-    if (level <= 5 && prevLevel > 5 && this.state.type !== "clear") {
+    // If level is 5 or below, force clear weather immediately to prevent stale storms
+    if (level <= 5 && this.state.type !== "clear") {
       this.state = {
         type: "clear",
         intensity: 0,

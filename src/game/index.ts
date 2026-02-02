@@ -72,5 +72,4 @@ export {
 
 // Screens
 export { GameOverScreen } from "../features/gameplay/GameOverScreen";
-export { MainMenu3D } from "../features/menu/MainMenu3D";
 export { GameScreen3D } from "../features/core/GameScreen3D";
