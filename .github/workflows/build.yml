@@ -61,6 +61,10 @@ jobs:
             -Pandroid.injected.signing.key.alias=${{ secrets.ANDROID_KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.ANDROID_KEY_PASSWORD }}
 
+      - name: Clean up keystore
+        if: always()
+        run: rm -f android/keystore.jks
+
       - name: Build Android Debug APK
         if: github.event_name != 'release'
         run: cd android && ./gradlew assembleDebug
@@ -75,7 +79,7 @@ jobs:
 
       - name: Attach APK to Release
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
         with:
           files: android/app/build/outputs/apk/release/app-release.apk
 

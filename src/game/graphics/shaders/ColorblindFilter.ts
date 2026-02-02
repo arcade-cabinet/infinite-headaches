@@ -69,6 +69,11 @@ export function createColorblindPostProcess(
 ): PostProcess | null {
   if (mode === "none") return null;
 
+  if (!(mode in COLORBLIND_MATRICES)) {
+    console.warn(`Invalid colorblind mode: ${mode}`);
+    return null;
+  }
+
   ensureShaderRegistered();
 
   const matrix = COLORBLIND_MATRICES[mode];

@@ -461,8 +461,9 @@ export class GameLogic {
     while (this.accumulator >= this.FIXED_TIMESTEP) {
       if (!hitStop.shouldPause()) {
         this.fixedUpdate(this.FIXED_TIMESTEP);
-        this.gameTime += this.FIXED_TIMESTEP;
       }
+      // Always advance game time to prevent desync
+      this.gameTime += this.FIXED_TIMESTEP;
       this.accumulator -= this.FIXED_TIMESTEP;
     }
 

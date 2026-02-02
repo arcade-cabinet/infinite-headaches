@@ -51,8 +51,17 @@ export function getKeyBindings(): KeyBindings {
  * Save key bindings to storage.
  */
 export async function saveKeyBindings(bindings: KeyBindings): Promise<void> {
-  currentBindings = { ...bindings };
-  await storage.set(STORAGE_KEYS.KEY_BINDINGS, bindings);
+  // Validate key bindings before saving
+  const validated: KeyBindings = { ...DEFAULT_KEY_BINDINGS };
+  for (const action of Object.keys(DEFAULT_KEY_BINDINGS) as KeyAction[]) {
+    if (action in bindings && Array.isArray(bindings[action])) {
+      validated[action] = bindings[action]
+        .filter((key): key is string => typeof key === "string" && key.length > 0 && key.length < 50)
+        .slice(0, 10);
+    }
+  }
+  currentBindings = validated;
+  await storage.set(STORAGE_KEYS.KEY_BINDINGS, validated);
 }
 
 /**

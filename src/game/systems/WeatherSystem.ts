@@ -115,7 +115,7 @@ export class WeatherSystem {
     const stormyChance = Math.min(0.3, (this.gameLevel - 5) * 0.015);
     const rainyChance = Math.min(0.3, (this.gameLevel - 5) * 0.02);
     const windyChance = 0.3;
-    const clearChance = 1 - stormyChance - rainyChance - windyChance;
+    const clearChance = Math.max(0.1, 1 - stormyChance - rainyChance - windyChance);
 
     const roll = this.rng();
     let selected: WeatherType;
