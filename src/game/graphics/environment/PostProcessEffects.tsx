@@ -13,9 +13,10 @@ import {
 interface PostProcessEffectsProps {
   quality: QualityLevel;
   colorblindMode?: ColorblindMode;
+  highContrastMode?: boolean;
 }
 
-export const PostProcessEffects = ({ quality, colorblindMode = "none" }: PostProcessEffectsProps) => {
+export const PostProcessEffects = ({ quality, colorblindMode = "none", highContrastMode = false }: PostProcessEffectsProps) => {
   const scene = useScene();
 
   useEffect(() => {
@@ -43,11 +44,11 @@ export const PostProcessEffects = ({ quality, colorblindMode = "none" }: PostPro
 
     // 5. Tone Mapping
     pipeline.imageProcessingEnabled = true;
-    pipeline.imageProcessing.contrast = 1.2;
+    pipeline.imageProcessing.contrast = highContrastMode ? 1.6 : 1.2;
     pipeline.imageProcessing.exposure = 1.1;
 
     return () => pipeline.dispose();
-  }, [scene, quality]);
+  }, [scene, quality, highContrastMode]);
 
   // Colorblind post-processing filter
   useEffect(() => {

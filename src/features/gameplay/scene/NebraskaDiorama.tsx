@@ -5,7 +5,7 @@
  * NO storm logic. Uses PBR materials and high-quality environment textures.
  */
 
-import { QualityLevel } from "@/graphics";
+import { QualityLevel, useGraphics } from "@/graphics";
 import { EnvironmentDome, NebraskaGround, PostProcessEffects, Lighting } from "@/game/graphics/environment";
 
 interface NebraskaDioramaProps {
@@ -13,13 +13,15 @@ interface NebraskaDioramaProps {
 }
 
 export const NebraskaDiorama = ({ quality }: NebraskaDioramaProps) => {
+  const { settings } = useGraphics();
+
   return (
     <>
       <Lighting quality={quality} />
       {/* Replaced CartoonSky with EnvironmentDome (HDRI) */}
       <EnvironmentDome quality={quality} />
       <NebraskaGround quality={quality} />
-      <PostProcessEffects quality={quality} />
+      <PostProcessEffects quality={quality} colorblindMode={settings.colorblindMode ?? "none"} highContrastMode={settings.highContrastMode} />
     </>
   );
 };

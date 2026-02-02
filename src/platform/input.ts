@@ -736,9 +736,13 @@ class InputManager {
   }
 
   /**
-   * Get current motor settings
+   * Get current motor settings.
+   * Returns defaults if init() has not been called yet.
    */
   getMotorSettings(): MotorSettings {
+    if (!this.initialized) {
+      console.warn("[Input] getMotorSettings called before init(), returning defaults");
+    }
     return { ...this.motorSettings };
   }
 

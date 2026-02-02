@@ -1,3 +1,5 @@
+// TODO: Add TrailMesh effects for fast-falling entities (requires BabylonJS TrailMesh import)
+
 /**
  * EntityRenderer - Renders a single ECS entity as a 3D model with animations and Physics.
  */

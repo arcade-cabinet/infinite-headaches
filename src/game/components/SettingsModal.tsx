@@ -20,6 +20,7 @@ import {
   saveKeyBindings,
   resetKeyBindings,
 } from "@/platform/keybindings";
+import { inputManager } from "@/platform/input";
 import type { ColorblindMode } from "@/game/graphics/shaders/ColorblindFilter";
 
 interface SettingsModalProps {
@@ -70,6 +71,12 @@ const DEFAULT_SOUND_SETTINGS: SoundSettings = {
   sfxVolume: 80,
   muted: false,
 };
+
+const SENSITIVITY_CONFIG = {
+  min: 0.5,
+  max: 2.0,
+  step: 0.1,
+} as const;
 
 const STORAGE_KEY = "homestead-headaches-sound-settings";
 
@@ -280,6 +287,8 @@ interface AccessibilityTabProps {
   fontSize: { xs: string; sm: string };
   colorblindMode: ColorblindMode;
   onColorblindModeChange: (mode: ColorblindMode) => void;
+  highContrastMode: boolean;
+  onToggleHighContrastMode: () => void;
   inputSensitivity: number;
   onInputSensitivityChange: (value: number) => void;
   oneHandedMode: boolean;
@@ -295,6 +304,8 @@ function AccessibilityTab({
   fontSize,
   colorblindMode,
   onColorblindModeChange,
+  highContrastMode,
+  onToggleHighContrastMode,
   inputSensitivity,
   onInputSensitivityChange,
   oneHandedMode,
@@ -382,6 +393,24 @@ function AccessibilityTab({
         </div>
       </div>
 
+      {/* High Contrast Mode toggle */}
+      <div
+        className="flex items-center justify-between p-3 rounded-lg"
+        style={{ backgroundColor: `${colors.soil[700]}40` }}
+      >
+        <div className="flex-1 mr-4">
+          <span style={{ color: colors.wheat[300] }}>High Contrast Mode</span>
+          <p className="mt-1" style={{ color: colors.wheat[200], fontSize: fontSize.xs }}>
+            Increases contrast for better visibility
+          </p>
+        </div>
+        <ToggleSwitch
+          checked={highContrastMode}
+          onChange={onToggleHighContrastMode}
+          ariaLabel="Toggle high contrast mode"
+        />
+      </div>
+
       {/* Input sensitivity slider */}
       <div
         className="p-3 rounded-lg"
@@ -395,9 +424,9 @@ function AccessibilityTab({
         </div>
         <input
           type="range"
-          min="0.5"
-          max="2.0"
-          step="0.1"
+          min={String(SENSITIVITY_CONFIG.min)}
+          max={String(SENSITIVITY_CONFIG.max)}
+          step={String(SENSITIVITY_CONFIG.step)}
           value={inputSensitivity}
           onChange={(e) => onInputSensitivityChange(Number(e.target.value))}
           className="w-full h-2 rounded-full appearance-none cursor-pointer"
@@ -458,6 +487,12 @@ function ControlsTab({ bindings, onBindingChange, onReset, fontSize }: ControlsT
     const handleKeyDown = (e: KeyboardEvent) => {
       e.preventDefault();
       e.stopPropagation();
+
+      if (e.code === "Escape" || e.key === "Escape") {
+        setCapturingAction(null);
+        return;
+      }
+
       const key = e.code;
       const current = bindings[capturingAction];
       if (!current.includes(key)) {
@@ -626,16 +661,25 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const [inputSensitivity, setInputSensitivity] = useState(1.0);
   const [oneHandedMode, setOneHandedMode] = useState(false);
 
+  // Load motor settings from input manager on mount
+  useEffect(() => {
+    const motor = inputManager.getMotorSettings();
+    setInputSensitivity(motor.inputSensitivity);
+    setOneHandedMode(motor.oneHandedMode);
+  }, []);
+
   // Entrance animation
+  const entranceAnimRef = useRef<ReturnType<typeof animate> | null>(null);
   useEffect(() => {
     if (modalRef.current) {
-      animate(modalRef.current, {
+      entranceAnimRef.current = animate(modalRef.current, {
         opacity: [0, 1],
         scale: [0.9, 1],
         duration: 300,
         ease: "outBack",
       });
     }
+    return () => { entranceAnimRef.current?.pause(); };
   }, []);
 
   // Save sound settings when they change
@@ -798,10 +842,19 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 fontSize={fontSize}
                 colorblindMode={graphicsSettings.colorblindMode ?? "none"}
                 onColorblindModeChange={(mode) => updateSettings({ colorblindMode: mode })}
+                highContrastMode={graphicsSettings.highContrastMode ?? false}
+                onToggleHighContrastMode={() => updateSettings({ highContrastMode: !(graphicsSettings.highContrastMode ?? false) })}
                 inputSensitivity={inputSensitivity}
-                onInputSensitivityChange={setInputSensitivity}
+                onInputSensitivityChange={(value) => {
+                  setInputSensitivity(value);
+                  inputManager.updateMotorSettings({ inputSensitivity: value, oneHandedMode });
+                }}
                 oneHandedMode={oneHandedMode}
-                onToggleOneHandedMode={() => setOneHandedMode(!oneHandedMode)}
+                onToggleOneHandedMode={() => {
+                  const newValue = !oneHandedMode;
+                  setOneHandedMode(newValue);
+                  inputManager.updateMotorSettings({ inputSensitivity, oneHandedMode: newValue });
+                }}
               />
             )}
 

@@ -69,7 +69,22 @@ export class WeatherSystem {
   }
 
   setLevel(level: number): void {
+    const prevLevel = this.gameLevel;
     this.gameLevel = level;
+    // If level drops to 5 or below, force clear weather immediately
+    if (level <= 5 && prevLevel > 5 && this.state.type !== "clear") {
+      this.state = {
+        type: "clear",
+        intensity: 0,
+        windDirection: 0,
+        windStrength: 0,
+        wobbleBonus: 0,
+        duration: Infinity,
+        elapsed: 0,
+        transitionProgress: 1,
+      };
+      this.onChangeCallback?.(this.state);
+    }
   }
 
   getState(): WeatherState {

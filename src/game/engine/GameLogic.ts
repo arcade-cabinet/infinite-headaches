@@ -84,6 +84,8 @@ export interface GameCallbacks {
   onScreenShake: (intensity: number) => void;
   onParticleEffect: (type: string, position: Vector3) => void;
   onWeatherChange?: (weather: WeatherState) => void;
+  onComboMilestone?: (combo: number) => void;
+  onPowerUpStateChange?: (state: { shield: boolean; slowMotion: boolean; scoreFrenzy: boolean }) => void;
 }
 
 export class GameLogic {
@@ -185,6 +187,7 @@ export class GameLogic {
   };
 
   private callbacks: GameCallbacks;
+  private reducedMotion = false;
 
   isPlaying = false;
   isPaused = false;
@@ -369,6 +372,8 @@ export class GameLogic {
     if (this.animationId) cancelAnimationFrame(this.animationId);
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
     world.clear();
+    this.weatherSystem = null as any;
+    this.dropController = null as any;
     if (typeof window !== "undefined") {
       delete (window as any).GAME_CONTROL;
     }
@@ -376,6 +381,10 @@ export class GameLogic {
     if (import.meta.env.DEV && devAPI) {
       devAPI.unbind();
     }
+  }
+
+  setReducedMotion(enabled: boolean): void {
+    this.reducedMotion = enabled;
   }
 
   handlePointerDown(worldX: number): void {
@@ -616,6 +625,9 @@ export class GameLogic {
       this.scoreFrenzyActive = false;
       this.scoreFrenzyMultiplier = 1;
     }
+
+    // Notify UI of power-up state changes
+    this.callbacks.onPowerUpStateChange?.(this.getActivePowerUps());
 
     // Combo decay
     const comboDecayTime = scoring.comboDecayTime * this.upgradeModifiers.comboDecayMultiplier;
@@ -947,11 +959,14 @@ export class GameLogic {
     }
 
     // --- Hit stop for impactful moments ---
-    if (isPerfect) {
+    if (isPerfect && !this.reducedMotion) {
       hitStop.trigger(80);
     }
-    if (this.combo === 5 || this.combo === 10 || this.combo === 15) {
+    if (!this.reducedMotion && (this.combo === 5 || this.combo === 10 || this.combo === 15)) {
       hitStop.trigger(120);
+    }
+    if (this.combo === 5 || this.combo === 10 || this.combo === 15) {
+      this.callbacks.onComboMilestone?.(this.combo);
     }
 
     // --- Visual/audio feedback ---
@@ -1156,6 +1171,8 @@ export class GameLogic {
         this.callbacks.onScoreChange(this.score, this.currentMultiplier, this.combo);
         break;
     }
+
+    this.callbacks.onPowerUpStateChange?.(this.getActivePowerUps());
   }
 
   // =========================================================================
@@ -1221,6 +1238,14 @@ export class GameLogic {
     this.callbacks.onStackTopple();
     this.callbacks.onScreenShake(1);
     feedback.play("topple");
+  }
+
+  getActivePowerUps(): { shield: boolean; slowMotion: boolean; scoreFrenzy: boolean } {
+    return {
+      shield: this.shieldCharges > 0,
+      slowMotion: this.slowMotionActive,
+      scoreFrenzy: this.scoreFrenzyActive,
+    };
   }
 
   setScreenDimensions(w: number, h: number) {}

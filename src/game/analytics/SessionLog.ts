@@ -43,7 +43,14 @@ let sessionWriteQueue = Promise.resolve();
 async function loadSessions(): Promise<SessionRecord[]> {
   if (sessionCache) return sessionCache;
   const stored = await storage.get<SessionRecord[]>(STORAGE_KEYS.SESSION_HISTORY);
-  sessionCache = stored ?? [];
+  if (!Array.isArray(stored)) {
+    if (stored != null) {
+      console.warn("[SessionLog] Invalid stored data shape, resetting to empty array");
+    }
+    sessionCache = [];
+  } else {
+    sessionCache = stored;
+  }
   return sessionCache;
 }
 
@@ -121,5 +128,6 @@ export function exportStatsAsJSON(sessions: SessionRecord[], stats: LifetimeStat
 
 export async function clearSessionHistory(): Promise<void> {
   sessionCache = [];
+  sessionWriteQueue = Promise.resolve();
   await storage.set(STORAGE_KEYS.SESSION_HISTORY, []);
 }

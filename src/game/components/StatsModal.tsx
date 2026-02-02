@@ -10,6 +10,7 @@ import {
   getSessionHistory,
   getLifetimeStats,
   exportStatsAsJSON,
+  clearSessionHistory,
   type SessionRecord,
   type LifetimeStats,
 } from "../analytics/SessionLog";
@@ -34,13 +35,26 @@ export function StatsModal({ onClose }: StatsModalProps) {
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [stats, setStats] = useState<LifetimeStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
-      const [s, st] = await Promise.all([getSessionHistory(), getLifetimeStats()]);
-      setSessions(s);
-      setStats(st);
-      setLoading(false);
+      try {
+        const [s, st] = await Promise.all([getSessionHistory(), getLifetimeStats()]);
+        setSessions(s);
+        setStats(st);
+      } catch (e) {
+        console.error("[StatsModal] Failed to load stats:", e);
+        setSessions([]);
+        setStats({
+          totalGames: 0, totalScore: 0, totalCatches: 0, totalMisses: 0,
+          bestScore: 0, bestLevel: 0, bestCombo: 0, totalPlayTime: 0,
+          averageScore: 0, catchRate: 0,
+        });
+        setError("Failed to load stats data.");
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
@@ -55,6 +69,17 @@ export function StatsModal({ onClose }: StatsModalProps) {
     a.click();
     URL.revokeObjectURL(url);
   }, [sessions, stats]);
+
+  const handleClearHistory = useCallback(async () => {
+    if (!window.confirm("Clear all session history? This cannot be undone.")) return;
+    await clearSessionHistory();
+    setSessions([]);
+    setStats({
+      totalGames: 0, totalScore: 0, totalCatches: 0, totalMisses: 0,
+      bestScore: 0, bestLevel: 0, bestCombo: 0, totalPlayTime: 0,
+      averageScore: 0, catchRate: 0,
+    });
+  }, []);
 
   return (
     <div
@@ -108,6 +133,10 @@ export function StatsModal({ onClose }: StatsModalProps) {
             <p className="game-font text-[#fef9c3] text-center" style={{ fontSize: fontSize.sm }}>
               Loading...
             </p>
+          ) : error ? (
+            <p className="game-font text-red-400 text-center" style={{ fontSize: fontSize.sm }}>
+              {error}
+            </p>
           ) : activeTab === "overview" ? (
             <OverviewTab stats={stats!} fontSize={fontSize} />
           ) : activeTab === "history" ? (
@@ -121,6 +150,9 @@ export function StatsModal({ onClose }: StatsModalProps) {
 
         {/* Footer */}
         <div className="flex justify-center gap-3 p-4 border-t border-[#6b5a3a]">
+          <GameButton size="sm" variant="secondary" onClick={handleClearHistory}>
+            Clear History
+          </GameButton>
           <GameButton size="sm" variant="secondary" onClick={handleExport}>
             Export JSON
           </GameButton>
@@ -197,18 +229,21 @@ function HistoryTab({ sessions, fontSize }: { sessions: SessionRecord[]; fontSiz
 }
 
 function ChartsTab({ sessions }: { sessions: SessionRecord[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const scoreCanvasRef = useRef<HTMLCanvasElement>(null);
   const levelCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (sessions.length === 0) return;
+    if (sessions.length === 0 || !containerRef.current) return;
 
+    const chartWidth = containerRef.current.clientWidth || 560;
     const recent = sessions.slice(-30);
 
     if (scoreCanvasRef.current) {
+      scoreCanvasRef.current.width = chartWidth;
       const ctx = scoreCanvasRef.current.getContext("2d");
       if (ctx) {
-        drawLineChart(ctx, 560, 200, {
+        drawLineChart(ctx, chartWidth, 200, {
           labels: recent.map((_, i) => (i + 1).toString()),
           datasets: [{ label: "Score", data: recent.map((s) => s.score) }],
         }, "Score Trend (Last 30)");
@@ -216,9 +251,9 @@ function ChartsTab({ sessions }: { sessions: SessionRecord[] }) {
     }
 
     if (levelCanvasRef.current) {
+      levelCanvasRef.current.width = chartWidth;
       const ctx = levelCanvasRef.current.getContext("2d");
       if (ctx) {
-        // Level distribution as bar chart
         const levelCounts: Record<number, number> = {};
         for (const s of sessions) {
           levelCounts[s.levelReached] = (levelCounts[s.levelReached] || 0) + 1;
@@ -226,7 +261,7 @@ function ChartsTab({ sessions }: { sessions: SessionRecord[] }) {
         const levels = Object.keys(levelCounts)
           .map(Number)
           .sort((a, b) => a - b);
-        drawBarChart(ctx, 560, 200, {
+        drawBarChart(ctx, chartWidth, 200, {
           labels: levels.map(String),
           values: levels.map((l) => levelCounts[l]),
         }, "Level Distribution");
@@ -239,23 +274,24 @@ function ChartsTab({ sessions }: { sessions: SessionRecord[] }) {
   }
 
   return (
-    <div className="space-y-4">
-      <canvas ref={scoreCanvasRef} width={560} height={200} className="w-full rounded" />
-      <canvas ref={levelCanvasRef} width={560} height={200} className="w-full rounded" />
+    <div ref={containerRef} className="space-y-4">
+      <canvas ref={scoreCanvasRef} height={200} className="w-full rounded" />
+      <canvas ref={levelCanvasRef} height={200} className="w-full rounded" />
     </div>
   );
 }
 
 function HeatMapTab({ sessions }: { sessions: SessionRecord[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (sessions.length === 0 || !canvasRef.current) return;
+    if (sessions.length === 0 || !canvasRef.current || !containerRef.current) return;
+    const chartWidth = containerRef.current.clientWidth || 560;
+    canvasRef.current.width = chartWidth;
     const ctx = canvasRef.current.getContext("2d");
     if (!ctx) return;
 
-    // Build heat map from catch/miss positions
-    // Positions are normalized x-values. We'll bucket into 20 columns, 2 rows (catch/miss)
     const cols = 20;
     const catchBuckets = new Array(cols).fill(0);
     const missBuckets = new Array(cols).fill(0);
@@ -277,7 +313,7 @@ function HeatMapTab({ sessions }: { sessions: SessionRecord[] }) {
       missBuckets.map((v) => v / maxVal),
     ];
 
-    drawHeatMap(ctx, 560, 150, {
+    drawHeatMap(ctx, chartWidth, 150, {
       width: cols,
       height: 2,
       data,
@@ -288,7 +324,11 @@ function HeatMapTab({ sessions }: { sessions: SessionRecord[] }) {
     return <p className="game-font text-[#a89070] text-center text-sm">No data yet.</p>;
   }
 
-  return <canvas ref={canvasRef} width={560} height={150} className="w-full rounded" />;
+  return (
+    <div ref={containerRef}>
+      <canvas ref={canvasRef} height={150} className="w-full rounded" />
+    </div>
+  );
 }
 
 function formatDuration(ms: number): string {

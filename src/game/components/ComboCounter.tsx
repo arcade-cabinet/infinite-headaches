@@ -32,6 +32,7 @@ export function ComboCounter({ combo, reducedMotion = false }: ComboCounterProps
   const { fontSize } = useResponsiveScale();
   const ref = useRef<HTMLDivElement>(null);
   const prevCombo = useRef(combo);
+  const animRef = useRef<ReturnType<typeof animate> | null>(null);
 
   useEffect(() => {
     if (!ref.current || reducedMotion || combo <= prevCombo.current) {
@@ -42,21 +43,23 @@ export function ComboCounter({ combo, reducedMotion = false }: ComboCounterProps
 
     const tier = getTier(combo);
 
+    animRef.current?.pause();
+
     if (tier === "low") {
-      animate(ref.current, {
+      animRef.current = animate(ref.current, {
         scale: [1.2, 1],
         duration: 150,
         ease: "outBack",
       });
     } else if (tier === "mid") {
-      animate(ref.current, {
+      animRef.current = animate(ref.current, {
         scale: [1.4, 1],
         translateY: [-4, 0],
         duration: 250,
         ease: "outElastic(1, .6)",
       });
     } else if (tier === "high") {
-      animate(ref.current, {
+      animRef.current = animate(ref.current, {
         scale: [1.6, 1],
         translateY: [-6, 0],
         duration: 300,
@@ -64,7 +67,7 @@ export function ComboCounter({ combo, reducedMotion = false }: ComboCounterProps
       });
     } else {
       // ultra
-      animate(ref.current, {
+      animRef.current = animate(ref.current, {
         scale: [1.8, 1],
         translateY: [-8, 0],
         rotate: [-3, 0],
@@ -73,6 +76,10 @@ export function ComboCounter({ combo, reducedMotion = false }: ComboCounterProps
       });
     }
   }, [combo, reducedMotion]);
+
+  useEffect(() => {
+    return () => { animRef.current?.pause(); };
+  }, []);
 
   if (combo <= 1) return null;
 

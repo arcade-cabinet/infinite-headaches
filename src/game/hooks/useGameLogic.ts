@@ -4,14 +4,15 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Vector3 } from "@babylonjs/core";
 import { audioManager } from "../audio";
 import { GAME_CONFIG } from "../config";
 import { GameLogic } from "../engine/GameLogic";
 import { deviceManager } from "../../platform/device";
 import { inputManager } from "../../platform/input";
 import { recordSession } from "../analytics/SessionLog";
+import { useAccessibilitySettings } from "@/graphics/hooks/useGraphics";
 import type { GameModeType } from "../modes/GameMode";
+import type { WeatherState } from "../systems/WeatherSystem";
 
 export interface UseGameLogicReturn {
   score: number;
@@ -48,6 +49,8 @@ export interface UseGameLogicReturn {
   getIsDropImminent: () => boolean;
   /** Push a physics collision event from PhysicsCollisionBridge. */
   pushCollisionEvent: (event: import("../../features/gameplay/scene/components/PhysicsCollisionBridge").PhysicsCatchEvent) => void;
+  weather: WeatherState | null;
+  activePowerUps: { shield: boolean; slowMotion: boolean; scoreFrenzy: boolean };
 }
 
 export interface GameLogicCallbacks {
@@ -56,6 +59,7 @@ export interface GameLogicCallbacks {
 
 export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn {
   const engineRef = useRef<GameLogic | null>(null);
+  const { reducedMotion } = useAccessibilitySettings();
   const [score, setScore] = useState(0);
   const [multiplier, setMultiplier] = useState(1);
   const [combo, setCombo] = useState(0);
@@ -73,6 +77,8 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
   const [perfectKey, setPerfectKey] = useState(0);
   const [showPerfect, setShowPerfect] = useState(false);
   const [showGood, setShowGood] = useState(false);
+  const [weather, setWeather] = useState<WeatherState | null>(null);
+  const [activePowerUps, setActivePowerUps] = useState<{ shield: boolean; slowMotion: boolean; scoreFrenzy: boolean }>({ shield: false, slowMotion: false, scoreFrenzy: false });
 
   useEffect(() => {
     const engine = new GameLogic({
@@ -90,20 +96,36 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
       onPerfectCatch: () => { setPerfectKey(k => k + 1); setShowPerfect(true); setTimeout(() => setShowPerfect(false), 800); },
       onGoodCatch: () => { setShowGood(true); setTimeout(() => setShowGood(false), 600); },
       onMiss: () => {},
-      onBankComplete: (t) => setBankedAnimals(t),
+      onBankComplete: (t) => { setBankedAnimals(t); audioManager.play("bank_fanfare"); },
       onLevelUp: (l) => { setLevel(l); audioManager.play("levelup"); },
       onLifeEarned: () => audioManager.play("lifeup"),
       onDangerState: (d) => setInDanger(d),
-      onStackTopple: () => {},
-      onPowerUpCollected: () => {},
-      onFireballShot: () => {},
-      onAnimalFrozen: () => {},
+      onStackTopple: () => { /* TODO: Add screen shake or visual feedback */ },
+      onPowerUpCollected: (_type) => {
+        // TODO: Play type-specific SFX when audio assets are available
+      },
+      onFireballShot: () => { /* TODO: Add fireball SFX */ },
+      onAnimalFrozen: () => { /* TODO: Add freeze SFX */ },
       onScreenShake: (i) => setScreenShake(i),
-      onParticleEffect: () => {},
+      onParticleEffect: () => { /* TODO: Wire to particle system */ },
+      onWeatherChange: (w) => {
+        setWeather(w);
+      },
+      onComboMilestone: (combo) => {
+        if (combo === 5) audioManager.play("combo5");
+        else if (combo === 10) audioManager.play("combo10");
+        else if (combo >= 15) audioManager.play("combo15");
+      },
+      onPowerUpStateChange: (state) => setActivePowerUps(state),
     });
     engineRef.current = engine;
     return () => engine.destroy();
   }, []);
+
+  // Sync reducedMotion preference to game engine
+  useEffect(() => {
+    engineRef.current?.setReducedMotion(reducedMotion);
+  }, [reducedMotion]);
 
   // Controls Detection
   useEffect(() => {
@@ -193,5 +215,7 @@ export function useGameLogic(callbacks?: GameLogicCallbacks): UseGameLogicReturn
     getDropDifficulty: () => engineRef.current?.getDropDifficulty() ?? 0,
     getIsDropImminent: () => engineRef.current?.getIsDropImminent() ?? false,
     pushCollisionEvent: (event) => engineRef.current?.pushCollisionEvent(event),
+    weather,
+    activePowerUps,
   };
 }

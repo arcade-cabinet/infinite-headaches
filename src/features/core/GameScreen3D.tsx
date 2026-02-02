@@ -49,6 +49,7 @@ import { SplashScene } from "@/features/splash/SplashScene";
 import { MainMenu3D } from "@/features/menu/MainMenu3D";
 import { MainMenuOverlay } from "@/features/menu/MainMenuOverlay";
 import { PeekingAnimal3D } from "@/features/menu/PeekingAnimal3D";
+import { LevelUpFlash } from "@/game/components/LevelUpFlash";
 
 export function GameScreen3D() {
   // ── Core services ──────────────────────────────────────
@@ -195,6 +196,9 @@ export function GameScreen3D() {
                 getIsDropImminent: gameplay.getIsDropImminent,
               }}
               onPhysicsCatch={gameplay.pushCollisionEvent}
+              weather={gameplay.weather}
+              reducedMotion={settings.reducedMotion}
+              combo={gameplay.combo}
             >
               {isMenu && (
                 <>
@@ -226,6 +230,7 @@ export function GameScreen3D() {
           onModes={menu.openPlay}
           onUpgrades={menu.openUpgrades}
           onStats={menu.openStats}
+          onSettings={menu.openSettings}
         />
       )}
 
@@ -243,6 +248,7 @@ export function GameScreen3D() {
             lives={gameplay.lives}
             maxLives={gameplay.maxLives}
             inDanger={gameplay.inDanger}
+            reducedMotion={settings.reducedMotion}
           />
         )}
 
@@ -254,6 +260,8 @@ export function GameScreen3D() {
           show={gameplay.showPerfect}
           animationKey={gameplay.perfectKey}
         />
+
+        <LevelUpFlash level={gameplay.level} reducedMotion={settings.reducedMotion} />
 
         {gameplay.showGood && (
           <div className="absolute left-1/2 top-[30%] -translate-x-1/2 game-font text-green-300 animate-pulse">
@@ -284,8 +292,13 @@ export function GameScreen3D() {
           />
         )}
         {menu.showHelp && <HelpModal onClose={menu.closeHelp} />}
-        {menu.showStats && <StatsModal onClose={menu.closeStats} />}
       </div>
+
+      {menu.showStats && (
+        <div className="absolute inset-0 z-[55]">
+          <StatsModal onClose={menu.closeStats} />
+        </div>
+      )}
 
       {/* ── Settings modal (z-60 so it renders above PauseMenu z-50) ── */}
       {menu.showSettings && (
