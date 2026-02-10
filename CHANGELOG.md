@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.0.1](https://github.com/arcade-cabinet/infinite-headaches/compare/v1.0.0...v1.0.1) (2026-02-02)
+
+
+### Features
+
+* v1.1.0 feature expansion ([c5e7461](https://github.com/arcade-cabinet/infinite-headaches/commit/c5e7461d6e6172223dfb51dafa83cbb0d9e1b113))
+* v1.1.0 feature expansion — accessibility, gameplay, polish, weather, analytics ([b276c12](https://github.com/arcade-cabinet/infinite-headaches/commit/b276c121f27aae6da93ba85cff25a1529a48c4cd))
+* v1.1.0 feature expansion — accessibility, gameplay, polish, weather, analytics ([#3](https://github.com/arcade-cabinet/infinite-headaches/issues/3)) ([c5e7461](https://github.com/arcade-cabinet/infinite-headaches/commit/c5e7461d6e6172223dfb51dafa83cbb0d9e1b113))
+* v1.1.0 feature expansion ([#5](https://github.com/arcade-cabinet/infinite-headaches/issues/5)) ([6dce9df](https://github.com/arcade-cabinet/infinite-headaches/commit/6dce9dfcc69e3d551524b68653fa7933cb1a45b0))
+
+
+### Bug Fixes
+
+* Address Amazon Q peer review findings ([e3ad175](https://github.com/arcade-cabinet/infinite-headaches/commit/e3ad175b56e9af7b56efe3479cee919a111a6a6b))
+* Close 55 integration gaps across wiring, bugs, a11y, and tests ([9f67d18](https://github.com/arcade-cabinet/infinite-headaches/commit/9f67d183f55d632117140dd8f47dd7f73cc77c0d))
+* Serialize session recording writes to prevent race conditions ([7ea5748](https://github.com/arcade-cabinet/infinite-headaches/commit/7ea5748e45c57c565bcd547de194209a6ba8e05a))
+* Update stale test assertions to match v1.1.0 config and input bindings ([b4db8b8](https://github.com/arcade-cabinet/infinite-headaches/commit/b4db8b819685fc3a738e1f069140e24f279ce0c3))
+
 ## 1.0.0 (2026-02-02)
 
 
